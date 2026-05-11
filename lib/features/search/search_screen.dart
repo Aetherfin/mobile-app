@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/audio/play_actions.dart';
 import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../widgets/artwork.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/track_row.dart';
 import 'ask_sheet.dart';
@@ -79,11 +82,32 @@ class _LiveSearchResults extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(searchProvider(query));
     return async.maybeWhen(
-      data: (res) => _SearchResults(
-        tracks: res.tracks,
-        albums: res.albums,
-        artists: res.artists,
-      ),
+      data: (res) {
+        final empty = res.tracks.isEmpty &&
+            res.albums.isEmpty &&
+            res.artists.isEmpty &&
+            res.playlists.isEmpty;
+        if (empty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AfSpacing.s16,
+              vertical: AfSpacing.s24,
+            ),
+            child: Text(
+              'No results for “$query”.',
+              style: AfTypography.bodyMedium.copyWith(
+                color: AfColors.textTertiary,
+              ),
+            ),
+          );
+        }
+        return _SearchResults(
+          tracks: res.tracks,
+          albums: res.albums,
+          artists: res.artists,
+          playlists: res.playlists,
+        );
+      },
       error: (e, _) => Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AfSpacing.s16,
@@ -119,32 +143,6 @@ class _SearchIdleState extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
       child: ListView(
         children: [
-          SectionHeader(title: 'Recent', uppercase: true),
-          const SizedBox(height: AfSpacing.s12),
-          Wrap(
-            spacing: AfSpacing.s8,
-            runSpacing: AfSpacing.s8,
-            children: [
-              for (final label in const [
-                'Skylark',
-                'Velvet Signal',
-                'Field Notes',
-                'Lumen Tide',
-              ])
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AfSpacing.s12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AfColors.surfaceBase,
-                    borderRadius: AfRadii.borderPill,
-                  ),
-                  child: Text(label, style: AfTypography.bodySmall),
-                ),
-            ],
-          ),
-          const SizedBox(height: AfSpacing.s24),
           SectionHeader(title: 'Genres', uppercase: true),
           const SizedBox(height: AfSpacing.s12),
           GridView.builder(
@@ -218,48 +216,59 @@ class _SearchIdleState extends ConsumerWidget {
   }
 }
 
-class _SearchResults extends StatelessWidget {
+class _SearchResults extends ConsumerWidget {
   final List<AfTrack> tracks;
   final List<AfAlbum> albums;
   final List<AfArtist> artists;
+  final List<AfPlaylist> playlists;
 
   const _SearchResults({
     required this.tracks,
     required this.albums,
     required this.artists,
+    required this.playlists,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+      padding: const EdgeInsets.fromLTRB(
+        AfSpacing.s16,
+        0,
+        AfSpacing.s16,
+        AfSpacing.bottomInsetWithMiniAndNav,
+      ),
       children: [
         if (tracks.isNotEmpty) ...[
           SectionHeader(title: 'Tracks', uppercase: true),
           const SizedBox(height: AfSpacing.s8),
-          for (final t in tracks.take(4))
+          // Show up to 20 result rows (was 4) and tap any to play.
+          // Tapping replaces the queue with the full set of search
+          // results so the user can skip-next through them.
+          for (var i = 0; i < tracks.length && i < 20; i++)
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
-              child: TrackRow(track: t),
+              child: TrackRow(
+                track: tracks[i],
+                onTap: () => ref
+                    .read(playActionsProvider)
+                    .playQueue(tracks, startIndex: i),
+              ),
             ),
           const SizedBox(height: AfSpacing.s16),
         ],
         if (albums.isNotEmpty) ...[
           SectionHeader(title: 'Albums', uppercase: true),
           const SizedBox(height: AfSpacing.s8),
-          for (final a in albums.take(3))
+          for (final a in albums.take(10))
             ListTile(
-              leading: Container(
+              leading: SizedBox(
                 width: 44,
                 height: 44,
-                decoration: BoxDecoration(
-                  borderRadius: AfRadii.borderSm,
-                  gradient: const LinearGradient(
-                    colors: [AfColors.indigo700, AfColors.indigo900],
-                  ),
+                child: Artwork(
+                  url: a.imageUrl,
+                  size: 44,
                 ),
-                child: const Icon(Icons.album_outlined,
-                    color: AfColors.indigo300),
               ),
               title: Text(a.name, style: AfTypography.bodyMedium),
               subtitle: Text(
@@ -270,23 +279,29 @@ class _SearchResults extends StatelessWidget {
               ),
               tileColor: Colors.transparent,
               contentPadding: EdgeInsets.zero,
+              onTap: () => context.push('/album/${a.id}'),
             ),
           const SizedBox(height: AfSpacing.s16),
         ],
         if (artists.isNotEmpty) ...[
           SectionHeader(title: 'Artists', uppercase: true),
           const SizedBox(height: AfSpacing.s8),
-          for (final a in artists.take(3))
+          for (final a in artists.take(10))
             ListTile(
               leading: CircleAvatar(
                 radius: 22,
                 backgroundColor: AfColors.indigo800,
-                child: Text(
-                  a.name.substring(0, 1),
-                  style: AfTypography.titleSmall.copyWith(
-                    color: AfColors.textOnPrimary,
-                  ),
-                ),
+                backgroundImage: a.imageUrl != null
+                    ? NetworkImage(a.imageUrl!)
+                    : null,
+                child: a.imageUrl == null
+                    ? Text(
+                        a.name.isNotEmpty ? a.name.substring(0, 1) : '?',
+                        style: AfTypography.titleSmall.copyWith(
+                          color: AfColors.textOnPrimary,
+                        ),
+                      )
+                    : null,
               ),
               title: Text(a.name, style: AfTypography.bodyMedium),
               subtitle: Text(
@@ -297,21 +312,39 @@ class _SearchResults extends StatelessWidget {
               ),
               tileColor: Colors.transparent,
               contentPadding: EdgeInsets.zero,
+              onTap: () => context.push('/artist/${a.id}'),
             ),
           const SizedBox(height: AfSpacing.s16),
         ],
-        if (tracks.isEmpty && albums.isEmpty && artists.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: AfSpacing.s24),
-            child: Text(
-              'No results in your library.',
-              textAlign: TextAlign.center,
-              style: AfTypography.bodyMedium.copyWith(
-                color: AfColors.textTertiary,
+        if (playlists.isNotEmpty) ...[
+          SectionHeader(title: 'Playlists', uppercase: true),
+          const SizedBox(height: AfSpacing.s8),
+          for (final p in playlists.take(10))
+            ListTile(
+              leading: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  borderRadius: AfRadii.borderSm,
+                  gradient: const LinearGradient(
+                    colors: [AfColors.indigo700, AfColors.indigo900],
+                  ),
+                ),
+                child: const Icon(Icons.playlist_play_rounded,
+                    color: AfColors.indigo300),
               ),
+              title: Text(p.name, style: AfTypography.bodyMedium),
+              subtitle: Text(
+                '${p.trackCount} tracks',
+                style: AfTypography.bodySmall.copyWith(
+                  color: AfColors.textTertiary,
+                ),
+              ),
+              tileColor: Colors.transparent,
+              contentPadding: EdgeInsets.zero,
+              onTap: () => context.push('/playlist/${p.id}'),
             ),
-          ),
-        const SizedBox(height: AfSpacing.bottomInsetWithMiniAndNav),
+        ],
       ],
     );
   }

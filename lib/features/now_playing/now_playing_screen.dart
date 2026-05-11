@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:just_audio/just_audio.dart' show LoopMode;
 
+import '../../core/audio/play_actions.dart';
 import '../../core/demo/demo_library.dart';
 import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
@@ -224,13 +225,13 @@ class NowPlayingScreen extends ConsumerWidget {
   }
 }
 
-class _TopBar extends StatelessWidget {
+class _TopBar extends ConsumerWidget {
   final Spectral spectral;
   final AfTrack track;
   const _TopBar({required this.spectral, required this.track});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AfSpacing.s8,
@@ -260,20 +261,73 @@ class _TopBar extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
+          PopupMenuButton<_NowPlayingAction>(
             icon: const Icon(Icons.more_horiz_rounded),
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('More options coming soon'),
-                duration: Duration(seconds: 2),
+            // Start radio = Jellyfin Instant Mix off this seed track.
+            // Implements the user's "generate queue related song based
+            // on the song played" request.
+            onSelected: (action) async {
+              switch (action) {
+                case _NowPlayingAction.startRadio:
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Starting Instant Mix…'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  await ref
+                      .read(playActionsProvider)
+                      .playInstantMix(track);
+                  break;
+                case _NowPlayingAction.goToAlbum:
+                  if (track.albumId != null) {
+                    context.push('/album/${track.albumId}');
+                  }
+                  break;
+                case _NowPlayingAction.goToArtist:
+                  if (track.artistId != null) {
+                    context.push('/artist/${track.artistId}');
+                  }
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: _NowPlayingAction.startRadio,
+                child: ListTile(
+                  leading: Icon(Icons.radio_rounded),
+                  title: Text('Start radio'),
+                  subtitle: Text('Similar songs from your library'),
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
-            ),
+              if (track.albumId != null)
+                const PopupMenuItem(
+                  value: _NowPlayingAction.goToAlbum,
+                  child: ListTile(
+                    leading: Icon(Icons.album_outlined),
+                    title: Text('Go to album'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              if (track.artistId != null)
+                const PopupMenuItem(
+                  value: _NowPlayingAction.goToArtist,
+                  child: ListTile(
+                    leading: Icon(Icons.person_outline_rounded),
+                    title: Text('Go to artist'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+            ],
           ),
         ],
       ),
     );
   }
 }
+
+enum _NowPlayingAction { startRadio, goToAlbum, goToArtist }
 
 class _TransportRow extends StatelessWidget {
   final bool isPlaying;

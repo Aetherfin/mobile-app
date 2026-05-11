@@ -459,7 +459,19 @@ class JellyfinClient {
   }
 
   /// `GET /MusicGenres` — distinct music genres in the user's library.
-  Future<List<AfGenre>> genres({int limit = 60}) async {
+  ///
+  /// Jellyfin returns one row per genre as stored on each track. Many
+  /// libraries (especially MusicBrainz-tagged ones) store comma-separated
+  /// genre strings as a *single* tag value — e.g.
+  /// `"Alternative, Indie Pop, Indie Rock"`. Those leak straight into the
+  /// grid as giant comma-joined tiles, which is unreadable.
+  ///
+  /// Here we normalise: split each returned name on `,` / `;` / `/`,
+  /// trim, lower-case for dedup, and emit one tile per atomic genre
+  /// token preserving the title-cased display form of the first
+  /// occurrence. A trailing slash inside a token (e.g. `Indie Rock/Rock
+  /// pop`) is kept intact — only commas + semicolons split.
+  Future<List<AfGenre>> genres({int limit = 200}) async {
     _assertUser();
     final res = await _dio.get<Map<String, dynamic>>(
       'MusicGenres',
@@ -477,13 +489,143 @@ class JellyfinClient {
       '#5644C9', '#A89DEC', '#3FD18C', '#FF7A59',
       '#F8C42D', '#FF6FB5', '#3DB6FF', '#FF4D6D',
     ];
+    final seen = <String>{};
     final result = <AfGenre>[];
-    for (var i = 0; i < items.length; i++) {
-      final name = (items[i]['Name'] as String?) ?? '';
-      if (name.isEmpty) continue;
-      result.add(AfGenre(name, palette[i % palette.length]));
+    for (final m in items) {
+      final raw = (m['Name'] as String?) ?? '';
+      if (raw.isEmpty) continue;
+      for (final part in raw.split(RegExp(r'[,;]'))) {
+        final token = part.trim();
+        if (token.isEmpty) continue;
+        final key = token.toLowerCase();
+        if (seen.add(key)) {
+          result.add(AfGenre(token, palette[result.length % palette.length]));
+        }
+      }
     }
     return result;
+  }
+
+  /// `GET /Users/{userId}/Items?IncludeItemTypes=MusicAlbum&Filters=IsFavorite`
+  /// — the user's favourite (heart-flagged) albums. Powers the Profile
+  /// screen's "Pinned" row — previously the row showed four hard-coded
+  /// demo names regardless of the user's actual favourites.
+  Future<List<AfAlbum>> favoriteAlbums({int limit = 30}) async {
+    _assertUser();
+    final res = await _dio.get<Map<String, dynamic>>(
+      'Users/$userId/Items',
+      queryParameters: <String, dynamic>{
+        'IncludeItemTypes': 'MusicAlbum',
+        'Recursive': true,
+        'Filters': 'IsFavorite',
+        'SortBy': 'SortName',
+        'SortOrder': 'Ascending',
+        'Limit': limit,
+        'Fields': _albumFields,
+        'EnableImages': true,
+      },
+    );
+    return _parseItemList(res.data).map(_parseAlbum).toList(growable: false);
+  }
+
+  /// `GET /Users/{userId}/Items?IncludeItemTypes=MusicAlbum` — *every* album
+  /// in the user's library, sorted alphabetically. Used by the Library
+  /// tab's Albums grid, which has historically conflated
+  /// `recentlyAddedAlbums` (top-20-newest) with the full library and
+  /// looked permanently underpopulated.
+  Future<List<AfAlbum>> allAlbums({
+    int limit = 500,
+    int startIndex = 0,
+  }) async {
+    _assertUser();
+    final res = await _dio.get<Map<String, dynamic>>(
+      'Users/$userId/Items',
+      queryParameters: <String, dynamic>{
+        'IncludeItemTypes': 'MusicAlbum',
+        'Recursive': true,
+        'SortBy': 'SortName',
+        'SortOrder': 'Ascending',
+        'Limit': limit,
+        'StartIndex': startIndex,
+        'Fields': _albumFields,
+        'EnableImages': true,
+      },
+    );
+    return _parseItemList(res.data).map(_parseAlbum).toList(growable: false);
+  }
+
+  /// `GET /Users/{userId}/Items?IncludeItemTypes=Audio` — *every* track in
+  /// the user's library, sorted alphabetically. Used by the Library tab's
+  /// Songs list. The Library used to wire Songs to `recentlyPlayed()`
+  /// (filter=IsPlayed, limit=20), so unplayed libraries appeared empty
+  /// and played libraries appeared capped at 20 rows.
+  Future<List<AfTrack>> allTracks({
+    int limit = 1000,
+    int startIndex = 0,
+  }) async {
+    _assertUser();
+    final res = await _dio.get<Map<String, dynamic>>(
+      'Users/$userId/Items',
+      queryParameters: <String, dynamic>{
+        'IncludeItemTypes': 'Audio',
+        'Recursive': true,
+        'SortBy': 'SortName',
+        'SortOrder': 'Ascending',
+        'Limit': limit,
+        'StartIndex': startIndex,
+        'Fields': _trackFields,
+        'EnableImages': true,
+      },
+    );
+    return _parseItemList(res.data).map(_parseTrack).toList(growable: false);
+  }
+
+  /// `GET /Playlists/{id}/Items` — the ordered track list for a playlist,
+  /// plus the playlist's header metadata. Powers the Playlist detail
+  /// screen.
+  Future<({AfPlaylist playlist, List<AfTrack> tracks})?> playlist(
+      String id) async {
+    _assertUser();
+    final headerRes = await _dio.get<Map<String, dynamic>>(
+      'Users/$userId/Items/$id',
+      queryParameters: <String, dynamic>{
+        'Fields': 'ChildCount,CumulativeRunTimeTicks',
+      },
+    );
+    final header = headerRes.data;
+    if (header == null || header.isEmpty) return null;
+    final pl = _parsePlaylist(header);
+    final tracksRes = await _dio.get<Map<String, dynamic>>(
+      'Playlists/$id/Items',
+      queryParameters: <String, dynamic>{
+        'UserId': userId,
+        'Fields': _trackFields,
+        'EnableImages': true,
+      },
+    );
+    final tracks =
+        _parseItemList(tracksRes.data).map(_parseTrack).toList(growable: false);
+    return (playlist: pl, tracks: tracks);
+  }
+
+  /// `GET /Items/{id}/InstantMix` — Jellyfin's server-side similar-songs
+  /// generator. Given a seed track / album / artist ID, returns up to
+  /// [limit] related tracks. Used to extend the queue with a "radio"
+  /// from the currently-playing song (the feature the user requested:
+  /// "is it possible to generate queue related song based on the song
+  /// played?").
+  Future<List<AfTrack>> instantMix(String seedId, {int limit = 50}) async {
+    _assertUser();
+    final res = await _dio.get<Map<String, dynamic>>(
+      'Items/$seedId/InstantMix',
+      queryParameters: <String, dynamic>{
+        'UserId': userId,
+        'Limit': limit,
+        'Fields': _trackFields,
+        'EnableImages': true,
+      },
+    );
+    return _parseItemList(res.data).map(_parseTrack).toList(growable: false);
   }
 
   /// `GET /Users/{userId}/Items/{albumId}` + `GET /Items?ParentId=…` — full

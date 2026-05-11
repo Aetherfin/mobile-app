@@ -338,6 +338,90 @@ final allPlaylistsProvider =
   return res;
 });
 
+/// User's favourite (heart-flagged) albums. Powers the Profile screen's
+/// "Pinned" row. Previously the row was hard-coded with four demo album
+/// names; now it shows real favourites, falling back to the most
+/// recently added albums when the user hasn't hearted anything yet so
+/// the row is never empty.
+final favoriteAlbumsProvider =
+    FutureProvider.autoDispose<List<AfAlbum>>((ref) async {
+  final client = ref.watch(jellyfinClientProvider);
+  if (client == null) {
+    _logData('favoriteAlbums', source: 'demo', extra: '(signed out)');
+    return DemoLibrary.albums.take(4).toList();
+  }
+  final res = await client.favoriteAlbums();
+  _logData('favoriteAlbums', source: 'live', extra: 'count=${res.length}');
+  return res;
+});
+
+/// Every album in the library (sorted alphabetically). Used by the
+/// Library tab's Albums grid — the previous wiring used
+/// `recentlyAddedAlbums` (top-20 newest) so the grid looked permanently
+/// underpopulated.
+final allAlbumsProvider =
+    FutureProvider.autoDispose<List<AfAlbum>>((ref) async {
+  final client = ref.watch(jellyfinClientProvider);
+  if (client == null) {
+    _logData('allAlbums', source: 'demo', extra: '(signed out)');
+    return DemoLibrary.albums;
+  }
+  final res = await client.allAlbums();
+  _logData('allAlbums', source: 'live', extra: 'count=${res.length}');
+  return res;
+});
+
+/// Every track in the library (sorted alphabetically). Used by the
+/// Library tab's Songs list, which previously used
+/// `recentlyPlayedTracks` (filter=IsPlayed, limit=20) and so missed
+/// every unplayed song.
+final allTracksProvider =
+    FutureProvider.autoDispose<List<AfTrack>>((ref) async {
+  final client = ref.watch(jellyfinClientProvider);
+  if (client == null) {
+    _logData('allTracks', source: 'demo', extra: '(signed out)');
+    return DemoLibrary.tracks;
+  }
+  final res = await client.allTracks();
+  _logData('allTracks', source: 'live', extra: 'count=${res.length}');
+  return res;
+});
+
+/// Playlist + its ordered tracks. Powers the Playlist detail screen.
+final playlistDetailProvider = FutureProvider.autoDispose
+    .family<({AfPlaylist playlist, List<AfTrack> tracks})?, String>(
+        (ref, id) async {
+  final client = ref.watch(jellyfinClientProvider);
+  if (client == null) {
+    _logData('playlistDetail',
+        source: 'demo', extra: 'id=$id (signed out)');
+    return null;
+  }
+  final res = await client.playlist(id);
+  _logData('playlistDetail',
+      source: 'live',
+      extra: 'id=$id tracks=${res?.tracks.length ?? 0}');
+  return res;
+});
+
+/// Instant Mix — server-side similar-tracks generator keyed on a seed
+/// track / album / artist ID. Used to start a "radio" from the currently
+/// playing song and to extend the queue with related songs (the feature
+/// the user requested).
+final instantMixProvider = FutureProvider.autoDispose
+    .family<List<AfTrack>, String>((ref, seedId) async {
+  final client = ref.watch(jellyfinClientProvider);
+  if (client == null) {
+    _logData('instantMix',
+        source: 'demo', extra: 'seedId=$seedId (signed out)');
+    return const <AfTrack>[];
+  }
+  final res = await client.instantMix(seedId);
+  _logData('instantMix',
+      source: 'live', extra: 'seedId=$seedId count=${res.length}');
+  return res;
+});
+
 /// Music genres. Jellyfin returns these without colors so we cycle through
 /// a small palette to keep the chip row colourful.
 final allGenresProvider =
@@ -445,6 +529,7 @@ typedef SearchResults = ({
   List<AfTrack> tracks,
   List<AfAlbum> albums,
   List<AfArtist> artists,
+  List<AfPlaylist> playlists,
 });
 
 final searchProvider = FutureProvider.autoDispose
@@ -456,6 +541,7 @@ final searchProvider = FutureProvider.autoDispose
       tracks: const <AfTrack>[],
       albums: const <AfAlbum>[],
       artists: const <AfArtist>[],
+      playlists: const <AfPlaylist>[],
     );
   }
   final client = ref.watch(jellyfinClientProvider);
@@ -478,17 +564,24 @@ final searchProvider = FutureProvider.autoDispose
         source: 'demo',
         extra: 'query="$query" tracks=${tracks.length} '
             'albums=${albums.length} artists=${artists.length}');
-    return (tracks: tracks, albums: albums, artists: artists);
+    return (
+      tracks: tracks,
+      albums: albums,
+      artists: artists,
+      playlists: const <AfPlaylist>[],
+    );
   }
   final res = await client.search(query);
   _logData('search',
       source: 'live',
       extra: 'query="$query" tracks=${res.tracks.length} '
-          'albums=${res.albums.length} artists=${res.artists.length}');
+          'albums=${res.albums.length} artists=${res.artists.length} '
+          'playlists=${res.playlists.length}');
   return (
     tracks: res.tracks,
     albums: res.albums,
     artists: res.artists,
+    playlists: res.playlists,
   );
 });
 

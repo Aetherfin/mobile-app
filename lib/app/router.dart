@@ -18,6 +18,7 @@ import '../features/onboarding/library_scope_screen.dart';
 import '../features/onboarding/server_discovery_screen.dart';
 import '../features/onboarding/sign_in_screen.dart';
 import '../features/onboarding/welcome_screen.dart';
+import '../features/playlist/playlist_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/queue/queue_screen.dart';
 import '../features/search/search_screen.dart';
@@ -96,7 +97,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/home',
                 pageBuilder: (_, __) =>
                     const NoTransitionPage(child: HomeScreen()),
-                routes: _commonChildren(),
               ),
             ],
           ),
@@ -106,7 +106,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/search',
                 pageBuilder: (_, __) =>
                     const NoTransitionPage(child: SearchScreen()),
-                routes: _commonChildren(),
               ),
             ],
           ),
@@ -116,7 +115,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/library',
                 pageBuilder: (_, __) =>
                     const NoTransitionPage(child: LibraryScreen()),
-                routes: _commonChildren(),
               ),
             ],
           ),
@@ -126,7 +124,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/profile',
                 pageBuilder: (_, __) =>
                     const NoTransitionPage(child: ProfileScreen()),
-                routes: _commonChildren(),
               ),
             ],
           ),
@@ -164,6 +161,34 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: rootKey,
         builder: (_, __) => const SettingsScreen(),
       ),
+
+      // Top-level album / artist routes. We register these above the shell
+      // so that `context.push('/album/<id>')` and
+      // `context.push('/artist/<id>')` resolve identically regardless of
+      // which tab the user is currently on — code in widgets like
+      // `library_screen.dart` and `home_screen.dart` pushes the bare path,
+      // and previously hit `GoException: no routes for location: /artist/<id>`
+      // because the routes were only registered as nested children of each
+      // shell branch (e.g. `/home/artist/:id`). Living above the shell also
+      // hides the bottom nav while the user is browsing detail screens.
+      GoRoute(
+        path: '/album/:id',
+        parentNavigatorKey: rootKey,
+        builder: (_, state) =>
+            AlbumScreen(albumId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/artist/:id',
+        parentNavigatorKey: rootKey,
+        builder: (_, state) =>
+            ArtistScreen(artistId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/playlist/:id',
+        parentNavigatorKey: rootKey,
+        builder: (_, state) =>
+            PlaylistScreen(playlistId: state.pathParameters['id']!),
+      ),
     ],
   );
 });
@@ -174,19 +199,6 @@ final routerProvider = Provider<GoRouter>((ref) {
 class _AuthRefreshListenable extends ChangeNotifier {
   void _notify() => notifyListeners();
 }
-
-List<GoRoute> _commonChildren() => [
-      GoRoute(
-        path: 'album/:id',
-        builder: (_, state) =>
-            AlbumScreen(albumId: state.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: 'artist/:id',
-        builder: (_, state) =>
-            ArtistScreen(artistId: state.pathParameters['id']!),
-      ),
-    ];
 
 class _NowPlayingPage extends Page<void> {
   @override

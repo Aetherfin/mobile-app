@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/audio/play_actions.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../widgets/tile.dart';
@@ -129,7 +130,10 @@ class _SectionBody extends ConsumerWidget {
     final padding = const EdgeInsets.symmetric(horizontal: AfSpacing.s16);
     switch (section) {
       case LibrarySection.albums:
-        final albums = ref.watch(recentlyAddedAlbumsProvider);
+        // Use the *full* library album list — not `recentlyAddedAlbums`,
+        // which is capped at 20 and made the grid look truncated even on
+        // libraries with hundreds of albums.
+        final albums = ref.watch(allAlbumsProvider);
         return albums.maybeWhen(
           data: (list) => GridView.builder(
             padding: padding.add(const EdgeInsets.only(
@@ -186,7 +190,10 @@ class _SectionBody extends ConsumerWidget {
         );
       case LibrarySection.songs:
         return Consumer(builder: (context, ref, _) {
-          final tracks = ref.watch(recentlyPlayedTracksProvider);
+          // Full library — was previously wired to `recentlyPlayed`
+          // (filter=IsPlayed, limit=20) which made unplayed libraries
+          // look empty.
+          final tracks = ref.watch(allTracksProvider);
           return tracks.maybeWhen(
             data: (list) => ListView.separated(
               padding: padding.add(const EdgeInsets.only(
@@ -194,8 +201,17 @@ class _SectionBody extends ConsumerWidget {
               itemCount: list.length,
               separatorBuilder: (_, __) =>
                   const SizedBox(height: AfSpacing.s4),
-              itemBuilder: (context, i) =>
-                  TrackRow(track: list[i]),
+              itemBuilder: (context, i) {
+                final t = list[i];
+                // Tap any row to play that track — previously this row
+                // had no onTap so songs were unplayable from Library.
+                return TrackRow(
+                  track: t,
+                  onTap: () => ref
+                      .read(playActionsProvider)
+                      .playQueue(list, startIndex: i),
+                );
+              },
             ),
             orElse: () => const Center(child: CircularProgressIndicator()),
           );
@@ -236,6 +252,7 @@ class _SectionBody extends ConsumerWidget {
                 tileColor: AfColors.surfaceBase,
                 shape: const RoundedRectangleBorder(
                     borderRadius: AfRadii.borderMd),
+                onTap: () => context.push('/playlist/${p.id}'),
               );
             },
           ),

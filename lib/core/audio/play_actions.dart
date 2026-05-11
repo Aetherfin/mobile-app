@@ -55,6 +55,43 @@ class PlayActions {
 
   Future<void> playSingle(AfTrack track) =>
       playQueue([track], startIndex: 0);
+
+  /// Replace the queue with the seed track followed by [Jellyfin's Instant
+  /// Mix](https://api.jellyfin.org/#tag/InstantMix/operation/GetInstantMixFromItem)
+  /// of similar songs. Implements the user's "generate queue related song
+  /// based on the song played" feature.
+  ///
+  /// On signed-out / demo builds this falls back to `playSingle` because
+  /// there's no server to query — surfacing an error toast would be
+  /// noisier than silently playing what we have.
+  Future<void> playInstantMix(AfTrack seed) async {
+    final client = ref.read(jellyfinClientProvider);
+    if (client == null) {
+      await playSingle(seed);
+      return;
+    }
+    try {
+      final mix = await client.instantMix(seed.id);
+      // Server-generated mix sometimes excludes the seed; prepend it so
+      // the user hears the song they tapped first, then the radio.
+      final queue = <AfTrack>[
+        seed,
+        for (final t in mix)
+          if (t.id != seed.id) t,
+      ];
+      // ignore: avoid_print
+      print('aetherfin:audio instantMix seed=${seed.id} '
+          'queue=${queue.length} (from server: ${mix.length})');
+      await playQueue(queue);
+    } catch (e, stack) {
+      // ignore: avoid_print
+      print('aetherfin:audio instantMix failed: $e');
+      // ignore: avoid_print
+      print('aetherfin:audio stack: $stack');
+      // Best-effort fallback: at least play the seed track.
+      await playSingle(seed);
+    }
+  }
 }
 
 final playActionsProvider = Provider<PlayActions>((ref) => PlayActions(ref));
