@@ -16,6 +16,55 @@ talks to Jellyfin over HTTP.
 > respect for the listener. Aetherfin must read as a *premium music* app,
 > not "a Jellyfin client."
 
+### 1.1 Mental model — what runs where
+
+The architectural split between server and app is non-negotiable. Treat
+Jellyfin as a **file source + library state store**, nothing else.
+**Aetherfin is the player.**
+
+**Jellyfin (server) is responsible for:**
+- Storing the audio files (mp3 / flac / m4a / opus / wav / ogg) and
+  serving the original bytes byte-for-byte.
+- Catalog metadata: titles, artists, albums, genres, durations, year,
+  artwork.
+- Search (`/Users/{id}/Items?searchTerm=…` — never `/Search/Hints`).
+- Auth (user accounts + access tokens).
+- Per-user state that must follow the user across devices: favorites,
+  play counts, last-played-at, playlists.
+- LRC lyric files. The server only *stores* them; the app parses them.
+- "Now Playing" telemetry display — `POST /Sessions/Playing*` exists
+  purely so the Jellyfin Dashboard widget shows who's listening to
+  what. It does NOT drive playback.
+
+**Aetherfin (app) is responsible for everything else, on-device:**
+- All audio **decoding** (ExoPlayer via just_audio).
+- Buffering, gapless transitions, output routing, position tracking.
+- Queue management (order, shuffle, repeat, reorder).
+- UI rendering for every screen.
+- LRC parsing + synced line highlighting.
+- Spectral color extraction from artwork (`palette_generator`).
+- Lock-screen / notification media-session integration.
+- Cover-art file cache (`cached_network_image`).
+- Local settings: audio-quality preference, crossfade, sleep timer.
+
+**Strict consequence:** stream URLs MUST use
+`/Audio/{id}/stream?Static=true` — the direct-stream endpoint. The
+universal endpoint (`/Audio/{id}/universal`) triggers server-side
+transcoding to HLS, which (1) wastes the server's CPU, (2) gives a
+codec ExoPlayer can't always decode, and (3) was the cause of the
+"track plays but position never advances" bug fixed in PR #4. If you
+ever feel the need to re-introduce transcoding, do it as a
+*fallback only* and bring back the full Finamp param set
+(`Container=…&TranscodingProtocol=hls&AudioCodec=aac&PlaySessionId=…`)
+— never partial.
+
+**Strict consequence #2:** favorites, play counts, and playlist contents
+are server-owned even though the heart icon flips locally first. The
+client does optimistic UI then `POST/DELETE /Users/{id}/FavoriteItems/
+{itemId}` (see `JellyfinClient.setFavorite()`). On HTTP error, revert
+the local state. Never store favorite state only on-device — a second
+device must see the same state on next sign-in.
+
 ## 2. Tech stack (exact versions)
 
 | Layer | Choice | Notes |
@@ -291,7 +340,8 @@ output is enough to diagnose most issues without attaching a debugger.
 | `aetherfin:http ←` | Successful response (status, method, URL) | `aetherfin:http ← 200 GET http://srv/System/Info/Public` |
 | `aetherfin:http ✕` | Failed response (status, method, URL) | `aetherfin:http ✕ 500 POST http://srv/Users/AuthenticateByName` |
 | `aetherfin:error` | Caught exception with full Dio error + stacktrace | (multi-line block) |
-| `aetherfin:data` | Data-source provenance — fires every time a Riverpod provider serves data, marking whether the bytes came from live Jellyfin (`source=live`), the bundled signed-out preview (`source=demo`), or a still-mocked code path (`source=mock`). | `aetherfin:data recentlyAddedAlbums source=live count=20` / `aetherfin:data search source=demo query="rain" tracks=3 albums=1 artists=0` |
+| `aetherfin:data` | Data-source provenance — fires every time a Riverpod provider serves data, marking whether the bytes came from live Jellyfin (`source=live`), the bundled signed-out preview (`source=demo`), or a still-mocked code path (`source=mock`). Also covers player-state changes (`shuffleMode`, `loopMode`, `playbackSpeed`, `currentTrack`, `playbackProgress`, `favoriteToggle`). | `aetherfin:data recentlyAddedAlbums source=live count=20` / `aetherfin:data shuffleMode source=live enabled=true` |
+| `aetherfin:audio` | Audio decoder / ExoPlayer state — every `processingState` transition (idle / loading / buffering / ready / completed), setAudioSource and play() exceptions, and `playbackEventStream` errors. The only place that exposes the actual reason a track silently failed to start. | `aetherfin:audio processingState=ready position=00:00 duration=03:42` |
 
 `aetherfin:data` lines are emitted by `_logData()` in `lib/state/providers.dart`
 and by `AfPlayerService` / `JellyfinPlaybackReporter` for queue + playback
