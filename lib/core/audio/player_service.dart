@@ -28,10 +28,29 @@ class AfPlayerService extends BaseAudioHandler with QueueHandler, SeekHandler {
   void Function(AfTrack track)? onTrackChanged;
 
   AfPlayerService() {
-    _player.playbackEventStream.listen(_broadcastPlaybackEvent);
+    _player.playbackEventStream.listen(
+      _broadcastPlaybackEvent,
+      onError: (Object e, StackTrace stack) {
+        // ignore: avoid_print
+        print('aetherfin:audio playbackEventStream error: $e');
+        // ignore: avoid_print
+        print('aetherfin:audio stack: $stack');
+      },
+    );
+    _player.processingStateStream.listen((state) {
+      // ignore: avoid_print
+      print('aetherfin:audio processingState=${state.name} '
+          'playing=${_player.playing} position=${_player.position.inMilliseconds}ms '
+          'duration=${_player.duration?.inMilliseconds ?? "?"}ms');
+    });
     _player.currentIndexStream.listen((idx) {
       if (idx == null) return;
       if (idx < 0 || idx >= _trackQueue.length) return;
+      // currentIndexStream re-emits on every state change, not just on
+      // index changes — without this dedupe we'd fire onTrackChanged +
+      // playbackStart dozens of times for the same track and spam
+      // /Sessions/Playing.
+      if (idx == _currentIndex) return;
       _currentIndex = idx;
       final track = _trackQueue[idx];
       mediaItem.add(_mediaItemFor(track));
@@ -78,21 +97,44 @@ class AfPlayerService extends BaseAudioHandler with QueueHandler, SeekHandler {
               tag: _mediaItemFor(t),
             ))
         .toList();
-    await _player.setAudioSource(
-      ConcatenatingAudioSource(children: sources),
-      initialIndex: startIndex,
-    );
-    _currentIndex = startIndex;
     final startTrack = tracks[startIndex];
+    // Pre-set _currentIndex BEFORE setAudioSource so the currentIndexStream
+    // listener's dedupe (`if (idx == _currentIndex) return;`) suppresses
+    // the spurious emit that fires immediately after the source is set —
+    // we drive the initial onTrackChanged + mediaItem broadcast ourselves
+    // below so the UI / playback reporter see the new track before audio
+    // even starts loading.
+    _currentIndex = startIndex;
     mediaItem.add(_mediaItemFor(startTrack));
     _trackController.add(startTrack);
     // ignore: avoid_print
     print(
       'aetherfin:data playQueue source=live size=${tracks.length} '
-      'startIndex=$startIndex first="${startTrack.title}"',
+      'startIndex=$startIndex first="${startTrack.title}" '
+      'url="${resolveStreamUrl(startTrack)}"',
     );
     onTrackChanged?.call(startTrack);
-    await _player.play();
+    try {
+      await _player.setAudioSource(
+        ConcatenatingAudioSource(children: sources),
+        initialIndex: startIndex,
+      );
+    } on Object catch (e, stack) {
+      // ignore: avoid_print
+      print('aetherfin:audio setAudioSource failed: $e');
+      // ignore: avoid_print
+      print('aetherfin:audio stack: $stack');
+      rethrow;
+    }
+    try {
+      await _player.play();
+    } on Object catch (e, stack) {
+      // ignore: avoid_print
+      print('aetherfin:audio play() failed: $e');
+      // ignore: avoid_print
+      print('aetherfin:audio stack: $stack');
+      rethrow;
+    }
   }
 
   @override

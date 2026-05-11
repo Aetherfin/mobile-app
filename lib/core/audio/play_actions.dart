@@ -37,8 +37,16 @@ class PlayActions {
           startIndex: startIndex,
           resolveStreamUrl: resolveStreamUrl,
         );
-      } catch (_) {
-        // Network/server issue — leave the queue staged so the UI is correct.
+      } catch (e, stack) {
+        // Leave the queue staged so the mini-player keeps the track
+        // visible, but log loudly so a logcat capture shows the cause
+        // (`aetherfin:audio` lines from player_service already cover
+        // setAudioSource/play failures; this catches anything thrown
+        // before/around them).
+        // ignore: avoid_print
+        print('aetherfin:audio playQueue failed: $e');
+        // ignore: avoid_print
+        print('aetherfin:audio stack: $stack');
       }
     }
   }

@@ -255,23 +255,40 @@ class JellyfinClient {
 
   /// Build a streaming URL for a given track ID.
   ///
-  /// We DO NOT add `static=true` — that would force direct play and bypass
-  /// Jellyfin's transcoder. Instead we let the server decide based on the
-  /// `audioCodec` / `maxStreamingBitrate` hints we send, and the resulting
-  /// `MediaSource` carries the [TrackQuality] honesty signal back to us.
+  /// Uses `/Audio/{id}/stream?Static=true` — the direct-stream endpoint
+  /// which serves the original file byte-for-byte (mp3 / flac / m4a /
+  /// ogg / wav / opus). just_audio's ExoPlayer plays these natively.
+  ///
+  /// We previously tried `/Audio/{id}/universal` (transcoding-aware) with
+  /// only `api_key` + `maxStreamingBitrate` hints. Without the full
+  /// Finamp-style `Container=…&TranscodingProtocol=hls&AudioCodec=aac`
+  /// negotiation, Jellyfin defaults to serving an HLS manifest that
+  /// just_audio could not decode — audio appeared "playing" (state=ready,
+  /// IsPaused=false) but `position` never advanced past 0 because the
+  /// decoder rejected the stream.
+  ///
+  /// Direct-stream is simpler, more reliable, and the quality chip can
+  /// still be computed from the source-file metadata we already have on
+  /// [AfTrack]. If users hit a track with an exotic codec ExoPlayer can't
+  /// decode, we'll re-introduce transcoding negotiation as a follow-up
+  /// with the full param set.
   String trackStreamUrl(
     String trackId, {
     int? maxBitrateKbps,
     String? deviceProfileId,
   }) {
+    _assertUser();
     final qp = <String, String>{
+      'Static': 'true',
+      'UserId': userId!,
+      'DeviceId': deviceId,
       if (accessToken != null) 'api_key': accessToken!,
       if (maxBitrateKbps != null)
-        'maxStreamingBitrate': '${maxBitrateKbps * 1000}',
-      if (deviceProfileId != null) 'profileId': deviceProfileId,
+        'MaxStreamingBitrate': '${maxBitrateKbps * 1000}',
+      if (deviceProfileId != null) 'DeviceProfileId': deviceProfileId,
     };
     final query = qp.entries.map((e) => '${e.key}=${e.value}').join('&');
-    return '${server.baseUrl}/Audio/$trackId/universal?$query';
+    return '${server.baseUrl}/Audio/$trackId/stream?$query';
   }
 
   /// `POST /Sessions/Playing` — tell the server a track just started.
