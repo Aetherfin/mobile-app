@@ -139,6 +139,7 @@ class NowPlayingScreen extends ConsumerWidget {
                         Waveform(
                           peaks: peaks,
                           progress: progress,
+                          isPlaying: isPlaying,
                           playedColor: spectral.energy,
                           onScrub: (p) {
                             final newPos = Duration(
