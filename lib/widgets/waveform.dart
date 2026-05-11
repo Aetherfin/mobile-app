@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
 import '../design_tokens/tokens.dart';
@@ -227,7 +228,9 @@ class _VisualiserPainter extends CustomPainter {
   bool shouldRepaint(_VisualiserPainter old) =>
       old.t != t ||
       old.progress != progress ||
-      old.peaks != peaks ||
+      // `peaks` is a fresh list on every parent rebuild; compare values,
+      // not the reference, or we repaint on every frame for no reason.
+      !listEquals(old.peaks, peaks) ||
       old.playedColor != playedColor ||
       old.unplayedColor != unplayedColor ||
       old.animate != animate;

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
 import 'core/audio/player_service.dart';
@@ -13,6 +14,14 @@ import 'core/jellyfin/auth_storage.dart';
 import 'core/jellyfin/models/server.dart';
 import 'design_tokens/tokens.dart';
 import 'state/providers.dart';
+
+/// Plain-prefs key for the fallback device ID used when the encrypted
+/// secure-storage keystore can't be reached. Persisting the fallback
+/// means even a permanently-broken keystore looks like the SAME device
+/// across launches instead of a fresh one (which would create a stale
+/// Jellyfin session per launch and trip the 500-on-AuthenticateByName
+/// described in CLAUDE.md §5.1).
+const _fallbackDeviceIdKey = 'aetherfin.deviceId.fallback.v1';
 
 /// Boot breadcrumb — every checkpoint prefixes with this so a single
 /// `adb logcat | grep aetherfin:boot` shows the full startup trace.
@@ -75,10 +84,12 @@ Future<void> main() async {
       print('aetherfin:error device id / auth load failed: $e');
       // ignore: avoid_print
       print('aetherfin:error stack: $stack');
-      // Last-ditch fallback so onboarding can still proceed. The cost is
-      // that this install will look like a new device to Jellyfin on
-      // every launch until secure storage starts working again.
-      deviceId = 'aetherfin-fallback-${DateTime.now().microsecondsSinceEpoch}';
+      // Last-ditch fallback so onboarding can still proceed. Persist
+      // the fallback ID to plain shared_preferences so it survives the
+      // next launch even when secure_storage stays broken — otherwise
+      // Jellyfin sees a new device on every launch and accumulates
+      // stale sessions (the known cause of `AuthenticateByName` 500s).
+      deviceId = await _loadOrCreateFallbackDeviceId();
       initialAuth = null;
     }
 
@@ -126,6 +137,39 @@ Future<void> main() async {
     // ignore: avoid_print
     print('aetherfin:error stack: $stack');
   });
+}
+
+/// Read or generate the persistent fallback device ID.
+///
+/// Only used when `flutter_secure_storage` is unreachable (corrupt
+/// keystore, brand-new device with no biometric setup, etc.). The ID
+/// lives in plain `shared_preferences` — not as secure as the encrypted
+/// store, but it's just a random opaque token (not a credential) and
+/// having it survive launches is far more important than hiding it.
+Future<String> _loadOrCreateFallbackDeviceId() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_fallbackDeviceIdKey);
+    if (existing != null && existing.isNotEmpty) {
+      _boot('fallback device id reused (len=${existing.length})');
+      return existing;
+    }
+    final fresh =
+        'aetherfin-fallback-${DateTime.now().microsecondsSinceEpoch}';
+    await prefs.setString(_fallbackDeviceIdKey, fresh);
+    _boot('fallback device id generated (len=${fresh.length})');
+    return fresh;
+  } catch (e, stack) {
+    // ignore: avoid_print
+    print('aetherfin:error fallback device id load failed: $e');
+    // ignore: avoid_print
+    print('aetherfin:error stack: $stack');
+    // shared_preferences itself is unavailable — pick a per-launch ID
+    // so the rest of the app still functions, even if Jellyfin sees a
+    // new device every time. This branch is essentially unreachable on
+    // a normal Android device.
+    return 'aetherfin-fallback-${DateTime.now().microsecondsSinceEpoch}';
+  }
 }
 
 Future<void> _warmUpAudio(AfPlayerService handler) async {

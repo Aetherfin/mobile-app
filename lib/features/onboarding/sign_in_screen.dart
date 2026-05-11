@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -74,10 +75,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         print('aetherfin:error url: ${e.requestOptions.uri}');
         // ignore: avoid_print
         print('aetherfin:error status: ${e.response?.statusCode}');
-        // ignore: avoid_print
-        print('aetherfin:error body: ${e.response?.data}');
-        // ignore: avoid_print
-        print('aetherfin:error headers: ${e.response?.headers.map}');
+        // Body + response headers can include cookies, server-side error
+        // messages, and full HTML 500 pages — only emit them in debug
+        // builds so a release-build logcat capture stays sanitized.
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('aetherfin:error body: ${e.response?.data}');
+          // ignore: avoid_print
+          print('aetherfin:error headers: ${e.response?.headers.map}');
+        }
       }
       // ignore: avoid_print
       print('aetherfin:error stack: $stack');
@@ -181,7 +187,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               const SizedBox(height: AfSpacing.s12),
               TextField(
                 controller: _pass,
-                obscureText: !_useToken,
+                // Always obscure — both passwords and API tokens are
+                // sensitive secrets that should never be visible on a
+                // shoulder-surfed device.
+                obscureText: true,
                 autocorrect: false,
                 decoration: InputDecoration(
                   hintText: _useToken ? 'API token' : 'Password',

@@ -29,13 +29,19 @@ class PlayActions {
       return 'about:blank';
     }
 
-    ref.read(currentTrackProvider.notifier).state = tracks[startIndex];
+    // Clamp the caller-supplied index so a stale UI snapshot can't push us
+    // into a RangeError when we look up `tracks[startIndex]` below.
+    final safeIndex = startIndex < 0
+        ? 0
+        : (startIndex >= tracks.length ? tracks.length - 1 : startIndex);
+    ref.read(currentTrackProvider.notifier).state = tracks[safeIndex];
     if (client != null) {
       try {
         await svc.playQueue(
           tracks,
-          startIndex: startIndex,
+          startIndex: safeIndex,
           resolveStreamUrl: resolveStreamUrl,
+          streamHeaders: client.authHeaders,
         );
       } catch (e, stack) {
         // Leave the queue staged so the mini-player keeps the track

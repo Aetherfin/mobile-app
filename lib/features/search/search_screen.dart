@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,12 +22,33 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _controller = TextEditingController();
+  // Wait this long after the last keystroke before firing a request —
+  // matches Jellyfin's own web client (~250ms) and avoids one
+  // `/Users/{id}/Items?searchTerm=` per keystroke.
+  static const _debounce = Duration(milliseconds: 250);
+  Timer? _debounceTimer;
   String _query = '';
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onChanged(String raw) {
+    _debounceTimer?.cancel();
+    // An empty query collapses back to the idle state — do that
+    // synchronously so the keyboard's clear-button feels instant.
+    if (raw.isEmpty) {
+      if (_query.isNotEmpty) setState(() => _query = '');
+      return;
+    }
+    _debounceTimer = Timer(_debounce, () {
+      if (!mounted) return;
+      if (_query == raw) return;
+      setState(() => _query = raw);
+    });
   }
 
   @override
@@ -52,7 +75,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 hintText: 'Artists, albums, tracks…',
                 prefixIcon: Icon(Icons.search_rounded),
               ),
-              onChanged: (v) => setState(() => _query = v),
+              onChanged: _onChanged,
             ),
           ),
           const SizedBox(height: AfSpacing.s16),

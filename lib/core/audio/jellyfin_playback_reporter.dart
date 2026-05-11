@@ -32,6 +32,12 @@ class JellyfinPlaybackReporter {
   StreamSubscription<bool>? _playingSub;
   Timer? _progressTimer;
   String? _lastReportedTrackId;
+  // dispose() must NOT send a `Stopped` ping when the reporter is being
+  // torn down purely because the ProviderScope rebuilt around a still-
+  // playing track — otherwise Jellyfin's activity feed flips to "stopped"
+  // while audio keeps coming out the speaker. Set to false on every
+  // intentional teardown (audio service stops, sign-out, app close).
+  bool _shouldStopOnDispose = false;
 
   JellyfinPlaybackReporter(this._player, this._clientGetter) {
     _trackSub = _player.currentTrackStream.listen(_onTrackChanged);
@@ -153,6 +159,10 @@ class JellyfinPlaybackReporter {
     _stopProgressTimer();
     final trackId = _lastReportedTrackId;
     if (trackId == null) return;
+    // Only emit a Stopped on dispose if it was explicitly requested
+    // (sign-out, audio handler tear-down) — a Riverpod scope rebuild
+    // around a still-playing track must NOT flip the activity feed.
+    if (!_shouldStopOnDispose) return;
     final client = _clientGetter();
     if (client == null) return;
     final position = _player.position;
@@ -167,5 +177,13 @@ class JellyfinPlaybackReporter {
       // ignore: avoid_print
       print('aetherfin:error stack: $stack');
     }
+  }
+
+  /// Call before [dispose] when the caller WANTS a final Stopped ping
+  /// to be sent (sign-out, app close, queue cleared). Default is to
+  /// keep the active session open so the activity feed isn't trashed
+  /// by spurious teardowns.
+  void requestStopOnDispose() {
+    _shouldStopOnDispose = true;
   }
 }

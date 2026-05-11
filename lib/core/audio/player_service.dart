@@ -90,11 +90,25 @@ class AfPlayerService extends BaseAudioHandler with QueueHandler, SeekHandler {
   double get speed => _player.speed;
 
   /// Replace the queue with [tracks] and start playback at [startIndex].
+  ///
+  /// [streamHeaders] are attached to every `AudioSource.uri` so the
+  /// Jellyfin Authorization header rides on each stream request instead
+  /// of being embedded as `?api_key=…` in the URL (where it would leak to
+  /// the server's access log and any logcat-grepping app on the device).
   Future<void> playQueue(
     List<AfTrack> tracks, {
     int startIndex = 0,
     required String Function(AfTrack track) resolveStreamUrl,
+    Map<String, String> streamHeaders = const {},
   }) async {
+    if (tracks.isEmpty) return;
+    // Clamp the caller-supplied index so a stale UI cannot crash playback
+    // with a RangeError on the line `tracks[startIndex]` below.
+    final safeIndex = startIndex < 0
+        ? 0
+        : (startIndex >= tracks.length ? tracks.length - 1 : startIndex);
+    final previousIndex = _currentIndex;
+    final previousQueue = List<AfTrack>.from(_trackQueue);
     _trackQueue
       ..clear()
       ..addAll(tracks);
@@ -103,36 +117,44 @@ class AfPlayerService extends BaseAudioHandler with QueueHandler, SeekHandler {
     final sources = tracks
         .map((t) => AudioSource.uri(
               Uri.parse(resolveStreamUrl(t)),
+              headers: streamHeaders.isEmpty ? null : streamHeaders,
               tag: _mediaItemFor(t),
             ))
         .toList();
-    final startTrack = tracks[startIndex];
+    final startTrack = tracks[safeIndex];
     // Pre-set _currentIndex BEFORE setAudioSource so the currentIndexStream
     // listener's dedupe (`if (idx == _currentIndex) return;`) suppresses
     // the spurious emit that fires immediately after the source is set —
     // we drive the initial onTrackChanged + mediaItem broadcast ourselves
     // below so the UI / playback reporter see the new track before audio
     // even starts loading.
-    _currentIndex = startIndex;
+    _currentIndex = safeIndex;
     mediaItem.add(_mediaItemFor(startTrack));
     _trackController.add(startTrack);
     // ignore: avoid_print
     print(
       'aetherfin:data playQueue source=live size=${tracks.length} '
-      'startIndex=$startIndex first="${startTrack.title}" '
-      'url="${resolveStreamUrl(startTrack)}"',
+      'startIndex=$safeIndex first="${startTrack.title}"',
     );
     onTrackChanged?.call(startTrack);
     try {
       await _player.setAudioSource(
         ConcatenatingAudioSource(children: sources),
-        initialIndex: startIndex,
+        initialIndex: safeIndex,
       );
     } on Object catch (e, stack) {
       // ignore: avoid_print
       print('aetherfin:audio setAudioSource failed: $e');
       // ignore: avoid_print
       print('aetherfin:audio stack: $stack');
+      // Revert the optimistic queue + index update so the UI doesn't
+      // keep claiming a track is loaded that we couldn't actually wire up.
+      _trackQueue
+        ..clear()
+        ..addAll(previousQueue);
+      _currentIndex = previousIndex;
+      queue.add(previousQueue.map(_mediaItemFor).toList());
+      _queueController.add(List.unmodifiable(_trackQueue));
       rethrow;
     }
     try {

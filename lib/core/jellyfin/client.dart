@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 
 import 'models/items.dart';
 import 'models/library.dart';
@@ -16,13 +17,15 @@ class JellyfinClient {
   final String? userId;
   final String deviceId;
   final Dio _dio;
+  final MemCacheStore _cacheStore;
 
   JellyfinClient({
     required this.server,
     required this.deviceId,
     this.accessToken,
     this.userId,
-  }) : _dio = Dio(BaseOptions(
+  })  : _cacheStore = MemCacheStore(maxSize: 20 * 1024 * 1024, maxEntrySize: 1 * 1024 * 1024),
+        _dio = Dio(BaseOptions(
           // Trailing slash is REQUIRED so Dio's Uri.resolve preserves the
           // server's base path (e.g. https://example.com/jellyfin/). All
           // paths below are written WITHOUT a leading slash for the same
@@ -64,47 +67,104 @@ class JellyfinClient {
     _dio.interceptors.add(
       DioCacheInterceptor(
         options: CacheOptions(
-          store: MemCacheStore(),
+          store: _cacheStore,
           policy: CachePolicy.request,
           maxStale: const Duration(minutes: 5),
           priority: CachePriority.normal,
         ),
       ),
     );
-    // Log every request + response to logcat so we can see exactly what
-    // bytes go on the wire when debugging Jellyfin's 500 / 403 / etc.
-    // The Authorization header value is redacted to avoid leaking tokens.
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          final redactedHeaders = Map<String, dynamic>.from(options.headers)
-            ..updateAll((k, v) =>
-                k.toLowerCase().contains('auth') ? '<redacted>' : v);
-          // ignore: avoid_print
-          print('aetherfin:http → ${options.method} ${options.uri}');
-          // ignore: avoid_print
-          print('aetherfin:http headers: $redactedHeaders');
-          // For auth-sensitive endpoints, redact the body too.
-          final isAuth = options.uri.path.toLowerCase().contains('authenticate');
-          // ignore: avoid_print
-          print('aetherfin:http body: '
-              '${isAuth ? '<redacted ${options.data is Map ? (options.data as Map).keys.toList() : options.data.runtimeType}>' : options.data}');
-          handler.next(options);
-        },
-        onResponse: (response, handler) {
-          // ignore: avoid_print
-          print('aetherfin:http ← ${response.statusCode} '
-              '${response.requestOptions.method} ${response.requestOptions.uri}');
-          handler.next(response);
-        },
-        onError: (err, handler) {
-          // ignore: avoid_print
-          print('aetherfin:http ✕ ${err.response?.statusCode ?? '?'} '
-              '${err.requestOptions.method} ${err.requestOptions.uri}');
-          handler.next(err);
-        },
-      ),
-    );
+    // Debug-only HTTP trace. In release builds we skip these prints
+    // entirely so URLs, headers, and bodies never reach logcat where
+    // any app on the device with READ_LOGS could capture them.
+    if (kDebugMode) {
+      _dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            final redactedHeaders = Map<String, dynamic>.from(options.headers)
+              ..updateAll((k, v) =>
+                  k.toLowerCase().contains('auth') ? '<redacted>' : v);
+            // ignore: avoid_print
+            print('aetherfin:http → ${options.method} ${_redactUrl(options.uri)}');
+            // ignore: avoid_print
+            print('aetherfin:http headers: $redactedHeaders');
+            // For auth-sensitive endpoints, redact the body too.
+            final isAuth =
+                options.uri.path.toLowerCase().contains('authenticate');
+            // ignore: avoid_print
+            print('aetherfin:http body: '
+                '${isAuth ? '<redacted ${options.data is Map ? (options.data as Map).keys.toList() : options.data.runtimeType}>' : options.data}');
+            handler.next(options);
+          },
+          onResponse: (response, handler) {
+            // ignore: avoid_print
+            print('aetherfin:http ← ${response.statusCode} '
+                '${response.requestOptions.method} ${_redactUrl(response.requestOptions.uri)}');
+            handler.next(response);
+          },
+          onError: (err, handler) {
+            // ignore: avoid_print
+            print('aetherfin:http ✕ ${err.response?.statusCode ?? '?'} '
+                '${err.requestOptions.method} ${_redactUrl(err.requestOptions.uri)}');
+            handler.next(err);
+          },
+        ),
+      );
+    }
+  }
+
+  /// Headers callers can use to authenticate ad-hoc requests that bypass
+  /// the Dio instance — e.g. the audio source URI given to just_audio, or
+  /// a CachedNetworkImage that fetches an artwork-protected endpoint.
+  ///
+  /// Mirrors what the Dio client sends. Empty map if no token is set.
+  Map<String, String> get authHeaders {
+    final headers = <String, String>{
+      'User-Agent': 'Aetherfin/0.1.0 (Android)',
+      'Accept': '*/*',
+    };
+    if (accessToken != null) {
+      headers['Authorization'] = _buildAuthHeader(
+        deviceId: deviceId,
+        token: accessToken,
+        userId: userId,
+      );
+    }
+    return headers;
+  }
+
+  /// Strip credentials (api_key, X-Emby-Token) from a URL before it's
+  /// emitted to logcat. Defensive — we no longer add api_key to URLs,
+  /// but third-party endpoints or future code could.
+  static Uri _redactUrl(Uri uri) {
+    if (uri.queryParameters.isEmpty) return uri;
+    final scrubbed = <String, dynamic>{
+      for (final e in uri.queryParametersAll.entries)
+        e.key:
+            _isSensitiveParam(e.key) ? const ['<redacted>'] : e.value,
+    };
+    return uri.replace(queryParameters: scrubbed);
+  }
+
+  static bool _isSensitiveParam(String key) {
+    final k = key.toLowerCase();
+    return k == 'api_key' ||
+        k == 'apikey' ||
+        k == 'x-emby-token' ||
+        k == 'token';
+  }
+
+  /// Release in-memory cache (used on sign-out so cross-account leakage
+  /// is impossible).
+  void clearCache() {
+    _cacheStore.clean();
+  }
+
+  /// Free the underlying Dio resources. Call on sign-out so HTTP/2
+  /// connections + the cache buffer don't leak across accounts.
+  void close() {
+    _cacheStore.close();
+    _dio.close(force: true);
   }
 
   /// Build a Jellyfin Authorization header.
@@ -125,19 +185,31 @@ class JellyfinClient {
   }) {
     final parts = <String>[];
     if (userId != null && userId.isNotEmpty) {
-      parts.add('UserId="$userId"');
+      parts.add('UserId="${_escapeHeaderValue(userId)}"');
     }
     if (token != null && token.isNotEmpty) {
-      parts.add('Token="$token"');
+      parts.add('Token="${_escapeHeaderValue(token)}"');
     }
     parts.add('Client="Aetherfin"');
     parts.add('Device="Android"');
-    parts.add('DeviceId="$deviceId"');
+    parts.add('DeviceId="${_escapeHeaderValue(deviceId)}"');
     parts.add('Version="0.1.0"');
     final raw = 'MediaBrowser ${parts.join(", ")}';
     // Belt-and-braces: strip anything outside the 7-bit ASCII range so
     // unusual device names / pasted tokens can never break the parser.
     return raw.replaceAll(RegExp(r'[^\x00-\x7F]+'), '_');
+  }
+
+  /// Escape characters that would break Jellyfin's quoted-string parser
+  /// in the Authorization header. Specifically `"` and `\\` get escaped,
+  /// and `\r` / `\n` are dropped entirely so a malicious value cannot
+  /// inject extra header fields.
+  static String _escapeHeaderValue(String v) {
+    return v
+        .replaceAll('\\', r'\\')
+        .replaceAll('"', r'\"')
+        .replaceAll('\r', '')
+        .replaceAll('\n', '');
   }
 
   /// `GET /System/Info/Public` — used by mDNS resolution to confirm a
@@ -205,25 +277,29 @@ class JellyfinClient {
         'Accept': 'application/json',
       },
     ));
-    final res = await probe.get<List<dynamic>>('Users');
-    final users = (res.data ?? const []).cast<Map>();
-    final wanted = username.trim().toLowerCase();
-    for (final raw in users) {
-      final u = raw.cast<String, dynamic>();
-      final name = (u['Name'] as String?)?.trim() ?? '';
-      if (name.toLowerCase() == wanted) {
-        return JellyfinAuth(
-          server: server,
-          userId: u['Id'] as String,
-          userName: name,
-          accessToken: apiKey,
-        );
+    try {
+      final res = await probe.get<List<dynamic>>('Users');
+      final users = (res.data ?? const []).cast<Map>();
+      final wanted = username.trim().toLowerCase();
+      for (final raw in users) {
+        final u = raw.cast<String, dynamic>();
+        final name = (u['Name'] as String?)?.trim() ?? '';
+        if (name.toLowerCase() == wanted) {
+          return JellyfinAuth(
+            server: server,
+            userId: u['Id'] as String,
+            userName: name,
+            accessToken: apiKey,
+          );
+        }
       }
+      throw StateError(
+        'No user named "$username" on this server. '
+        'Available: ${users.map((u) => u['Name']).join(", ")}',
+      );
+    } finally {
+      probe.close(force: true);
     }
-    throw StateError(
-      'No user named "$username" on this server. '
-      'Available: ${users.map((u) => u['Name']).join(", ")}',
-    );
   }
 
   /// `GET /Users/{userId}/Views` — the list of libraries the user can see.
@@ -238,19 +314,6 @@ class JellyfinClient {
                   .toLowerCase(),
             ))
         .toList(growable: false);
-  }
-
-  /// Resolve an album/track/artist Primary image URL (delegates to Jellyfin's
-  /// `/Items/{id}/Images/Primary` endpoint with `maxWidth` and `quality` query
-  /// params for sane bandwidth).
-  String imageUrl(String itemId, {int maxWidth = 480, int quality = 90}) {
-    final qp = <String, String>{
-      'maxWidth': '$maxWidth',
-      'quality': '$quality',
-      if (accessToken != null) 'api_key': accessToken!,
-    };
-    final query = qp.entries.map((e) => '${e.key}=${e.value}').join('&');
-    return '${server.baseUrl}/Items/$itemId/Images/Primary?$query';
   }
 
   /// Build a streaming URL for a given track ID.
@@ -282,13 +345,24 @@ class JellyfinClient {
       'Static': 'true',
       'UserId': userId!,
       'DeviceId': deviceId,
-      if (accessToken != null) 'api_key': accessToken!,
       if (maxBitrateKbps != null)
         'MaxStreamingBitrate': '${maxBitrateKbps * 1000}',
       if (deviceProfileId != null) 'DeviceProfileId': deviceProfileId,
     };
-    final query = qp.entries.map((e) => '${e.key}=${e.value}').join('&');
-    return '${server.baseUrl}/Audio/$trackId/stream?$query';
+    final base = server.baseUrl.endsWith('/')
+        ? server.baseUrl.substring(0, server.baseUrl.length - 1)
+        : server.baseUrl;
+    // Build via `Uri` so every value is URL-encoded — historically we hand
+    // -joined `$k=$v` pairs which silently mis-encoded tokens / IDs that
+    // contained `+`, `=`, `&`, or `/`. The token used to ride in this URL
+    // as `api_key=…`; it now travels in the Authorization header (see
+    // `authHeaders`) which a logcat-grepping attacker cannot recover.
+    return Uri.parse(base)
+        .replace(
+          path: '${Uri.parse(base).path}/Audio/$trackId/stream',
+          queryParameters: qp,
+        )
+        .toString();
   }
 
   /// `POST /Sessions/Playing` — tell the server a track just started.
@@ -987,7 +1061,14 @@ class JellyfinClient {
       'quality': '$quality',
       'tag': tag,
     };
-    final query = qp.entries.map((e) => '${e.key}=${e.value}').join('&');
-    return '${server.baseUrl}/Items/$itemId/Images/$imageType?$query';
+    final base = server.baseUrl.endsWith('/')
+        ? server.baseUrl.substring(0, server.baseUrl.length - 1)
+        : server.baseUrl;
+    return Uri.parse(base)
+        .replace(
+          path: '${Uri.parse(base).path}/Items/$itemId/Images/$imageType',
+          queryParameters: qp,
+        )
+        .toString();
   }
 }

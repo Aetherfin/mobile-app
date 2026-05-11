@@ -71,12 +71,22 @@ class AuthNotifier extends StateNotifier<JellyfinAuth?> {
   final AuthStorage _storage;
   AuthNotifier(this._storage, {JellyfinAuth? initial}) : super(initial);
 
+  /// Persist [auth] FIRST, then flip in-memory state.
+  ///
+  /// Previously we set `state = auth` before the storage write — if the
+  /// keystore was full / corrupted the user looked signed in but the
+  /// next app launch would silently kick them back to onboarding. By
+  /// failing loudly here the sign-in screen surfaces the error instead,
+  /// and a successful flip implies the secret already hit disk.
   Future<void> save(JellyfinAuth auth) async {
-    state = auth;
     await _storage.save(auth);
+    state = auth;
   }
 
   Future<void> clear() async {
+    // The Jellyfin client provider listens to this state and tears
+    // itself down (HTTP cache + connection pool) via `ref.onDispose`
+    // when `state` flips to null.
     state = null;
     await _storage.clear();
   }
@@ -95,12 +105,17 @@ final jellyfinClientProvider = Provider<JellyfinClient?>((ref) {
   _logData('jellyfinClient',
       source: 'live',
       extra: 'server=${auth.server.baseUrl} user=${auth.userName}');
-  return JellyfinClient(
+  final client = JellyfinClient(
     server: auth.server,
     deviceId: ref.watch(deviceIdProvider),
     accessToken: auth.accessToken,
     userId: auth.userId,
   );
+  // When auth flips (sign-out, account switch) the provider rebuilds —
+  // tear down the old client so its HTTP cache + connection pool don't
+  // leak across accounts.
+  ref.onDispose(client.close);
+  return client;
 });
 
 /// ─────────────────────────────────────────────────────────────────────────

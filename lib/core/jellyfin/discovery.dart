@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:multicast_dns/multicast_dns.dart';
 
+import 'client.dart';
 import 'models/server.dart';
 
 /// Scans the local network for Jellyfin servers via mDNS.
@@ -58,7 +59,14 @@ class JellyfinDiscovery {
             );
             await for (final ip in ipStream) {
               if (completer.isCompleted) break;
-              final url = 'http://${ip.address.address}:${srv.port}';
+              final addr = ip.address.address;
+              final port = srv.port;
+              // Most home Jellyfin installs are plain-HTTP on the LAN,
+              // but some users front them with a reverse proxy on the
+              // same host. Probe HTTPS first (no cost when it 404s
+              // fast) so encrypted servers don't get downgraded to
+              // HTTP just because mDNS advertises the bare port.
+              final url = await _resolveBaseUrl(addr, port);
               if (seen.add(url)) {
                 yield JellyfinServer(
                   baseUrl: url,
@@ -77,6 +85,31 @@ class JellyfinDiscovery {
       ]);
     } finally {
       client.stop();
+    }
+  }
+
+  /// Pick the best scheme for the discovered host/port pair.
+  ///
+  /// We probe `https://host:port/System/Info/Public` with a short
+  /// connect timeout. Anything that completes (200 / 401 / 404 — all
+  /// count) means the port speaks TLS, so we keep https. On any TLS
+  /// handshake failure, refusal, or timeout we fall back to plain http
+  /// which is what mDNS advertises by default.
+  static Future<String> _resolveBaseUrl(String addr, int port) async {
+    final https = 'https://$addr:$port';
+    try {
+      final probe = JellyfinClient(
+        server: JellyfinServer(baseUrl: https, name: addr, isLocal: true),
+        deviceId: 'aetherfin-discovery-probe',
+      );
+      try {
+        await probe.publicInfo().timeout(const Duration(seconds: 2));
+        return https;
+      } finally {
+        probe.close();
+      }
+    } catch (_) {
+      return 'http://$addr:$port';
     }
   }
 }
