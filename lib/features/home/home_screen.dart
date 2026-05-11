@@ -78,7 +78,7 @@ class HomeScreen extends ConsumerWidget {
               child: SectionHeader(
                 title: 'Recently played',
                 actionLabel: 'See more',
-                onActionTap: () {},
+                onActionTap: () => context.go('/library'),
               ),
             ),
           ),

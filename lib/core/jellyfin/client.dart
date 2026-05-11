@@ -350,6 +350,22 @@ class JellyfinClient {
     );
   }
 
+  /// Toggle a library item's favorite state.
+  ///
+  /// `POST /Users/{userId}/FavoriteItems/{itemId}` adds, the matching
+  /// DELETE removes. Both endpoints return the updated `UserItemDataDto`
+  /// — we don't need the body, the boolean state in the request is the
+  /// source of truth and the UI updates optimistically.
+  Future<void> setFavorite(String itemId, bool isFavorite) async {
+    _assertUser();
+    final path = 'Users/$userId/FavoriteItems/$itemId';
+    if (isFavorite) {
+      await _dio.post<Map<String, dynamic>>(path);
+    } else {
+      await _dio.delete<Map<String, dynamic>>(path);
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Library endpoints
   // ---------------------------------------------------------------------------

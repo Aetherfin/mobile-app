@@ -138,6 +138,7 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen> {
                           ),
                           const SizedBox(height: AfSpacing.s16),
                           _ActionRow(
+                            albumId: widget.albumId,
                             onPlay: () => ref
                                 .read(playActionsProvider)
                                 .playAlbum(tracks),
@@ -223,7 +224,12 @@ class _OpacityAppBar extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.more_vert_rounded),
-              onPressed: () {},
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('More options coming soon'),
+                  duration: Duration(seconds: 2),
+                ),
+              ),
             ),
           ],
         ),
@@ -232,9 +238,45 @@ class _OpacityAppBar extends StatelessWidget {
   }
 }
 
-class _ActionRow extends StatelessWidget {
+class _ActionRow extends ConsumerStatefulWidget {
   final VoidCallback onPlay;
-  const _ActionRow({required this.onPlay});
+  final String albumId;
+  const _ActionRow({required this.onPlay, required this.albumId});
+
+  @override
+  ConsumerState<_ActionRow> createState() => _ActionRowState();
+}
+
+class _ActionRowState extends ConsumerState<_ActionRow> {
+  bool _isFavorite = false;
+  bool _favoriteBusy = false;
+
+  Future<void> _toggleFavorite() async {
+    if (_favoriteBusy) return;
+    final client = ref.read(jellyfinClientProvider);
+    if (client == null) return;
+    setState(() {
+      _favoriteBusy = true;
+      _isFavorite = !_isFavorite;
+    });
+    try {
+      await client.setFavorite(widget.albumId, _isFavorite);
+      // ignore: avoid_print
+      print(
+        'aetherfin:data albumFavorite source=live '
+        'id=${widget.albumId} isFavorite=$_isFavorite',
+      );
+    } catch (e) {
+      setState(() => _isFavorite = !_isFavorite);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not update favorite: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _favoriteBusy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -242,17 +284,37 @@ class _ActionRow extends StatelessWidget {
       children: [
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: onPlay,
+            onPressed: widget.onPlay,
             icon: const Icon(Icons.play_arrow_rounded),
             label: const Text('Play'),
           ),
         ),
         const SizedBox(width: AfSpacing.s12),
-        _IconCircle(icon: Icons.favorite_border, onTap: () {}),
+        _IconCircle(
+          icon: _isFavorite ? Icons.favorite : Icons.favorite_border,
+          color: _isFavorite ? AfColors.semanticError : null,
+          onTap: _toggleFavorite,
+        ),
         const SizedBox(width: AfSpacing.s8),
-        _IconCircle(icon: Icons.download_outlined, onTap: () {}),
+        _IconCircle(
+          icon: Icons.download_outlined,
+          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Offline downloads coming soon'),
+              duration: Duration(seconds: 2),
+            ),
+          ),
+        ),
         const SizedBox(width: AfSpacing.s8),
-        _IconCircle(icon: Icons.more_horiz_rounded, onTap: () {}),
+        _IconCircle(
+          icon: Icons.more_horiz_rounded,
+          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('More options coming soon'),
+              duration: Duration(seconds: 2),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -261,7 +323,8 @@ class _ActionRow extends StatelessWidget {
 class _IconCircle extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  const _IconCircle({required this.icon, required this.onTap});
+  final Color? color;
+  const _IconCircle({required this.icon, required this.onTap, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -276,7 +339,7 @@ class _IconCircle extends StatelessWidget {
           color: AfColors.surfaceBase,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 22, color: AfColors.textPrimary),
+        child: Icon(icon, size: 22, color: color ?? AfColors.textPrimary),
       ),
     );
   }

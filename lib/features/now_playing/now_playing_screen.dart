@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:just_audio/just_audio.dart' show LoopMode;
 
 import '../../core/demo/demo_library.dart';
 import '../../core/jellyfin/models/items.dart';
@@ -123,7 +124,11 @@ class NowPlayingScreen extends ConsumerWidget {
                                     ? AfColors.semanticError
                                     : AfColors.textPrimary,
                               ),
-                              onPressed: () {},
+                              tooltip: track.isFavorite
+                                  ? 'Remove from favorites'
+                                  : 'Add to favorites',
+                              onPressed: () =>
+                                  ref.read(favoriteToggleProvider)(track),
                             ),
                             if (track.quality != null)
                               QualityChip(quality: track.quality!),
@@ -167,6 +172,32 @@ class NowPlayingScreen extends ConsumerWidget {
                         _TransportRow(
                           isPlaying: isPlaying,
                           spectral: spectral,
+                          shuffleOn: ref
+                              .watch(shuffleModeProvider)
+                              .maybeWhen(
+                                data: (v) => v,
+                                orElse: () => false,
+                              ),
+                          loopMode: ref
+                              .watch(loopModeProvider)
+                              .maybeWhen(
+                                data: (v) => v,
+                                orElse: () => LoopMode.off,
+                              ),
+                          accent: spectral.energy,
+                          onShuffle: () {
+                            final svc = ref.read(playerServiceProvider);
+                            svc.setAfShuffleMode(!svc.isShuffleEnabled);
+                          },
+                          onRepeat: () {
+                            final svc = ref.read(playerServiceProvider);
+                            final next = switch (svc.loopMode) {
+                              LoopMode.off => LoopMode.all,
+                              LoopMode.all => LoopMode.one,
+                              LoopMode.one => LoopMode.off,
+                            };
+                            svc.setAfLoopMode(next);
+                          },
                           onPlayPause: () {
                             final svc =
                                 ref.read(playerServiceProvider);
@@ -178,7 +209,7 @@ class NowPlayingScreen extends ConsumerWidget {
                               ref.read(playerServiceProvider).skipToNext(),
                         ),
                         const SizedBox(height: AfSpacing.s32),
-                        _UtilityRow(),
+                        const _UtilityRow(),
                         const SizedBox(height: AfSpacing.s24),
                       ],
                     ),
@@ -231,7 +262,12 @@ class _TopBar extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.more_horiz_rounded),
-            onPressed: () {},
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('More options coming soon'),
+                duration: Duration(seconds: 2),
+              ),
+            ),
           ),
         ],
       ),
@@ -242,16 +278,26 @@ class _TopBar extends StatelessWidget {
 class _TransportRow extends StatelessWidget {
   final bool isPlaying;
   final Spectral spectral;
+  final bool shuffleOn;
+  final LoopMode loopMode;
+  final Color accent;
   final VoidCallback onPlayPause;
   final VoidCallback onPrev;
   final VoidCallback onNext;
+  final VoidCallback onShuffle;
+  final VoidCallback onRepeat;
 
   const _TransportRow({
     required this.isPlaying,
     required this.spectral,
+    required this.shuffleOn,
+    required this.loopMode,
+    required this.accent,
     required this.onPlayPause,
     required this.onPrev,
     required this.onNext,
+    required this.onShuffle,
+    required this.onRepeat,
   });
 
   @override
@@ -262,7 +308,8 @@ class _TransportRow extends StatelessWidget {
         _TransportButton(
           icon: Icons.shuffle_rounded,
           size: 28,
-          onTap: () {},
+          color: shuffleOn ? accent : AfColors.textPrimary,
+          onTap: onShuffle,
         ),
         _TransportButton(
           icon: Icons.skip_previous_rounded,
@@ -280,9 +327,14 @@ class _TransportRow extends StatelessWidget {
           onTap: onNext,
         ),
         _TransportButton(
-          icon: Icons.repeat_rounded,
+          icon: loopMode == LoopMode.one
+              ? Icons.repeat_one_rounded
+              : Icons.repeat_rounded,
           size: 28,
-          onTap: () {},
+          color: loopMode == LoopMode.off
+              ? AfColors.textPrimary
+              : accent,
+          onTap: onRepeat,
         ),
       ],
     );
@@ -293,10 +345,12 @@ class _TransportButton extends StatelessWidget {
   final IconData icon;
   final double size;
   final VoidCallback onTap;
+  final Color? color;
   const _TransportButton({
     required this.icon,
     required this.size,
     required this.onTap,
+    this.color,
   });
 
   @override
@@ -306,7 +360,7 @@ class _TransportButton extends StatelessWidget {
       child: SizedBox(
         width: AfSpacing.minHitTarget,
         height: AfSpacing.minHitTarget,
-        child: Icon(icon, size: size, color: AfColors.textPrimary),
+        child: Icon(icon, size: size, color: color ?? AfColors.textPrimary),
       ),
     );
   }
@@ -353,23 +407,109 @@ class _PlayButton extends StatelessWidget {
   }
 }
 
-class _UtilityRow extends StatelessWidget {
+class _UtilityRow extends ConsumerWidget {
+  const _UtilityRow();
+
   @override
-  Widget build(BuildContext context) {
-    final items = const [
-      (Icons.bedtime_outlined, 'Sleep', '/sleep'),
-      (Icons.lyrics_outlined, 'Lyrics', '/lyrics'),
-      (Icons.speed_rounded, 'Speed', null),
-      (Icons.cast_outlined, 'Output', '/cast'),
-      (Icons.playlist_add_rounded, 'Save', null),
-      (Icons.queue_music_rounded, 'Queue', '/queue'),
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        for (final (icon, label, route) in items)
-          _UtilityIcon(icon: icon, label: label, route: route),
+        _UtilityIcon(
+          icon: Icons.bedtime_outlined,
+          label: 'Sleep',
+          onTap: () => context.push('/sleep'),
+        ),
+        _UtilityIcon(
+          icon: Icons.lyrics_outlined,
+          label: 'Lyrics',
+          onTap: () => context.push('/lyrics'),
+        ),
+        _UtilityIcon(
+          icon: Icons.speed_rounded,
+          label: 'Speed',
+          onTap: () => _showSpeedSheet(context, ref),
+        ),
+        _UtilityIcon(
+          icon: Icons.cast_outlined,
+          label: 'Output',
+          onTap: () => context.push('/cast'),
+        ),
+        _UtilityIcon(
+          icon: Icons.playlist_add_rounded,
+          label: 'Save',
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Playlists coming soon'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          },
+        ),
+        _UtilityIcon(
+          icon: Icons.queue_music_rounded,
+          label: 'Queue',
+          onTap: () => context.push('/queue'),
+        ),
       ],
+    );
+  }
+
+  void _showSpeedSheet(BuildContext context, WidgetRef ref) {
+    const speeds = <double>[0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+    final current = ref.read(playerServiceProvider).speed;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AfColors.surfaceBase,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AfRadii.lg)),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: AfSpacing.s12),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AfColors.textTertiary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: AfSpacing.s12),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AfSpacing.gutterGenerous,
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Playback speed',
+                  style: AfTypography.titleSmall,
+                ),
+              ),
+            ),
+            for (final s in speeds)
+              ListTile(
+                title: Text(
+                  '${s.toStringAsFixed(s == s.roundToDouble() ? 1 : 2)}×',
+                  style: AfTypography.bodyMedium,
+                ),
+                trailing: (s - current).abs() < 0.001
+                    ? const Icon(Icons.check_rounded, size: 20)
+                    : null,
+                onTap: () {
+                  ref.read(playerServiceProvider).setAfSpeed(s);
+                  Navigator.of(sheetCtx).pop();
+                },
+              ),
+            const SizedBox(height: AfSpacing.s12),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -377,18 +517,18 @@ class _UtilityRow extends StatelessWidget {
 class _UtilityIcon extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String? route;
+  final VoidCallback onTap;
   const _UtilityIcon({
     required this.icon,
     required this.label,
-    required this.route,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return PressScale(
       ensureHitTarget: false,
-      onTap: route == null ? null : () => context.push(route!),
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AfSpacing.s8),
         child: Column(

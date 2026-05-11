@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:just_audio/just_audio.dart' show LoopMode;
 
 import '../core/audio/jellyfin_playback_reporter.dart';
 import '../core/audio/player_service.dart';
@@ -166,9 +167,86 @@ final playingStreamProvider = StreamProvider.autoDispose<bool>((ref) {
   return svc.playingStream;
 });
 
+/// Live shuffle flag — drives the shuffle icon's active tint in
+/// Now Playing / Queue. Seeded with the player's current value so the
+/// first frame matches reality without waiting for the next emit.
+final shuffleModeProvider = StreamProvider.autoDispose<bool>((ref) {
+  final svc = ref.watch(playerServiceProvider);
+  return Stream<bool>.multi((controller) {
+    controller.add(svc.isShuffleEnabled);
+    final sub = svc.shuffleModeStream.listen(controller.add);
+    controller.onCancel = sub.cancel;
+  });
+});
+
+/// Live loop mode — drives the repeat icon (off / all / one) in
+/// Now Playing.
+final loopModeProvider = StreamProvider.autoDispose<LoopMode>((ref) {
+  final svc = ref.watch(playerServiceProvider);
+  return Stream<LoopMode>.multi((controller) {
+    controller.add(svc.loopMode);
+    final sub = svc.loopModeStream.listen(controller.add);
+    controller.onCancel = sub.cancel;
+  });
+});
+
+/// Live playback speed multiplier — drives the Speed sheet's checkmark.
+final playbackSpeedProvider = StreamProvider.autoDispose<double>((ref) {
+  final svc = ref.watch(playerServiceProvider);
+  return Stream<double>.multi((controller) {
+    controller.add(svc.speed);
+    final sub = svc.speedStream.listen(controller.add);
+    controller.onCancel = sub.cancel;
+  });
+});
+
 /// Currently-playing track (changes when the player advances within
 /// the queue). Null when no playback has been started this session.
 final currentTrackProvider = StateProvider<AfTrack?>((ref) => null);
+
+/// Imperative helper to toggle a track's favorite state.
+///
+/// Optimistically flips the in-memory `currentTrackProvider.isFavorite`
+/// so the heart fills/empties on the next frame, then POSTs/DELETEs
+/// `/Users/{id}/FavoriteItems/{trackId}`. On HTTP failure we revert.
+///
+/// Signed-out (no client) → updates the local state only; the next sign-in
+/// will resync against the server's user-data on the next track fetch.
+final favoriteToggleProvider = Provider<Future<void> Function(AfTrack)>((ref) {
+  return (AfTrack track) async {
+    final client = ref.read(jellyfinClientProvider);
+    final next = !track.isFavorite;
+    final updated = track.copyWith(isFavorite: next);
+    // Optimistic UI: update currentTrackProvider if this is the playing
+    // track. (Album / Track tiles read isFavorite from their own
+    // FutureProvider snapshots which will refresh next time their
+    // provider re-runs.)
+    final current = ref.read(currentTrackProvider);
+    if (current?.id == track.id) {
+      ref.read(currentTrackProvider.notifier).state = updated;
+    }
+    if (client == null) {
+      _logData('favoriteToggle',
+          source: 'demo',
+          extra: '(signed out) id=${track.id} isFavorite=$next');
+      return;
+    }
+    try {
+      await client.setFavorite(track.id, next);
+      _logData('favoriteToggle',
+          source: 'live',
+          extra: 'id=${track.id} isFavorite=$next');
+    } catch (e) {
+      // ignore: avoid_print
+      print('aetherfin:error favoriteToggle failed: $e');
+      // Revert optimistic flip on server error.
+      if (current?.id == track.id) {
+        ref.read(currentTrackProvider.notifier).state = track;
+      }
+      rethrow;
+    }
+  };
+});
 
 /// True the moment any playback has been started this session — drives
 /// whether the floating mini-player is rendered.

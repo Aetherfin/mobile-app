@@ -38,7 +38,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.sort_rounded),
-                  onPressed: () {},
+                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Sort coming soon'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  ),
                   tooltip: 'Sort',
                 ),
               ],

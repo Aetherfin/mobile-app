@@ -73,12 +73,21 @@ class AfPlayerService extends BaseAudioHandler with QueueHandler, SeekHandler {
   /// Broadcast stream of the active queue — emits the same list shape the
   /// Queue screen renders so it reflects skips / replacements immediately.
   Stream<List<AfTrack>> get queueStream => _queueController.stream;
+  /// Broadcast stream of just_audio's shuffle flag.
+  Stream<bool> get shuffleModeStream => _player.shuffleModeEnabledStream;
+  /// Broadcast stream of just_audio's loop mode (off / one / all).
+  Stream<LoopMode> get loopModeStream => _player.loopModeStream;
+  /// Broadcast stream of the playback speed multiplier (1.0 = normal).
+  Stream<double> get speedStream => _player.speedStream;
   Duration get position => _player.position;
   List<AfTrack> get currentQueue => List.unmodifiable(_trackQueue);
   AfTrack? get currentTrack =>
       (_currentIndex >= 0 && _currentIndex < _trackQueue.length)
           ? _trackQueue[_currentIndex]
           : null;
+  bool get isShuffleEnabled => _player.shuffleModeEnabled;
+  LoopMode get loopMode => _player.loopMode;
+  double get speed => _player.speed;
 
   /// Replace the queue with [tracks] and start playback at [startIndex].
   Future<void> playQueue(
@@ -159,6 +168,42 @@ class AfPlayerService extends BaseAudioHandler with QueueHandler, SeekHandler {
   @override
   Future<void> skipToQueueItem(int index) =>
       _player.seek(Duration.zero, index: index);
+
+  /// Toggle shuffle. just_audio reshuffles the queue order; the
+  /// underlying [_trackQueue] list is left in original order — only the
+  /// playback order changes. The Queue screen reflects the new order via
+  /// `queueStream` (currentIndexStream still fires per-skip).
+  ///
+  /// Named with the `af` prefix to avoid colliding with
+  /// `BaseAudioHandler.setShuffleMode(AudioServiceShuffleMode)` which the
+  /// OS lock-screen calls with a different enum type.
+  Future<void> setAfShuffleMode(bool enabled) async {
+    if (enabled) {
+      // Generate a fresh shuffle order so consecutive toggles don't
+      // produce the same sequence.
+      await _player.shuffle();
+    }
+    await _player.setShuffleModeEnabled(enabled);
+    // ignore: avoid_print
+    print('aetherfin:data shuffleMode source=live enabled=$enabled');
+  }
+
+  /// Set loop mode to `off`, `one`, or `all`.
+  ///
+  /// Named with the `af` prefix to avoid colliding with
+  /// `BaseAudioHandler.setRepeatMode(AudioServiceRepeatMode)`.
+  Future<void> setAfLoopMode(LoopMode mode) async {
+    await _player.setLoopMode(mode);
+    // ignore: avoid_print
+    print('aetherfin:data loopMode source=live mode=${mode.name}');
+  }
+
+  /// Set playback speed multiplier (0.5–2.0 is the user-facing range).
+  Future<void> setAfSpeed(double speed) async {
+    await _player.setSpeed(speed);
+    // ignore: avoid_print
+    print('aetherfin:data playbackSpeed source=live speed=$speed');
+  }
 
   Future<void> dispose() async {
     await _player.dispose();

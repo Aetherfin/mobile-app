@@ -54,11 +54,25 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
         ),
         title: Text('Queue', style: AfTypography.titleSmall),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.shuffle_rounded),
-            onPressed: () {},
-            tooltip: 'Shuffle',
-          ),
+          Consumer(builder: (context, ref, _) {
+            final shuffleOn = ref.watch(shuffleModeProvider).maybeWhen(
+                  data: (v) => v,
+                  orElse: () => false,
+                );
+            return IconButton(
+              icon: Icon(
+                Icons.shuffle_rounded,
+                color: shuffleOn
+                    ? AfColors.indigo300
+                    : AfColors.textPrimary,
+              ),
+              tooltip: shuffleOn ? 'Shuffle on' : 'Shuffle',
+              onPressed: () {
+                final svc = ref.read(playerServiceProvider);
+                svc.setAfShuffleMode(!svc.isShuffleEnabled);
+              },
+            );
+          }),
           IconButton(
             icon: const Icon(Icons.lyrics_outlined),
             onPressed: () => context.go('/lyrics'),
