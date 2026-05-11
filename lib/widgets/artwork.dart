@@ -1,12 +1,20 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../design_tokens/tokens.dart';
+import '../state/providers.dart';
 
 /// Network artwork that gracefully degrades to a deterministic indigo
 /// gradient when the URL is null or fails to load. Used everywhere we
 /// need an album/playlist/track cover.
-class Artwork extends StatelessWidget {
+///
+/// The widget reads `jellyfinClientProvider` so it can send the active
+/// `Authorization` header alongside the image fetch. The token used to
+/// ride in the URL as `?api_key=…`; review S2 moved it to a header,
+/// which means Jellyfin servers with auth-required image endpoints
+/// would 401 here without this wiring.
+class Artwork extends ConsumerWidget {
   final String? url;
   final double size;
   final double? height;
@@ -25,7 +33,7 @@ class Artwork extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final w = size;
     final h = height ?? size;
     // `size` / `height` can come from `double.infinity` when Artwork
@@ -66,6 +74,8 @@ class Artwork extends StatelessWidget {
       return physical > 1024 ? 1024 : physical;
     }
 
+    final client = ref.watch(jellyfinClientProvider);
+    final headers = client?.authHeaders;
     return ClipRRect(
       borderRadius: radius,
       child: SizedBox(
@@ -73,6 +83,7 @@ class Artwork extends StatelessWidget {
         height: hFinite,
         child: CachedNetworkImage(
           imageUrl: url!,
+          httpHeaders: headers,
           fit: fit,
           placeholder: (_, __) => placeholder,
           errorWidget: (_, __, ___) => placeholder,

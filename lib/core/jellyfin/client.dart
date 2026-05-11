@@ -184,6 +184,12 @@ class JellyfinClient {
     String? userId,
   }) {
     final parts = <String>[];
+    // UserId / Token come from Jellyfin (UUIDs / hex strings) and from
+    // an API-key paste field. They are ASCII-safe by contract — escape
+    // quotes / CR / LF / backslash so they can't smuggle extra header
+    // fields, but DON'T strip non-ASCII: if a future Jellyfin build
+    // ever issues a non-ASCII token, silently rewriting the bytes to
+    // `_` would auth-fail in a way that's painful to debug.
     if (userId != null && userId.isNotEmpty) {
       parts.add('UserId="${_escapeHeaderValue(userId)}"');
     }
@@ -192,12 +198,13 @@ class JellyfinClient {
     }
     parts.add('Client="Aetherfin"');
     parts.add('Device="Android"');
-    parts.add('DeviceId="${_escapeHeaderValue(deviceId)}"');
+    // DeviceId IS allowed to contain user-facing characters (it's
+    // currently random base64url but on the fallback path it includes
+    // a microsecond timestamp). Strip non-ASCII here only so Jellyfin's
+    // strict 7-bit header parser never sees an emoji-bearing device name.
+    parts.add('DeviceId="${_asciiClean(_escapeHeaderValue(deviceId))}"');
     parts.add('Version="0.1.0"');
-    final raw = 'MediaBrowser ${parts.join(", ")}';
-    // Belt-and-braces: strip anything outside the 7-bit ASCII range so
-    // unusual device names / pasted tokens can never break the parser.
-    return raw.replaceAll(RegExp(r'[^\x00-\x7F]+'), '_');
+    return 'MediaBrowser ${parts.join(", ")}';
   }
 
   /// Escape characters that would break Jellyfin's quoted-string parser
@@ -211,6 +218,12 @@ class JellyfinClient {
         .replaceAll('\r', '')
         .replaceAll('\n', '');
   }
+
+  /// Replace non-ASCII runs with `_`. Used only on the parts of the
+  /// header we *can* mangle without breaking auth — never on the
+  /// server-issued UserId / Token.
+  static String _asciiClean(String v) =>
+      v.replaceAll(RegExp(r'[^\x00-\x7F]+'), '_');
 
   /// `GET /System/Info/Public` — used by mDNS resolution to confirm a
   /// reachable server and pick up its name + version.
@@ -471,8 +484,7 @@ class JellyfinClient {
         'EnableImages': true,
       },
     );
-    final items = (res.data ?? const <dynamic>[]).cast<Map<dynamic, dynamic>>();
-    return items.map((m) => _parseAlbum(m.cast<String, dynamic>())).toList(growable: false);
+    return _parseRawItemList(res.data).map(_parseAlbum).toList(growable: false);
   }
 
   /// `GET /Users/{userId}/Items` — recently played audio tracks. Uses
@@ -660,25 +672,31 @@ class JellyfinClient {
   Future<({AfPlaylist playlist, List<AfTrack> tracks})?> playlist(
       String id) async {
     _assertUser();
-    final headerRes = await _dio.get<Map<String, dynamic>>(
-      'Users/$userId/Items/$id',
-      queryParameters: <String, dynamic>{
-        'Fields': 'ChildCount,CumulativeRunTimeTicks',
-      },
-    );
-    final header = headerRes.data;
+    // Fan out the header + tracks fetches in parallel — the second
+    // request doesn't depend on the first, so awaiting them serially
+    // doubled the time-to-first-byte of the Playlist screen.
+    final responses = await Future.wait<Response<Map<String, dynamic>>>([
+      _dio.get<Map<String, dynamic>>(
+        'Users/$userId/Items/$id',
+        queryParameters: <String, dynamic>{
+          'Fields': 'ChildCount,CumulativeRunTimeTicks',
+        },
+      ),
+      _dio.get<Map<String, dynamic>>(
+        'Playlists/$id/Items',
+        queryParameters: <String, dynamic>{
+          'UserId': userId,
+          'Fields': _trackFields,
+          'EnableImages': true,
+        },
+      ),
+    ]);
+    final header = responses[0].data;
     if (header == null || header.isEmpty) return null;
     final pl = _parsePlaylist(header);
-    final tracksRes = await _dio.get<Map<String, dynamic>>(
-      'Playlists/$id/Items',
-      queryParameters: <String, dynamic>{
-        'UserId': userId,
-        'Fields': _trackFields,
-        'EnableImages': true,
-      },
-    );
-    final tracks =
-        _parseItemList(tracksRes.data).map(_parseTrack).toList(growable: false);
+    final tracks = _parseItemList(responses[1].data)
+        .map(_parseTrack)
+        .toList(growable: false);
     return (playlist: pl, tracks: tracks);
   }
 
@@ -706,27 +724,31 @@ class JellyfinClient {
   /// album detail plus its ordered track list.
   Future<({AfAlbum album, List<AfTrack> tracks})?> album(String id) async {
     _assertUser();
-    final albumRes = await _dio.get<Map<String, dynamic>>(
-      'Users/$userId/Items/$id',
-      queryParameters: <String, dynamic>{
-        'Fields': _albumFields,
-      },
-    );
-    final albumData = albumRes.data;
+    // Same idea as [playlist] — the album header and its track list are
+    // independent endpoints; running them in parallel halves the
+    // perceived load time of the Album screen.
+    final responses = await Future.wait<Response<Map<String, dynamic>>>([
+      _dio.get<Map<String, dynamic>>(
+        'Users/$userId/Items/$id',
+        queryParameters: <String, dynamic>{
+          'Fields': _albumFields,
+        },
+      ),
+      _dio.get<Map<String, dynamic>>(
+        'Users/$userId/Items',
+        queryParameters: <String, dynamic>{
+          'ParentId': id,
+          'IncludeItemTypes': 'Audio',
+          'SortBy': 'ParentIndexNumber,IndexNumber,SortName',
+          'SortOrder': 'Ascending',
+          'Fields': _trackFields,
+        },
+      ),
+    ]);
+    final albumData = responses[0].data;
     if (albumData == null || albumData.isEmpty) return null;
     final album = _parseAlbum(albumData);
-
-    final tracksRes = await _dio.get<Map<String, dynamic>>(
-      'Users/$userId/Items',
-      queryParameters: <String, dynamic>{
-        'ParentId': id,
-        'IncludeItemTypes': 'Audio',
-        'SortBy': 'ParentIndexNumber,IndexNumber,SortName',
-        'SortOrder': 'Ascending',
-        'Fields': _trackFields,
-      },
-    );
-    final tracks = _parseItemList(tracksRes.data)
+    final tracks = _parseItemList(responses[1].data)
         .map(_parseTrack)
         .toList(growable: false);
     return (album: album, tracks: tracks);
@@ -864,7 +886,14 @@ class JellyfinClient {
       }
       return buf.toString();
     } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return null;
+      // Treat any 4xx as "no lyrics here" — 404 (missing), 401/403 (no
+      // permission to read lyrics on this track), 400 (server doesn't
+      // support the endpoint at all). The Lyrics screen renders the
+      // tasteful "No lyrics yet" placeholder for `null`, which is the
+      // right UX regardless of which 4xx the server returned.
+      // 5xx still bubbles up so an outage doesn't get silently masked.
+      final status = e.response?.statusCode ?? 0;
+      if (status >= 400 && status < 500) return null;
       rethrow;
     }
   }
@@ -894,11 +923,21 @@ class JellyfinClient {
   List<Map<String, dynamic>> _parseItemList(Map<String, dynamic>? data) {
     if (data == null) return const [];
     final items = data['Items'] as List? ?? const [];
-    return items
-        .whereType<Map>()
-        .map((m) => m.cast<String, dynamic>())
-        .toList(growable: false);
+    return _normaliseItems(items);
   }
+
+  /// Same as [_parseItemList] but for endpoints that return a raw
+  /// top-level JSON array (e.g. `/Users/{id}/Items/Latest`) instead of
+  /// the usual `{Items: [...]}` envelope. Centralises the casting so
+  /// every parser goes through the same code path.
+  List<Map<String, dynamic>> _parseRawItemList(List<dynamic>? data) =>
+      _normaliseItems(data ?? const []);
+
+  List<Map<String, dynamic>> _normaliseItems(Iterable<dynamic> items) =>
+      items
+          .whereType<Map>()
+          .map((m) => m.cast<String, dynamic>())
+          .toList(growable: false);
 
   AfAlbum _parseAlbum(Map<String, dynamic> m) {
     final id = m['Id'] as String;

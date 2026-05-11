@@ -281,8 +281,16 @@ final spectralExtractorProvider =
 final spectralProvider =
     FutureProvider.autoDispose.family<Spectral, AfTrack?>((ref, track) async {
   if (track?.imageUrl == null) return Spectral.fallback;
+  // Hand the same Authorization header to PaletteGenerator that the
+  // CachedNetworkImage widgets use — once the token moved out of the
+  // URL query string (review S2), unauthed artwork fetches would 401
+  // and the player UI would flicker back to fallback indigo.
+  final client = ref.watch(jellyfinClientProvider);
+  final headers = client?.authHeaders;
   try {
-    return await ref.watch(spectralExtractorProvider).fromImageUrl(track!.imageUrl!);
+    return await ref
+        .watch(spectralExtractorProvider)
+        .fromImageUrl(track!.imageUrl!, headers: headers);
   } catch (_) {
     return Spectral.fallback;
   }

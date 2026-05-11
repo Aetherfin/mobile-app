@@ -77,7 +77,14 @@ class AfTrack {
   final bool isFavorite;
   final bool isDownloaded;
   final DateTime? dateAdded;
-  final List<int>? peaks; // server-provided audio peaks if available
+  /// Per-bar waveform peaks for the visualiser. Currently populated only
+  /// by [DemoLibrary] tracks — Jellyfin does not expose audio peak data
+  /// in its API. For Jellyfin tracks this is always `null` and the Now
+  /// Playing screen falls back to [DemoLibrary.peaksFor] (deterministic
+  /// per track ID) so the visualiser still has a shape to draw. Kept on
+  /// the model so an offline demo experience renders the *real* peak
+  /// pattern instead of going through the fallback path.
+  final List<int>? peaks;
 
   const AfTrack({
     required this.id,

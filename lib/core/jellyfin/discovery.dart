@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:async/async.dart' show StreamGroup;
 import 'package:multicast_dns/multicast_dns.dart';
 
 import 'client.dart';
@@ -114,32 +115,4 @@ class JellyfinDiscovery {
   }
 }
 
-/// Minimal stream-group merge (we don't pull in `async/StreamGroup` to avoid
-/// a heavy dep — we only ever merge two streams).
-class StreamGroup {
-  static Stream<T> merge<T>(Iterable<Stream<T>> streams) async* {
-    final controller = StreamController<T>();
-    final subs = <StreamSubscription<T>>[];
-    var open = streams.length;
 
-    for (final s in streams) {
-      subs.add(s.listen(
-        controller.add,
-        onError: controller.addError,
-        onDone: () {
-          open--;
-          if (open == 0) controller.close();
-        },
-      ));
-    }
-
-    try {
-      yield* controller.stream;
-    } finally {
-      for (final s in subs) {
-        await s.cancel();
-      }
-      await controller.close();
-    }
-  }
-}

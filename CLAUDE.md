@@ -137,12 +137,14 @@ times:
   "transcoded" adds 1dp `AfColors.warningAmber` border.
 
 ### 4.2 Motion (`lib/design_tokens/motion.dart`)
-- **Exactly five** duration tiers: `instant 90ms`, `quick 180ms`,
-  `standard 240ms`, `expressive 360ms`, `slow 500ms`. The 200/300/500ms
+- **Exactly five** duration tiers: `instant 80ms`, `quick 160ms`,
+  `standard 240ms`, `expressive 400ms`, `long 600ms`. The 200/300/500ms
   Material defaults are forbidden — `test/design_tokens_test.dart` enforces
   this.
-- Exactly five easing curves: `easeStandard`, `easeEntrance`, `easeExit`,
-  `easeEmphasis`, `easeOvershoot`. Any new animation must pick from these.
+- Exactly five easing curves: `easeStandard`, `easeEmphasized`, `easeOut`,
+  `easeIn`, `linear`. Audio-coupled animations (waveform, progress ring,
+  lyric scroll) MUST use `linear` — easing audio time lies about playback
+  position. Any new animation must pick from these.
 
 ### 4.3 Mini-player rules
 - **56 dp tall, 12 dp horizontal margin, 16 dp gap to bottom nav** —
@@ -150,7 +152,7 @@ times:
   every scrollable so content never hides under it.
 - Visible only when the queue is non-empty. Tapping it opens Now Playing
   with a shared-element hero on the artwork.
-- Slides up with `AfCurves.easeEntrance` over `AfDurations.standard`.
+- Slides up with `AfCurves.easeOut` over `AfDurations.standard`.
 
 ### 4.4 Profile rules (Settings → Profile)
 Phases 1–8 of the spec require:
