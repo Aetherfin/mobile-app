@@ -28,9 +28,15 @@ class Artwork extends StatelessWidget {
   Widget build(BuildContext context) {
     final w = size;
     final h = height ?? size;
+    // `size` / `height` can come from `double.infinity` when Artwork
+    // is dropped into an unbounded constraint (Expanded, Flexible,
+    // ConstrainedBox with no max). `Infinity.round()` throws, so any
+    // memCache hint must be guarded.
+    final wFinite = w.isFinite ? w : null;
+    final hFinite = h.isFinite ? h : null;
     final placeholder = Container(
-      width: w,
-      height: h,
+      width: wFinite,
+      height: hFinite,
       decoration: BoxDecoration(
         borderRadius: radius,
         gradient: const LinearGradient(
@@ -50,19 +56,29 @@ class Artwork extends StatelessWidget {
     if (url == null || url!.isEmpty) {
       return Semantics(label: semanticLabel, child: placeholder);
     }
+    final dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 2.0;
+    int? clampedCachePx(double? logicalPx) {
+      if (logicalPx == null) return null;
+      final physical = (logicalPx * dpr).round();
+      // Hard ceiling so a misconfigured giant artwork (e.g. 4096px
+      // wide page hero) doesn't decode an obscene bitmap.
+      if (physical <= 0) return null;
+      return physical > 1024 ? 1024 : physical;
+    }
+
     return ClipRRect(
       borderRadius: radius,
       child: SizedBox(
-        width: w,
-        height: h,
+        width: wFinite,
+        height: hFinite,
         child: CachedNetworkImage(
           imageUrl: url!,
           fit: fit,
           placeholder: (_, __) => placeholder,
           errorWidget: (_, __, ___) => placeholder,
           fadeInDuration: AfDurations.quick,
-          memCacheWidth: (w * 2).round(),
-          memCacheHeight: (h * 2).round(),
+          memCacheWidth: clampedCachePx(wFinite),
+          memCacheHeight: clampedCachePx(hFinite),
         ),
       ),
     );
