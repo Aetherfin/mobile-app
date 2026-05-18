@@ -6,6 +6,7 @@ import '../../core/audio/play_actions.dart';
 import '../../core/battery_opt.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../utils/display_error.dart';
 import '../../widgets/hero_album_card.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/tile.dart';
@@ -88,7 +89,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           // Hero album.
           SliverToBoxAdapter(
-            child: albumsAsync.maybeWhen(
+            child: albumsAsync.when(
               data: (albums) => albums.isEmpty
                   ? const SizedBox.shrink()
                   : HeroAlbumCard(
@@ -104,7 +105,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         }
                       },
                     ),
-              orElse: () => const SizedBox(height: 168),
+              loading: () => const SizedBox(height: 168),
+              error: (e, _) => _RailError(
+                label: 'Couldn\u2019t load recent albums',
+                error: e,
+                reservedHeight: 168,
+                onRetry: () => ref.invalidate(
+                  isLocal ? localAlbumsProvider : recentlyAddedAlbumsProvider,
+                ),
+              ),
             ),
           ),
 
@@ -123,7 +132,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SliverToBoxAdapter(child: SizedBox(height: AfSpacing.s12)),
           SliverToBoxAdapter(
-            child: recentTracksAsync.maybeWhen(
+            child: recentTracksAsync.when(
               data: (tracks) => ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -144,7 +153,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   );
                 },
               ),
-              orElse: () => const SizedBox(height: 80),
+              loading: () => const SizedBox(height: 80),
+              error: (e, _) => _RailError(
+                label: 'Couldn\u2019t load recently played',
+                error: e,
+                reservedHeight: 80,
+                onRetry: () => ref.invalidate(
+                  isLocal ? localTracksProvider : recentlyPlayedTracksProvider,
+                ),
+              ),
             ),
           ),
 
@@ -163,7 +180,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SliverToBoxAdapter(child: SizedBox(height: AfSpacing.s12)),
           SliverToBoxAdapter(
-            child: artistsAsync.maybeWhen(
+            child: artistsAsync.when(
+              loading: () => const SizedBox(height: 172),
+              error: (e, _) => _RailError(
+                label: 'Couldn\u2019t load artists',
+                error: e,
+                reservedHeight: 172,
+                onRetry: () => ref.invalidate(
+                  isLocal ? localArtistsProvider : allArtistsProvider,
+                ),
+              ),
               data: (artists) => SizedBox(
                 height: 172,
                 child: ListView.separated(
@@ -186,7 +212,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   },
                 ),
               ),
-              orElse: () => const SizedBox(height: 168),
             ),
           ),
 
@@ -207,7 +232,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverToBoxAdapter(
             child: SizedBox(
               height: 96,
-              child: genresAsync.maybeWhen(
+              child: genresAsync.when(
                 data: (genres) => ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding:
@@ -225,7 +250,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     );
                   },
                 ),
-                orElse: () => const SizedBox.shrink(),
+                loading: () => const SizedBox.shrink(),
+                error: (e, _) => _RailError(
+                  label: 'Couldn\u2019t load genres',
+                  error: e,
+                  reservedHeight: 96,
+                  onRetry: () => ref.invalidate(
+                    isLocal ? localGenresProvider : allGenresProvider,
+                  ),
+                ),
               ),
             ),
           ),
@@ -244,5 +277,80 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Color _hex(String hex) {
     final v = int.parse(hex.replaceFirst('#', ''), radix: 16);
     return Color(0xFF000000 | v);
+  }
+}
+
+/// Inline error card for a single Home rail.
+///
+/// Before this widget, every rail on Home used `maybeWhen(data:, orElse:)`
+/// which collapsed loading **and** error into a fixed-height blank space.
+/// When the server was unreachable, auth expired, or the backend returned
+/// a 5xx, the user saw an empty page and had no idea anything had failed.
+///
+/// Renders inside the reserved rail height (matches the loading skeleton
+/// size) so layout doesn't jump when an error surfaces. Uses
+/// `displayError` to redact auth query params from any DioException
+/// before showing the message to the user.
+class _RailError extends StatelessWidget {
+  final String label;
+  final Object error;
+  final double reservedHeight;
+  final VoidCallback onRetry;
+
+  const _RailError({
+    required this.label,
+    required this.error,
+    required this.reservedHeight,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: reservedHeight,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.cloud_off_rounded,
+              color: AfColors.semanticError,
+              size: 20,
+            ),
+            const SizedBox(width: AfSpacing.s8),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AfTypography.bodyMedium.copyWith(
+                      color: AfColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    displayError(error),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AfTypography.caption.copyWith(
+                      color: AfColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AfSpacing.s8),
+            TextButton(
+              onPressed: onRetry,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
