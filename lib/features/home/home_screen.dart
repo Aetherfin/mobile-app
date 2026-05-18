@@ -6,7 +6,7 @@ import '../../core/audio/play_actions.dart';
 import '../../core/battery_opt.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
-import '../../utils/display_error.dart';
+import '../../widgets/async_error_view.dart';
 import '../../widgets/hero_album_card.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/tile.dart';
@@ -106,10 +106,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       },
                     ),
               loading: () => const SizedBox(height: 168),
-              error: (e, _) => _RailError(
+              error: (e, _) => AsyncErrorView.compact(
                 label: 'Couldn\u2019t load recent albums',
                 error: e,
-                reservedHeight: 168,
+                height: 168,
                 onRetry: () => ref.invalidate(
                   isLocal ? localAlbumsProvider : recentlyAddedAlbumsProvider,
                 ),
@@ -154,10 +154,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 },
               ),
               loading: () => const SizedBox(height: 80),
-              error: (e, _) => _RailError(
+              error: (e, _) => AsyncErrorView.compact(
                 label: 'Couldn\u2019t load recently played',
                 error: e,
-                reservedHeight: 80,
+                height: 80,
                 onRetry: () => ref.invalidate(
                   isLocal ? localTracksProvider : recentlyPlayedTracksProvider,
                 ),
@@ -182,10 +182,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverToBoxAdapter(
             child: artistsAsync.when(
               loading: () => const SizedBox(height: 172),
-              error: (e, _) => _RailError(
+              error: (e, _) => AsyncErrorView.compact(
                 label: 'Couldn\u2019t load artists',
                 error: e,
-                reservedHeight: 172,
+                height: 172,
                 onRetry: () => ref.invalidate(
                   isLocal ? localArtistsProvider : allArtistsProvider,
                 ),
@@ -251,10 +251,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   },
                 ),
                 loading: () => const SizedBox.shrink(),
-                error: (e, _) => _RailError(
+                error: (e, _) => AsyncErrorView.compact(
                   label: 'Couldn\u2019t load genres',
                   error: e,
-                  reservedHeight: 96,
+                  height: 96,
                   onRetry: () => ref.invalidate(
                     isLocal ? localGenresProvider : allGenresProvider,
                   ),
@@ -280,77 +280,4 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-/// Inline error card for a single Home rail.
-///
-/// Before this widget, every rail on Home used `maybeWhen(data:, orElse:)`
-/// which collapsed loading **and** error into a fixed-height blank space.
-/// When the server was unreachable, auth expired, or the backend returned
-/// a 5xx, the user saw an empty page and had no idea anything had failed.
-///
-/// Renders inside the reserved rail height (matches the loading skeleton
-/// size) so layout doesn't jump when an error surfaces. Uses
-/// `displayError` to redact auth query params from any DioException
-/// before showing the message to the user.
-class _RailError extends StatelessWidget {
-  final String label;
-  final Object error;
-  final double reservedHeight;
-  final VoidCallback onRetry;
 
-  const _RailError({
-    required this.label,
-    required this.error,
-    required this.reservedHeight,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: reservedHeight,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.cloud_off_rounded,
-              color: AfColors.semanticError,
-              size: 20,
-            ),
-            const SizedBox(width: AfSpacing.s8),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AfTypography.bodyMedium.copyWith(
-                      color: AfColors.textPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    displayError(error),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AfTypography.caption.copyWith(
-                      color: AfColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AfSpacing.s8),
-            TextButton(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

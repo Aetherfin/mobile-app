@@ -6,6 +6,7 @@ import '../../core/audio/play_actions.dart';
 import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../widgets/async_error_view.dart';
 import '../../widgets/tile.dart';
 import '../../widgets/track_context_menu.dart';
 import '../../widgets/track_row.dart';
@@ -280,10 +281,10 @@ class _SectionBody extends ConsumerWidget {
 
     switch (section) {
       case LibrarySection.albums:
-        final albums = isLocal
-            ? ref.watch(localAlbumsProvider)
-            : ref.watch(allAlbumsProvider);
-        return albums.maybeWhen(
+        final albumsProvider =
+            isLocal ? localAlbumsProvider : allAlbumsProvider;
+        final albums = ref.watch(albumsProvider);
+        return albums.when(
           data: (list) {
             final sorted = sortAlbums != null ? sortAlbums!(list) : list;
             return GridView.builder(
@@ -312,13 +313,18 @@ class _SectionBody extends ConsumerWidget {
               },
             );
           },
-          orElse: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => AsyncErrorView(
+            label: 'Couldn\u2019t load albums',
+            error: e,
+            onRetry: () => ref.invalidate(albumsProvider),
+          ),
         );
       case LibrarySection.artists:
-        final artists = isLocal
-            ? ref.watch(localArtistsProvider)
-            : ref.watch(allArtistsProvider);
-        return artists.maybeWhen(
+        final artistsProvider =
+            isLocal ? localArtistsProvider : allArtistsProvider;
+        final artists = ref.watch(artistsProvider);
+        return artists.when(
           data: (list) {
             final sorted = sortArtists != null ? sortArtists!(list) : list;
             return GridView.builder(
@@ -345,14 +351,19 @@ class _SectionBody extends ConsumerWidget {
               },
             );
           },
-          orElse: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => AsyncErrorView(
+            label: 'Couldn\u2019t load artists',
+            error: e,
+            onRetry: () => ref.invalidate(artistsProvider),
+          ),
         );
       case LibrarySection.songs:
         return Consumer(builder: (context, ref, _) {
-          final tracks = isLocal
-              ? ref.watch(localTracksProvider)
-              : ref.watch(allTracksProvider);
-          return tracks.maybeWhen(
+          final tracksProvider =
+              isLocal ? localTracksProvider : allTracksProvider;
+          final tracks = ref.watch(tracksProvider);
+          return tracks.when(
             data: (list) {
               final sorted = sortTracks != null ? sortTracks!(list) : list;
               return ListView.separated(
@@ -376,7 +387,12 @@ class _SectionBody extends ConsumerWidget {
                 },
               );
             },
-            orElse: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => AsyncErrorView(
+              label: 'Couldn\u2019t load songs',
+              error: e,
+              onRetry: () => ref.invalidate(tracksProvider),
+            ),
           );
         });
       case LibrarySection.playlists:
@@ -386,7 +402,7 @@ class _SectionBody extends ConsumerWidget {
           data: (list) => list.length,
           orElse: () => 0,
         );
-        return playlists.maybeWhen(
+        return playlists.when(
           data: (list) => ListView.separated(
             padding: padding.add(const EdgeInsets.only(
                 bottom: AfSpacing.bottomInsetWithMiniAndNav)),
@@ -454,13 +470,18 @@ class _SectionBody extends ConsumerWidget {
               );
             },
           ),
-          orElse: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => AsyncErrorView(
+            label: 'Couldn\u2019t load playlists',
+            error: e,
+            onRetry: () => ref.invalidate(allPlaylistsProvider),
+          ),
         );
       case LibrarySection.genres:
-        final genresAsync = isLocal
-            ? ref.watch(localGenresProvider)
-            : ref.watch(allGenresProvider);
-        return genresAsync.maybeWhen(
+        final genresProvider =
+            isLocal ? localGenresProvider : allGenresProvider;
+        final genresAsync = ref.watch(genresProvider);
+        return genresAsync.when(
           data: (genres) => GridView.builder(
             padding: padding.add(const EdgeInsets.only(
                 bottom: AfSpacing.bottomInsetWithMiniAndNav)),
@@ -486,11 +507,16 @@ class _SectionBody extends ConsumerWidget {
               );
             },
           ),
-          orElse: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => AsyncErrorView(
+            label: 'Couldn\u2019t load genres',
+            error: e,
+            onRetry: () => ref.invalidate(genresProvider),
+          ),
         );
       case LibrarySection.liked:
         final likedAsync = ref.watch(favoriteTracksProvider);
-        return likedAsync.maybeWhen(
+        return likedAsync.when(
           data: (list) => list.isEmpty
               ? Center(
                   child: Text(
@@ -519,7 +545,12 @@ class _SectionBody extends ConsumerWidget {
                     );
                   },
                 ),
-          orElse: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => AsyncErrorView(
+            label: 'Couldn\u2019t load liked songs',
+            error: e,
+            onRetry: () => ref.invalidate(favoriteTracksProvider),
+          ),
         );
     }
   }
