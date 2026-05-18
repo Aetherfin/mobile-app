@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/jellyfin/models/items.dart';
 import '../design_tokens/tokens.dart';
 import 'artwork.dart';
+import 'favorite_heart_button.dart';
 import 'press_scale.dart';
 import 'quality_chip.dart';
 
@@ -28,7 +29,6 @@ class TrackRow extends StatelessWidget {
   final Color? activeAccent;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
-  final VoidCallback? onHeartTap;
   final int? leadingNumber;
   final bool showQualityChip;
   final bool showHeart;
@@ -41,7 +41,6 @@ class TrackRow extends StatelessWidget {
     this.activeAccent,
     this.onTap,
     this.onLongPress,
-    this.onHeartTap,
     this.leadingNumber,
     this.showQualityChip = true,
     this.showHeart = true,
@@ -140,23 +139,11 @@ class TrackRow extends StatelessWidget {
             ],
             if (showHeart) ...[
               const SizedBox(width: AfSpacing.s4),
-              IconButton(
-                icon: Icon(
-                  track.isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: track.isFavorite
-                      ? AfColors.semanticError
-                      : AfColors.textTertiary,
-                  size: 20,
-                ),
-                onPressed: onHeartTap,
-                tooltip: track.isFavorite ? 'Unfavorite' : 'Favorite',
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-                constraints: const BoxConstraints(
-                  minWidth: AfSpacing.minHitTarget,
-                  minHeight: AfSpacing.minHitTarget,
-                ),
-              ),
+              // Self-contained heart that talks to the backend directly
+              // and manages its own optimistic flip — see
+              // FavoriteHeartButton for the rationale (`onHeartTap`
+              // used to be a dead callback in every list screen).
+              FavoriteHeartButton(track: track),
             ],
           ],
         ),
