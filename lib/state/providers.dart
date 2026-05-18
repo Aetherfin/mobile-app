@@ -399,16 +399,53 @@ final fftSpectrumProvider = StreamProvider.autoDispose<FftFrame>((ref) {
 
 final currentTrackProvider = StateProvider<AfTrack?>((ref) => null);
 
+/// Track-level favorite overrides written immediately on heart toggle.
+///
+/// Detail providers ([albumDetailProvider], [playlistDetailProvider],
+/// `artistTopTracks`, [searchProvider], etc.) each cache their own track
+/// list. When the user toggles favorite from one screen and navigates
+/// to another that has the same track cached, the cached
+/// `AfTrack.isFavorite` is stale — so the heart icon shows the
+/// pre-toggle state on every screen except the one where the toggle
+/// happened. Invalidating every detail provider on every favorite
+/// toggle would force a full re-fetch of any actively-watched album /
+/// playlist / search-results list just to flip a single icon, which is
+/// wasteful (the user is paying server round-trips for one bit of
+/// state).
+///
+/// Instead, this map is the authoritative "latest-known" favorite
+/// state per track id. UI that renders a track heart
+/// ([FavoriteHeartButton], Now Playing's icon) consults this map first
+/// and only falls back to the track model's own `isFavorite` field if
+/// no override is present. Writes happen on the optimistic flip (so
+/// every heart for that track id flips in lock-step) and on rollback
+/// after a failed backend call.
+///
+/// Not autoDispose: lives for the session so an override set early in
+/// the app's life is still respected on screens visited much later.
+/// The map is bounded by the number of distinct tracks the user has
+/// favorited this session, so unbounded growth in practice isn't a
+/// concern.
+final trackFavoriteOverridesProvider =
+    StateProvider<Map<String, bool>>((ref) => const {});
+
 final favoriteToggleProvider = Provider<Future<void> Function(AfTrack)>((ref) {
   return (AfTrack track) async {
     final backend = ref.read(musicBackendProvider);
-    final next = !track.isFavorite;
+    // `trackFavoriteOverridesProvider` is the latest-known state — fall
+    // back to the model only when no override is present.
+    final overrides = ref.read(trackFavoriteOverridesProvider);
+    final wasFavorite = overrides[track.id] ?? track.isFavorite;
+    final next = !wasFavorite;
     final updated = track.copyWith(isFavorite: next);
     final current = ref.read(currentTrackProvider);
 
     if (current?.id == track.id) {
       ref.read(currentTrackProvider.notifier).state = updated;
     }
+    ref.read(trackFavoriteOverridesProvider.notifier).update(
+          (s) => {...s, track.id: next},
+        );
 
     if (backend == null) {
       _logData('favoriteToggle',
@@ -428,6 +465,9 @@ final favoriteToggleProvider = Provider<Future<void> Function(AfTrack)>((ref) {
       if (current?.id == track.id) {
         ref.read(currentTrackProvider.notifier).state = track;
       }
+      ref.read(trackFavoriteOverridesProvider.notifier).update(
+            (s) => {...s, track.id: wasFavorite},
+          );
       rethrow;
     }
   };

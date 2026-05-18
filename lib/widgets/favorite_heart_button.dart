@@ -9,10 +9,13 @@ import '../utils/log.dart';
 
 /// Tappable heart button for a single [AfTrack].
 ///
-/// Drives `backend.setFavorite(trackId, next)` directly and manages an
-/// **optimistic local flip** so the icon updates on the next frame —
-/// the round-trip to the server is hidden behind the user's tap. On
-/// failure the flip is reverted and a `SnackBar` surfaces `displayError`.
+/// Drives `backend.setFavorite(trackId, next)` directly and writes the
+/// **optimistic flip** into the session-wide
+/// [trackFavoriteOverridesProvider] so every heart for the same track
+/// id — on the album screen, the playlist screen, search results, the
+/// Now Playing icon — flips in lock-step. The round-trip to the server
+/// is hidden behind the user's tap. On failure the override is rolled
+/// back to the previous value and a `SnackBar` surfaces `displayError`.
 ///
 /// This widget replaces the previously-dead `onHeartTap` callback hole
 /// in [TrackRow]: every list screen that rendered a `TrackRow` with
@@ -30,10 +33,12 @@ import '../utils/log.dart';
 /// when the tapped track is the one currently playing — otherwise the
 /// Now Playing screen would lag behind a list-screen toggle.
 ///
-/// Uses `didUpdateWidget` to re-seed local state when the parent
-/// re-fetches the track (e.g. after a favorite-provider invalidation)
-/// — but skips re-seeding while a toggle is in flight so the optimistic
-/// state isn't clobbered.
+/// Displayed state is derived from
+/// `trackFavoriteOverridesProvider[track.id] ?? track.isFavorite`, so
+/// a toggle from anywhere is reflected here as soon as Riverpod
+/// rebuilds — no `didUpdateWidget` / local mirror dance needed.
+/// `_busy` stays local because it gates *this* button's request, not
+/// the global toggle state.
 class FavoriteHeartButton extends ConsumerStatefulWidget {
   /// The track to favorite/unfavorite. Only `id` and `isFavorite` are
   /// read; the rest of the model is forwarded to `currentTrackProvider`
@@ -56,39 +61,32 @@ class FavoriteHeartButton extends ConsumerStatefulWidget {
 }
 
 class _FavoriteHeartButtonState extends ConsumerState<FavoriteHeartButton> {
-  late bool _isFavorite;
   bool _busy = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _isFavorite = widget.track.isFavorite;
-  }
-
-  @override
-  void didUpdateWidget(covariant FavoriteHeartButton old) {
-    super.didUpdateWidget(old);
-    // Sync with parent when the source-of-truth track changes — but not
-    // mid-toggle, so we don't clobber the optimistic flip with the stale
-    // pre-toggle value.
-    if (!_busy && old.track.isFavorite != widget.track.isFavorite) {
-      _isFavorite = widget.track.isFavorite;
-    }
-  }
+  /// Authoritative "is this track favorited *right now*" — overrides
+  /// the (potentially stale) `widget.track.isFavorite` field cached on
+  /// whatever provider produced the track list.
+  bool _isFavoriteFromOverrides(Map<String, bool> overrides) =>
+      overrides[widget.track.id] ?? widget.track.isFavorite;
 
   Future<void> _toggle() async {
     if (_busy) return;
     final backend = ref.read(musicBackendProvider);
     if (backend == null) return; // signed-out / demo mode
 
-    final next = !_isFavorite;
-    setState(() {
-      _busy = true;
-      _isFavorite = next;
-    });
+    final overrides = ref.read(trackFavoriteOverridesProvider);
+    final wasFavorite = _isFavoriteFromOverrides(overrides);
+    final next = !wasFavorite;
+    setState(() => _busy = true);
+
+    // Optimistic global flip — every heart for this track id rebuilds
+    // immediately, including this one (via the `ref.watch` in `build`).
+    ref.read(trackFavoriteOverridesProvider.notifier).update(
+          (s) => {...s, widget.track.id: next},
+        );
 
     // Keep `currentTrackProvider` in sync if this is the playing track,
-    // so Now Playing's heart icon doesn't lag a list-screen toggle.
+    // so Now Playing's icon doesn't lag a list-screen toggle.
     final current = ref.read(currentTrackProvider);
     if (current?.id == widget.track.id) {
       ref.read(currentTrackProvider.notifier).state =
@@ -110,8 +108,11 @@ class _FavoriteHeartButtonState extends ConsumerState<FavoriteHeartButton> {
       afLog('error', 'trackFavorite toggle failed',
           error: e, stackTrace: stack);
       if (!mounted) return;
-      setState(() => _isFavorite = !next);
-      // Revert the playing-track copy if we were the source of truth.
+      // Roll the override back to the pre-toggle value (which itself
+      // might have been an earlier override or the model default).
+      ref.read(trackFavoriteOverridesProvider.notifier).update(
+            (s) => {...s, widget.track.id: wasFavorite},
+          );
       if (current?.id == widget.track.id) {
         ref.read(currentTrackProvider.notifier).state = current;
       }
@@ -128,14 +129,16 @@ class _FavoriteHeartButtonState extends ConsumerState<FavoriteHeartButton> {
 
   @override
   Widget build(BuildContext context) {
+    final overrides = ref.watch(trackFavoriteOverridesProvider);
+    final isFavorite = _isFavoriteFromOverrides(overrides);
     return IconButton(
       icon: Icon(
-        _isFavorite ? Icons.favorite : Icons.favorite_border,
-        color: _isFavorite ? AfColors.semanticError : AfColors.textTertiary,
+        isFavorite ? Icons.favorite : Icons.favorite_border,
+        color: isFavorite ? AfColors.semanticError : AfColors.textTertiary,
         size: widget.size,
       ),
       onPressed: _toggle,
-      tooltip: _isFavorite ? 'Unfavorite' : 'Favorite',
+      tooltip: isFavorite ? 'Unfavorite' : 'Favorite',
       padding: EdgeInsets.zero,
       visualDensity: VisualDensity.compact,
       constraints: const BoxConstraints(
