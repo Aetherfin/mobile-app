@@ -54,3 +54,37 @@ String redactSensitiveQueryParams(Object uri) {
   };
   return parsed.replace(queryParameters: scrubbed).toString();
 }
+
+/// Build a deterministic cache key for an artwork URL.
+///
+/// Subsonic cover-art URLs embed a fresh per-request salt + md5 token
+/// (`s=…&t=…&u=…`) — see `SubsonicClient._authParams()`. The URL is
+/// effectively random on every fetch, so passing it directly to
+/// `CachedNetworkImage` or `CachedNetworkImageProvider` defeats the
+/// on-disk cache: every list refresh re-downloads every cover art that
+/// was already on disk. The same applies to any Jellyfin URL that
+/// happens to carry `api_key` as a query param.
+///
+/// This helper strips entries in [_sensitiveQueryKeys] from the query
+/// string while keeping path + non-sensitive params intact (`id`,
+/// `size`, `tag`, `maxWidth`, …) so different cover IDs / sizes still
+/// map to different keys. The returned string is intended for
+/// `cacheKey:` arguments only — never used as a real request URL.
+///
+/// Non-URL inputs (file paths, malformed strings, file:// URIs) are
+/// returned unchanged. File-backed artwork doesn't carry auth material,
+/// so the raw path makes a fine cache key.
+String stableImageCacheKey(String url) {
+  final parsed = Uri.tryParse(url);
+  if (parsed == null || parsed.queryParameters.isEmpty) return url;
+  final hasSensitive =
+      parsed.queryParameters.keys.any(_sensitiveQueryKeys.contains);
+  if (!hasSensitive) return url;
+  final cleaned = <String, String>{
+    for (final entry in parsed.queryParameters.entries)
+      if (!_sensitiveQueryKeys.contains(entry.key)) entry.key: entry.value,
+  };
+  // `Uri.replace` with an empty map drops the `?` entirely, matching
+  // what callers would write by hand if they were stripping params.
+  return parsed.replace(queryParameters: cleaned).toString();
+}

@@ -181,6 +181,58 @@ random non-LRC line
     });
   });
 
+  group('stableImageCacheKey', () {
+    test('produces the same key for two Subsonic URLs with different salts',
+        () {
+      // Real Subsonic getCoverArt URLs look like this — the only
+      // difference between two requests for the same artwork is the
+      // (u, t, s) triple. The cache key must collapse that to one slot.
+      const a =
+          'https://nav.example/rest/getCoverArt.view?u=alice&t=aaaaaaaa&s=salt1&v=1.16.1&c=Aetherfin&f=json&id=al-42&size=480';
+      const b =
+          'https://nav.example/rest/getCoverArt.view?u=alice&t=bbbbbbbb&s=salt2&v=1.16.1&c=Aetherfin&f=json&id=al-42&size=480';
+      expect(stableImageCacheKey(a), stableImageCacheKey(b));
+    });
+
+    test('different cover IDs map to different keys', () {
+      const a =
+          'https://nav.example/rest/getCoverArt.view?u=alice&t=hash&s=salt&id=al-42&size=480';
+      const b =
+          'https://nav.example/rest/getCoverArt.view?u=alice&t=hash&s=salt&id=al-99&size=480';
+      expect(stableImageCacheKey(a), isNot(equals(stableImageCacheKey(b))));
+    });
+
+    test('different sizes map to different keys (memCache hint)', () {
+      const small =
+          'https://nav.example/rest/getCoverArt.view?u=alice&t=h&s=s&id=al-42&size=120';
+      const large =
+          'https://nav.example/rest/getCoverArt.view?u=alice&t=h&s=s&id=al-42&size=480';
+      expect(stableImageCacheKey(small),
+          isNot(equals(stableImageCacheKey(large))));
+    });
+
+    test('strips Jellyfin api_key while keeping cover-art path + tag', () {
+      const raw =
+          'https://jf.example/Items/track-1/Images/Primary?tag=hash7&maxWidth=320&api_key=secret';
+      final key = stableImageCacheKey(raw);
+      expect(key, isNot(contains('api_key')));
+      expect(key, isNot(contains('secret')));
+      expect(key, contains('Items/track-1/Images/Primary'));
+      expect(key, contains('tag=hash7'));
+      expect(key, contains('maxWidth=320'));
+    });
+
+    test('passes through plain (non-query) URLs untouched', () {
+      const raw = 'https://example/Items/x/Images/Primary';
+      expect(stableImageCacheKey(raw), raw);
+    });
+
+    test('passes through file:// URLs untouched', () {
+      const raw = 'file:///storage/emulated/0/Music/album/cover.jpg';
+      expect(stableImageCacheKey(raw), raw);
+    });
+  });
+
   group('displayError', () {
     test('redacts sensitive query params on DioException with response', () {
       final dio = DioException(

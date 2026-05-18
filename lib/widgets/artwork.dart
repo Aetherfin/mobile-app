@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../design_tokens/tokens.dart';
 import '../state/providers.dart';
+import '../utils/url.dart';
 
 /// Network artwork that gracefully degrades to a deterministic indigo
 /// gradient when the URL is null or fails to load. Used everywhere we
@@ -106,6 +107,13 @@ class Artwork extends ConsumerWidget {
         width: wFinite,
         height: hFinite,
         child: CachedNetworkImage(
+          // `cacheKey` strips Subsonic per-request salt/token (`u`, `t`,
+          // `s`) and Jellyfin `api_key` from the URL so the disk cache
+          // hits across requests. Without this, every list refresh
+          // regenerates the auth params and re-downloads the same
+          // bytes. The unsanitized URL is still used for `imageUrl` so
+          // the actual HTTP fetch carries the live auth.
+          cacheKey: stableImageCacheKey(url!),
           imageUrl: url!,
           httpHeaders: headers,
           fit: fit,

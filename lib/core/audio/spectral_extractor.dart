@@ -45,9 +45,15 @@ class SpectralExtractor {
     String imageUrl, {
     Map<String, String>? headers,
   }) async {
-    final cached = _cache.remove(imageUrl);
+    // Subsonic cover-art URLs carry a fresh salt + md5 token on every
+    // call, so keying the in-memory palette cache by the raw URL would
+    // miss for every track even when the underlying bytes are identical.
+    // The disk-cache key on `CachedNetworkImageProvider` below has the
+    // same problem — match it so we share the cache slot.
+    final key = stableImageCacheKey(imageUrl);
+    final cached = _cache.remove(key);
     if (cached != null) {
-      _cache[imageUrl] = cached;
+      _cache[key] = cached;
       return cached;
     }
     try {
@@ -55,7 +61,11 @@ class SpectralExtractor {
       if (imageUrl.startsWith('file://')) {
         provider = FileImage(File(imageUrl.substring('file://'.length)));
       } else {
-        provider = CachedNetworkImageProvider(imageUrl, headers: headers);
+        provider = CachedNetworkImageProvider(
+          imageUrl,
+          headers: headers,
+          cacheKey: key,
+        );
       }
       final palette = await PaletteGeneratorMaster.fromImageProvider(
         provider,
@@ -78,7 +88,7 @@ class SpectralExtractor {
           );
         }
       }
-      _cache[imageUrl] = result;
+      _cache[key] = result;
       // Evict oldest (head) entry when over limit.
       if (_cache.length > _cacheLimit) {
         _cache.remove(_cache.keys.first);
