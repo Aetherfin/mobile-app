@@ -770,77 +770,73 @@ class _GenresGrid extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: AfColors.surfaceHigh,
-                      width: 1,
+                      width: 1.2,
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final w = constraints.maxWidth;
-                      return Stack(
-                        children: [
-                          // Right split artwork side
-                          Positioned(
-                            top: 0,
-                            bottom: 0,
-                            right: 0,
-                            left: 0,
-                            child: ClipPath(
-                              clipper: const _DiagonalClipper(
-                                startRatio: 0.55,
-                                endRatio: 0.75,
-                              ),
-                              child: Artwork(
-                                url: g.imageUrl,
-                                size: double.infinity,
-                                radius: BorderRadius.zero,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          // Thin diagonal neon outline on split border
-                          Positioned.fill(
-                            child: CustomPaint(
-                              painter: _DiagonalBorderPainter(
-                                color: tint.withValues(alpha: 0.8),
-                                startRatio: 0.55,
-                                endRatio: 0.75,
-                              ),
-                            ),
-                          ),
-                          // Left info side - restricted to left 48% to avoid overlap
-                          Positioned(
-                            left: 12,
-                            top: 0,
-                            bottom: 0,
-                            width: w * 0.48,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  g.name.toUpperCase(),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AfTypography.bodyMedium.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.3,
-                                    color: AfColors.textPrimary,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Container(
-                                  width: 16,
-                                  height: 2,
-                                  color: tint,
-                                ),
+                  child: Stack(
+                    children: [
+                      // 1. Natural cover artwork (clean background)
+                      Positioned.fill(
+                        child: Artwork(
+                          url: g.imageUrl,
+                          size: double.infinity,
+                          radius: BorderRadius.zero,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+
+                      // 2. High-contrast vertical fade to keep text extremely readable and the design clean
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                              colors: [
+                                Colors.black.withValues(alpha: 0.9),
+                                Colors.black.withValues(alpha: 0.4),
+                                Colors.transparent,
                               ],
+                              stops: const [0.0, 0.55, 1.0],
                             ),
                           ),
-                        ],
-                      );
-                    },
+                        ),
+                      ),
+
+                      // 3. Editorial text overlay
+                      Positioned(
+                        left: 12,
+                        right: 12,
+                        bottom: 10,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Minimalist accent dot in genre neon tint
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: tint,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              g.name.toUpperCase(),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AfTypography.titleMedium.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: AfColors.textPrimary,
+                                fontSize: 12,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -862,62 +858,4 @@ class _GenresGrid extends ConsumerWidget {
     final q = query.toLowerCase();
     return genres.where((g) => g.name.toLowerCase().contains(q)).toList();
   }
-}
-
-class _DiagonalClipper extends CustomClipper<Path> {
-  const _DiagonalClipper({
-    required this.startRatio,
-    required this.endRatio,
-  });
-
-  final double startRatio;
-  final double endRatio;
-
-  @override
-  Path getClip(Size size) {
-    final path = Path()
-      ..moveTo(size.width * startRatio, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height)
-      ..lineTo(size.width * endRatio, size.height)
-      ..close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant _DiagonalClipper oldClipper) =>
-      oldClipper.startRatio != startRatio || oldClipper.endRatio != endRatio;
-}
-
-class _DiagonalBorderPainter extends CustomPainter {
-  _DiagonalBorderPainter({
-    required this.color,
-    required this.startRatio,
-    required this.endRatio,
-  });
-
-  final Color color;
-  final double startRatio;
-  final double endRatio;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke
-      ..isAntiAlias = true;
-
-    final path = Path()
-      ..moveTo(size.width * startRatio, 0)
-      ..lineTo(size.width * endRatio, size.height);
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _DiagonalBorderPainter oldDelegate) =>
-      oldDelegate.color != color ||
-      oldDelegate.startRatio != startRatio ||
-      oldDelegate.endRatio != endRatio;
 }

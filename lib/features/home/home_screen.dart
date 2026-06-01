@@ -1020,6 +1020,7 @@ class _ReworkedGenresSection extends ConsumerWidget {
                         children: [
                           _BentoGenreCard(
                             genre: list[0],
+                            index: 0,
                             width: cardWidth,
                             height: 110,
                             isLocal: isLocal,
@@ -1029,8 +1030,9 @@ class _ReworkedGenresSection extends ConsumerWidget {
                           if (list.length > 1)
                             _BentoGenreCard(
                               genre: list[1],
+                              index: 1,
                               width: cardWidth,
-                              height: 140, // Asymmetric heights!
+                              height: 110,
                               isLocal: isLocal,
                               ref: ref,
                             ),
@@ -1038,13 +1040,13 @@ class _ReworkedGenresSection extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (list.length > 2)
                             _BentoGenreCard(
                               genre: list[2],
+                              index: 2,
                               width: cardWidth,
-                              height: 140, // Asymmetric heights!
+                              height: 110,
                               isLocal: isLocal,
                               ref: ref,
                             ),
@@ -1052,6 +1054,7 @@ class _ReworkedGenresSection extends ConsumerWidget {
                           if (list.length > 3)
                             _BentoGenreCard(
                               genre: list[3],
+                              index: 3,
                               width: cardWidth,
                               height: 110,
                               isLocal: isLocal,
@@ -1084,6 +1087,7 @@ class _ReworkedGenresSection extends ConsumerWidget {
 class _BentoGenreCard extends StatelessWidget {
   const _BentoGenreCard({
     required this.genre,
+    required this.index,
     required this.width,
     required this.height,
     required this.isLocal,
@@ -1091,6 +1095,7 @@ class _BentoGenreCard extends StatelessWidget {
   });
 
   final AfGenre genre;
+  final int index;
   final double width;
   final double height;
   final bool isLocal;
@@ -1112,139 +1117,77 @@ class _BentoGenreCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: AfColors.surfaceHigh,
-            width: 1,
+            width: 1.2,
           ),
         ),
         clipBehavior: Clip.antiAlias,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final w = constraints.maxWidth;
-            return Stack(
-              children: [
-                // Right split artwork side
-                Positioned(
-                  top: 0,
-                  bottom: 0,
-                  right: 0,
-                  left: 0,
-                  child: ClipPath(
-                    clipper: const _DiagonalClipper(
-                      startRatio: 0.55,
-                      endRatio: 0.75,
-                    ),
-                    child: Artwork(
-                      url: genre.imageUrl,
-                      size: double.infinity,
-                      radius: BorderRadius.zero,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                // Thin diagonal neon outline on split border
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _DiagonalBorderPainter(
-                      color: tint.withValues(alpha: 0.8),
-                      startRatio: 0.55,
-                      endRatio: 0.75,
-                    ),
-                  ),
-                ),
-                // Left info side - restricted to left 48% to avoid overlap
-                Positioned(
-                  left: 12,
-                  top: 0,
-                  bottom: 0,
-                  width: w * 0.48,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        genre.name.toUpperCase(),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AfTypography.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.3,
-                          color: AfColors.textPrimary,
-                          fontSize: 11,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        width: 16,
-                        height: 2,
-                        color: tint,
-                      ),
+        child: Stack(
+          children: [
+            // 1. Natural cover artwork (clean background)
+            Positioned.fill(
+              child: Artwork(
+                url: genre.imageUrl,
+                size: double.infinity,
+                radius: BorderRadius.zero,
+                fit: BoxFit.cover,
+              ),
+            ),
+
+            // 2. High-contrast vertical fade to keep text extremely readable and the design clean
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.9),
+                      Colors.black.withValues(alpha: 0.4),
+                      Colors.transparent,
                     ],
+                    stops: const [0.0, 0.55, 1.0],
                   ),
                 ),
-              ],
-            );
-          },
+              ),
+            ),
+
+            // 3. Editorial text overlay
+            Positioned(
+              left: 14,
+              right: 14,
+              bottom: 12,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Minimalist accent dot in genre neon tint
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: tint,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    genre.name.toUpperCase(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AfTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: AfColors.textPrimary,
+                      fontSize: 12.5,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
-}
-
-class _DiagonalClipper extends CustomClipper<Path> {
-  const _DiagonalClipper({
-    required this.startRatio,
-    required this.endRatio,
-  });
-
-  final double startRatio;
-  final double endRatio;
-
-  @override
-  Path getClip(Size size) {
-    final path = Path()
-      ..moveTo(size.width * startRatio, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height)
-      ..lineTo(size.width * endRatio, size.height)
-      ..close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant _DiagonalClipper oldClipper) =>
-      oldClipper.startRatio != startRatio || oldClipper.endRatio != endRatio;
-}
-
-class _DiagonalBorderPainter extends CustomPainter {
-  _DiagonalBorderPainter({
-    required this.color,
-    required this.startRatio,
-    required this.endRatio,
-  });
-
-  final Color color;
-  final double startRatio;
-  final double endRatio;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke
-      ..isAntiAlias = true;
-
-    final path = Path()
-      ..moveTo(size.width * startRatio, 0)
-      ..lineTo(size.width * endRatio, size.height);
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _DiagonalBorderPainter oldDelegate) =>
-      oldDelegate.color != color ||
-      oldDelegate.startRatio != startRatio ||
-      oldDelegate.endRatio != endRatio;
 }
 
 Color _hex(String hex) {
