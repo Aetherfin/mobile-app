@@ -15,49 +15,49 @@ abstract final class AfColors {
   // ---------------------------------------------------------------------------
   // Indigo primary scale (hue 275°)
   // ---------------------------------------------------------------------------
-  static const indigo50 = Color(0xFFF5F4FE);
-  static const indigo100 = Color(0xFFE8E5FB);
-  static const indigo200 = Color(0xFFCDC6F4);
-  static const indigo300 = Color(0xFFA89DEC);
-  static const indigo400 = Color(0xFF8276E0);
-  static const indigo500 = Color(0xFF6657D7);
-  static const indigo600 = Color(0xFF5644C9); // Primary action
-  static const indigo700 = Color(0xFF453AA1); // Pressed
-  static const indigo800 = Color(0xFF332C7A); // Hero card gradient base
-  static const indigo900 = Color(0xFF251F58); // Section-tinted surfaces
-  static const indigo950 = Color(0xFF181439); // Deep tint for sheets
-  static const indigo1000 = Color(0xFF0E0B23); // Reserved emergency depth
+  static const indigo50  = Color(0xFFEEF2FF);
+  static const indigo100 = Color(0xFFE0E7FF);
+  static const indigo200 = Color(0xFFC7D2FE);
+  static const indigo300 = Color(0xFFA5B4FC);
+  static const indigo400 = Color(0xFF818CF8);
+  static const indigo500 = Color(0xFF6366F1);
+  static const indigo600 = Color(0xFF4F46E5); // Primary action
+  static const indigo700 = Color(0xFF4338CA); // Pressed
+  static const indigo800 = Color(0xFF3730A3); // Hero card gradient base
+  static const indigo900 = Color(0xFF1E1B4B); // Section-tinted surfaces
+  static const indigo950 = Color(0xFF0F0E2E); // Deep tint for sheets
+  static const indigo1000 = Color(0xFF08071A); // Reserved emergency depth
 
   // ---------------------------------------------------------------------------
   // Surface scale — Nocturne (dark)
-  // Depth via tone, NOT blur, NOT shadow-as-decoration.
+  // Midnight Onyx: pure dark, no purple tint — depth via tone.
   // ---------------------------------------------------------------------------
-  static const surfaceCanvas = Color(0xFF0B0B14);
-  static const surfaceLow = Color(0xFF101020);
-  static const surfaceBase = Color(0xFF15152A);
-  static const surfaceRaised = Color(0xFF1B1B36);
-  static const surfaceHigh = Color(0xFF232347);
-  static const surfaceMax = Color(0xFF2C2C57);
-  static const surfaceScrim = Color(0x8F000000);
+  static const surfaceCanvas = Color(0xFF08090C);
+  static const surfaceLow    = Color(0xFF0F1116);
+  static const surfaceBase   = Color(0xFF151820);
+  static const surfaceRaised = Color(0xFF1C202B);
+  static const surfaceHigh   = Color(0xFF252A3A);
+  static const surfaceMax    = Color(0xFF333A50);
+  static const surfaceScrim  = Color(0x8F000000);
 
   // ---------------------------------------------------------------------------
   // Foreground (text on Nocturne canvas)
   // APCA targets: body Lc ≥ 60, secondary ≥ 45, tertiary ≥ 30.
   // ---------------------------------------------------------------------------
-  static const textPrimary = Color(0xFFF2F1F8);
-  static const textSecondary = Color(0xFFBFBED0);
-  static const textTertiary = Color(0xFF8C8AA3);
-  static const textDisabled = Color(0xFF5E5C72);
-  static const textOnPrimary = Color(0xFFF8F7FB);
-  static const textLink = Color(0xFF9788E6);
+  static const textPrimary   = Color(0xFFF3F4F6);
+  static const textSecondary = Color(0xFFD1D5DB);
+  static const textTertiary  = Color(0xFF9CA3AF);
+  static const textDisabled  = Color(0xFF6B7280);
+  static const textOnPrimary = Color(0xFFFFFFFF);
+  static const textLink      = Color(0xFF818CF8);
 
   // ---------------------------------------------------------------------------
   // Semantic
   // ---------------------------------------------------------------------------
   static const semanticSuccess = Color(0xFF5DCB87);
   static const semanticWarning = Color(0xFFD7B852);
-  static const semanticError = Color(0xFFE26A53);
-  static const semanticInfo = Color(0xFF6CB1D9);
+  static const semanticError   = Color(0xFFE26A53);
+  static const semanticInfo    = Color(0xFF6CB1D9);
   static const semanticOffline = Color(0xFF90909E);
 }
 

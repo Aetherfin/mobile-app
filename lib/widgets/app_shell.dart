@@ -118,7 +118,7 @@ class AppShell extends ConsumerWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xFF271640), Color(0xFF040319)],
+                  colors: [Color(0xFF0F111E), Color(0xFF040508)],
                   stops: [0.0, 1.0],
                 ),
               ),

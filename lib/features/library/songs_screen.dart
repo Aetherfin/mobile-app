@@ -80,7 +80,7 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Songs', style: AfTypography.titleLarge),
+                Text('Library', style: AfTypography.titleLarge),
                 const SizedBox(height: AfSpacing.s12),
                 TextField(
                   controller: _searchController,
@@ -222,8 +222,14 @@ class _PillBarState extends State<_PillBar>
                         child: const IgnorePointer(
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              color: AfColors.indigo600,
+                              color: Color(0x266366F1), // indigo500 @ 15%
                               borderRadius: AfRadii.borderPill,
+                              border: Border.fromBorderSide(
+                                BorderSide(
+                                  color: Color(0x40818CF8), // indigo400 @ 25%
+                                  width: 1,
+                                ),
+                              ),
                             ),
                           ),
                         ),

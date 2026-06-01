@@ -129,7 +129,9 @@ class TrackRow extends StatelessWidget {
               ? (isActive
                     ? Colors.white.withValues(alpha: 0.15)
                     : Colors.white.withValues(alpha: 0.08))
-              : (isActive ? AfColors.surfaceBase : Colors.transparent),
+              : (isActive
+                    ? AfColors.indigo500.withValues(alpha: 0.08)
+                    : Colors.transparent),
           borderRadius: BorderRadius.circular(
             steelBackground ? AfRadii.lg : AfRadii.sm,
           ),
@@ -145,12 +147,15 @@ class TrackRow extends StatelessWidget {
         child: Row(
           children: [
             if (isActive && !steelBackground)
-              Container(
-                width: 2,
-                height: artSize,
-                decoration: BoxDecoration(
-                  color: accent,
-                  borderRadius: BorderRadius.circular(1),
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Container(
+                  width: 3,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    borderRadius: BorderRadius.circular(1.5),
+                  ),
                 ),
               ),
             const SizedBox(width: AfSpacing.s8),

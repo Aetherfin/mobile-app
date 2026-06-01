@@ -26,6 +26,12 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
   @override
   void initState() {
     super.initState();
@@ -98,12 +104,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Text('Listen', style: AfTypography.titleLarge),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _getGreeting(),
+                          style: AfTypography.titleLarge.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'What are we playing today?',
+                          style: AfTypography.bodySmall.copyWith(
+                            color: AfColors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
                     const Spacer(),
-                    IconButton(
-                      icon: const Icon(LucideIcons.cast),
-                      onPressed: () => context.push('/cast'),
-                      tooltip: 'Output',
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AfColors.surfaceLow,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AfColors.surfaceHigh.withValues(alpha: 0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(LucideIcons.cast, size: 20),
+                        onPressed: () => context.push('/cast'),
+                        tooltip: 'Output',
+                        color: AfColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -169,32 +203,58 @@ class _RecentTracksSection extends ConsumerWidget {
     return SliverList(
       delegate: SliverChildListDelegate([
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+          padding: const EdgeInsets.fromLTRB(
+            AfSpacing.s16, 0, AfSpacing.s16, AfSpacing.s8,
+          ),
           child: SectionHeader(
             title: 'Recently played',
             actionLabel: 'See more',
             onActionTap: () => context.go('/library'),
           ),
         ),
-        const SizedBox(height: AfSpacing.s12),
         tracksAsync.when(
-          data: (tracks) => ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
-            itemCount: tracks.take(5).length,
-            separatorBuilder: (context, index) =>
-                const SizedBox(height: AfSpacing.s4),
-            itemBuilder: (context, i) {
-              final t = tracks[i];
-              return TrackRow(
-                track: t,
-                density: TrackRowDensity.generous,
-                onTap: () => ref.read(playActionsProvider).playSingle(t),
-                onLongPress: () => showTrackContextMenu(context, ref, t),
-              );
-            },
-          ),
+          data: (tracks) {
+            final top5 = tracks.take(5).toList();
+            if (top5.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AfColors.surfaceLow,
+                  borderRadius: BorderRadius.circular(AfRadii.lg),
+                  border: Border.all(
+                    color: AfColors.surfaceHigh.withValues(alpha: 0.6),
+                    width: 1,
+                  ),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  itemCount: top5.length,
+                  separatorBuilder: (context, index) => Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: AfColors.surfaceHigh.withValues(alpha: 0.5),
+                    // indent starts after the artwork + padding
+                    indent: AfSpacing.s16 + 56 + AfSpacing.s12,
+                    endIndent: AfSpacing.s16,
+                  ),
+                  itemBuilder: (context, i) {
+                    final t = top5[i];
+                    return TrackRow(
+                      track: t,
+                      density: TrackRowDensity.generous,
+                      onTap: () =>
+                          ref.read(playActionsProvider).playSingle(t),
+                      onLongPress: () =>
+                          showTrackContextMenu(context, ref, t),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
           loading: () => const HomeRecentSkeleton(),
           error: (e, _) => AsyncErrorView.compact(
             label: 'Couldn\'t load recently played',

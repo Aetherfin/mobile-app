@@ -47,7 +47,16 @@ class Tile extends StatelessWidget {
               : CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            art,
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AfRadii.lg),
+                border: Border.all(
+                  color: AfColors.surfaceHigh.withValues(alpha: 0.5),
+                  width: 1,
+                ),
+              ),
+              child: art,
+            ),
             const SizedBox(height: AfSpacing.s8),
             Text(
               title,

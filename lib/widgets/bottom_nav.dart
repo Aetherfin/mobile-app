@@ -83,8 +83,16 @@ class _AfBottomNavState extends ConsumerState<AfBottomNav> {
         height: 48,
         padding: EdgeInsets.symmetric(horizontal: active ? 16 : 12),
         decoration: BoxDecoration(
-          color: active ? AfColors.indigo900 : Colors.transparent,
+          color: active
+              ? AfColors.indigo500.withValues(alpha: 0.15)
+              : Colors.transparent,
           borderRadius: AfRadii.borderPill,
+          border: active
+              ? Border.all(
+                  color: AfColors.indigo400.withValues(alpha: 0.25),
+                  width: 1,
+                )
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

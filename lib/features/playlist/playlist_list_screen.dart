@@ -106,14 +106,14 @@ class PlaylistListScreen extends ConsumerWidget {
       slivers.add(
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AfSpacing.s16,
-              vertical: AfSpacing.s8,
+            padding: const EdgeInsets.fromLTRB(
+              AfSpacing.s16, AfSpacing.s8, AfSpacing.s16, AfSpacing.s8,
             ),
             child: Text(
               'Smart Playlists',
-              style: AfTypography.titleSmall.copyWith(
+              style: AfTypography.label.copyWith(
                 color: AfColors.textTertiary,
+                letterSpacing: 0.8,
               ),
             ),
           ),
@@ -123,37 +123,47 @@ class PlaylistListScreen extends ConsumerWidget {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
-            child: ListTile(
-              leading: Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(
-                  borderRadius: AfRadii.borderSm,
-                  color: AfColors.indigo900,
-                ),
-                child: const Icon(
-                  Icons.auto_awesome_rounded,
-                  color: AfColors.indigo300,
+            child: Container(
+              decoration: BoxDecoration(
+                color: AfColors.surfaceLow,
+                borderRadius: BorderRadius.circular(AfRadii.lg),
+                border: Border.all(
+                  color: AfColors.surfaceHigh.withValues(alpha: 0.6),
+                  width: 1,
                 ),
               ),
-              title: Text('Smart Playlists', style: AfTypography.titleSmall),
-              subtitle: Text(
-                '$smartCount playlists',
-                style: AfTypography.bodySmall.copyWith(
-                  color: AfColors.textTertiary,
+              child: ListTile(
+                leading: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AfRadii.md),
+                    color: AfColors.indigo900,
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: AfColors.indigo300,
+                    size: 22,
+                  ),
                 ),
+                title: Text('Smart Playlists', style: AfTypography.titleSmall),
+                subtitle: Text(
+                  '$smartCount playlists',
+                  style: AfTypography.bodySmall.copyWith(
+                    color: AfColors.textTertiary,
+                  ),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AfRadii.lg),
+                ),
+                onTap: () => context.push('/smart-playlists'),
               ),
-              tileColor: AfColors.surfaceRaised,
-              shape: const RoundedRectangleBorder(
-                borderRadius: AfRadii.borderMd,
-              ),
-              onTap: () => context.push('/smart-playlists'),
             ),
           ),
         ),
       );
       slivers.add(
-        const SliverToBoxAdapter(child: SizedBox(height: AfSpacing.s12)),
+        const SliverToBoxAdapter(child: SizedBox(height: AfSpacing.s16)),
       );
     }
 
@@ -161,14 +171,14 @@ class PlaylistListScreen extends ConsumerWidget {
       slivers.add(
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AfSpacing.s16,
-              vertical: AfSpacing.s8,
+            padding: const EdgeInsets.fromLTRB(
+              AfSpacing.s16, 0, AfSpacing.s16, AfSpacing.s8,
             ),
             child: Text(
               'My Playlists',
-              style: AfTypography.titleSmall.copyWith(
+              style: AfTypography.label.copyWith(
                 color: AfColors.textTertiary,
+                letterSpacing: 0.8,
               ),
             ),
           ),
@@ -177,39 +187,56 @@ class PlaylistListScreen extends ConsumerWidget {
       slivers.add(
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
-          sliver: SliverList.separated(
-            itemCount: list.length,
-            separatorBuilder: (context, index) =>
-                const SizedBox(height: AfSpacing.s8),
-            itemBuilder: (context, i) {
-              final p = list[i];
-              return ListTile(
-                leading: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: const BoxDecoration(
-                    borderRadius: AfRadii.borderSm,
-                    color: AfColors.indigo800,
-                  ),
-                  child: const Icon(
-                    Icons.playlist_play_rounded,
-                    color: AfColors.indigo300,
-                  ),
+          sliver: SliverToBoxAdapter(
+            child: Container(
+              decoration: BoxDecoration(
+                color: AfColors.surfaceLow,
+                borderRadius: BorderRadius.circular(AfRadii.lg),
+                border: Border.all(
+                  color: AfColors.surfaceHigh.withValues(alpha: 0.6),
+                  width: 1,
                 ),
-                title: Text(p.name, style: AfTypography.titleSmall),
-                subtitle: Text(
-                  p.trackCountLabel,
-                  style: AfTypography.bodySmall.copyWith(
-                    color: AfColors.textTertiary,
-                  ),
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                itemCount: list.length,
+                separatorBuilder: (context, index) => Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: AfColors.surfaceHigh.withValues(alpha: 0.5),
+                  indent: AfSpacing.s16 + 44 + AfSpacing.s12,
+                  endIndent: AfSpacing.s16,
                 ),
-                tileColor: AfColors.surfaceRaised,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: AfRadii.borderMd,
-                ),
-                onTap: () => context.push('/playlist/${p.id}'),
-              );
-            },
+                itemBuilder: (context, i) {
+                  final p = list[i];
+                  return ListTile(
+                    leading: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AfRadii.md),
+                        color: AfColors.indigo900,
+                      ),
+                      child: const Icon(
+                        Icons.playlist_play_rounded,
+                        color: AfColors.indigo300,
+                        size: 22,
+                      ),
+                    ),
+                    title: Text(p.name, style: AfTypography.titleSmall),
+                    subtitle: Text(
+                      p.trackCountLabel,
+                      style: AfTypography.bodySmall.copyWith(
+                        color: AfColors.textTertiary,
+                      ),
+                    ),
+                    onTap: () => context.push('/playlist/${p.id}'),
+                  );
+                },
+              ),
+            ),
           ),
         ),
       );
