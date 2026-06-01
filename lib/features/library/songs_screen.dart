@@ -774,16 +774,22 @@ class _GenresGrid extends ConsumerWidget {
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Stack(
-                    children: [
-                      // Right split artwork side - positioned at the right 45% width
-                      Positioned.fill(
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: FractionallySizedBox(
-                            widthFactor: 0.45,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final w = constraints.maxWidth;
+                      return Stack(
+                        children: [
+                          // Right split artwork side
+                          Positioned(
+                            top: 0,
+                            bottom: 0,
+                            right: 0,
+                            left: 0,
                             child: ClipPath(
-                              clipper: _DiagonalClipper(),
+                              clipper: const _DiagonalClipper(
+                                startRatio: 0.55,
+                                endRatio: 0.75,
+                              ),
                               child: Artwork(
                                 url: g.imageUrl,
                                 size: double.infinity,
@@ -792,60 +798,49 @@ class _GenresGrid extends ConsumerWidget {
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                      
-                      // Thin diagonal neon outline on split border
-                      Positioned.fill(
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: FractionallySizedBox(
-                            widthFactor: 0.45,
+                          // Thin diagonal neon outline on split border
+                          Positioned.fill(
                             child: CustomPaint(
-                              painter: _DiagonalBorderPainter(color: tint.withValues(alpha: 0.8)),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Top-most layer: Text label covering full width (but padded)
-                      Positioned(
-                        top: 12,
-                        left: 12,
-                        right: 12,
-                        bottom: 12,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              g.name.toUpperCase(),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: AfTypography.bodyMedium.copyWith(
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0.5,
-                                color: AfColors.textPrimary,
-                                fontSize: 12,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black.withValues(alpha: 0.8),
-                                    offset: const Offset(1, 1),
-                                    blurRadius: 4,
-                                  ),
-                                ],
+                              painter: _DiagonalBorderPainter(
+                                color: tint.withValues(alpha: 0.8),
+                                startRatio: 0.55,
+                                endRatio: 0.75,
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            Container(
-                              width: 16,
-                              height: 2,
-                              color: tint,
+                          ),
+                          // Left info side - restricted to left 48% to avoid overlap
+                          Positioned(
+                            left: 12,
+                            top: 0,
+                            bottom: 0,
+                            width: w * 0.48,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  g.name.toUpperCase(),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AfTypography.bodyMedium.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.3,
+                                    color: AfColors.textPrimary,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  width: 16,
+                                  height: 2,
+                                  color: tint,
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               );
@@ -870,24 +865,40 @@ class _GenresGrid extends ConsumerWidget {
 }
 
 class _DiagonalClipper extends CustomClipper<Path> {
+  const _DiagonalClipper({
+    required this.startRatio,
+    required this.endRatio,
+  });
+
+  final double startRatio;
+  final double endRatio;
+
   @override
   Path getClip(Size size) {
     final path = Path()
-      ..moveTo(size.width * 0.25, 0)
+      ..moveTo(size.width * startRatio, 0)
       ..lineTo(size.width, 0)
       ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
+      ..lineTo(size.width * endRatio, size.height)
       ..close();
     return path;
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+  bool shouldReclip(covariant _DiagonalClipper oldClipper) =>
+      oldClipper.startRatio != startRatio || oldClipper.endRatio != endRatio;
 }
 
 class _DiagonalBorderPainter extends CustomPainter {
-  _DiagonalBorderPainter({required this.color});
+  _DiagonalBorderPainter({
+    required this.color,
+    required this.startRatio,
+    required this.endRatio,
+  });
+
   final Color color;
+  final double startRatio;
+  final double endRatio;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -898,12 +909,15 @@ class _DiagonalBorderPainter extends CustomPainter {
       ..isAntiAlias = true;
 
     final path = Path()
-      ..moveTo(size.width * 0.25, 0)
-      ..lineTo(0, size.height);
+      ..moveTo(size.width * startRatio, 0)
+      ..lineTo(size.width * endRatio, size.height);
 
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant _DiagonalBorderPainter oldDelegate) => oldDelegate.color != color;
+  bool shouldRepaint(covariant _DiagonalBorderPainter oldDelegate) =>
+      oldDelegate.color != color ||
+      oldDelegate.startRatio != startRatio ||
+      oldDelegate.endRatio != endRatio;
 }
