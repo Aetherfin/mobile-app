@@ -774,49 +774,59 @@ class _GenresGrid extends ConsumerWidget {
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Stack(
+                  child: Row(
                     children: [
-                      // Subdued rotated artwork on the side
-                      Positioned(
-                        bottom: -16,
-                        right: -16,
-                        width: 70,
-                        height: 70,
-                        child: Opacity(
-                          opacity: 0.65,
-                          child: Transform.rotate(
-                            angle: -0.2,
-                            child: Artwork(
-                              url: g.imageUrl,
-                              size: 70,
-                            ),
+                      // Left info side
+                      Expanded(
+                        flex: 55,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                g.name.toUpperCase(),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: AfTypography.bodyMedium.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.5,
+                                  color: AfColors.textPrimary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                width: 16,
+                                height: 2,
+                                color: tint,
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      
-                      // Bold left label
-                      Positioned(
-                        top: 14,
-                        left: 14,
-                        right: 14,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      // Right split artwork side
+                      Expanded(
+                        flex: 45,
+                        child: Stack(
                           children: [
-                            Text(
-                              g.name.toUpperCase(),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: AfTypography.bodyMedium.copyWith(
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0.5,
-                                color: AfColors.textPrimary,
+                            Positioned.fill(
+                              child: ClipPath(
+                                clipper: _DiagonalClipper(),
+                                child: Artwork(
+                                  url: g.imageUrl,
+                                  size: double.infinity,
+                                  radius: BorderRadius.zero,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Container(
-                              width: 16,
-                              height: 1.5,
-                              color: tint,
+                            // Thin diagonal neon outline on split border
+                            Positioned.fill(
+                              child: CustomPaint(
+                                painter: _DiagonalBorderPainter(color: tint.withValues(alpha: 0.8)),
+                              ),
                             ),
                           ],
                         ),
@@ -843,4 +853,43 @@ class _GenresGrid extends ConsumerWidget {
     final q = query.toLowerCase();
     return genres.where((g) => g.name.toLowerCase().contains(q)).toList();
   }
+}
+
+class _DiagonalClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path()
+      ..moveTo(size.width * 0.25, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _DiagonalBorderPainter extends CustomPainter {
+  _DiagonalBorderPainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
+
+    final path = Path()
+      ..moveTo(size.width * 0.25, 0)
+      ..lineTo(0, size.height);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _DiagonalBorderPainter oldDelegate) => oldDelegate.color != color;
 }

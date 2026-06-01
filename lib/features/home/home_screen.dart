@@ -1098,6 +1098,7 @@ class _BentoGenreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tint = _hex(genre.tint);
     return GestureDetector(
       onTap: () {
         ref.read(songsPillProvider.notifier).state = SongsPill.genres;
@@ -1115,49 +1116,59 @@ class _BentoGenreCard extends StatelessWidget {
           ),
         ),
         clipBehavior: Clip.antiAlias,
-        child: Stack(
+        child: Row(
           children: [
-            // Artwork on lower right corner
-            Positioned(
-              bottom: -16,
-              right: -16,
-              width: width * 0.6,
-              height: height * 0.7,
-              child: Opacity(
-                opacity: 0.65,
-                child: Transform.rotate(
-                  angle: -0.2,
-                  child: Artwork(
-                    url: genre.imageUrl,
-                    size: width * 0.6,
-                  ),
+            // Left info side
+            Expanded(
+              flex: 55,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      genre.name.toUpperCase(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AfTypography.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                        color: AfColors.textPrimary,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 16,
+                      height: 2,
+                      color: tint,
+                    ),
+                  ],
                 ),
               ),
             ),
-            
-            // Large architectural label
-            Positioned(
-              top: 14,
-              left: 14,
-              right: 14,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // Right split artwork side
+            Expanded(
+              flex: 45,
+              child: Stack(
                 children: [
-                  Text(
-                    genre.name.toUpperCase(),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AfTypography.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
-                      color: AfColors.textPrimary,
+                  Positioned.fill(
+                    child: ClipPath(
+                      clipper: _DiagonalClipper(),
+                      child: Artwork(
+                        url: genre.imageUrl,
+                        size: double.infinity,
+                        radius: BorderRadius.zero,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Container(
-                    width: 12,
-                    height: 2,
-                    color: AfColors.indigo400,
+                  // Thin diagonal neon outline on split border
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _DiagonalBorderPainter(color: tint.withValues(alpha: 0.8)),
+                    ),
                   ),
                 ],
               ),
@@ -1166,5 +1177,58 @@ class _BentoGenreCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _DiagonalClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path()
+      ..moveTo(size.width * 0.25, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _DiagonalBorderPainter extends CustomPainter {
+  _DiagonalBorderPainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
+
+    final path = Path()
+      ..moveTo(size.width * 0.25, 0)
+      ..lineTo(0, size.height);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _DiagonalBorderPainter oldDelegate) => oldDelegate.color != color;
+}
+
+Color _hex(String hex) {
+  try {
+    final cleaned = hex.replaceFirst('#', '');
+    if (cleaned.length != 6 && cleaned.length != 8) return AfColors.indigo600;
+    final value = int.parse(
+      cleaned.length == 6 ? 'FF$cleaned' : cleaned,
+      radix: 16,
+    );
+    return Color(value);
+  } catch (_) {
+    return AfColors.indigo600;
   }
 }
