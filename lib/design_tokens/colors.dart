@@ -15,18 +15,18 @@ abstract final class AfColors {
   // ---------------------------------------------------------------------------
   // Indigo primary scale (hue 275°)
   // ---------------------------------------------------------------------------
-  static const indigo50  = Color(0xFFEEF2FF);
-  static const indigo100 = Color(0xFFE0E7FF);
-  static const indigo200 = Color(0xFFC7D2FE);
-  static const indigo300 = Color(0xFFA5B4FC);
-  static const indigo400 = Color(0xFF818CF8);
-  static const indigo500 = Color(0xFF6366F1);
-  static const indigo600 = Color(0xFF4F46E5); // Primary action
-  static const indigo700 = Color(0xFF4338CA); // Pressed
-  static const indigo800 = Color(0xFF3730A3); // Hero card gradient base
-  static const indigo900 = Color(0xFF1E1B4B); // Section-tinted surfaces
-  static const indigo950 = Color(0xFF0F0E2E); // Deep tint for sheets
-  static const indigo1000 = Color(0xFF08071A); // Reserved emergency depth
+  static const indigo50  = Color(0xFFF0F2FF);
+  static const indigo100 = Color(0xFFE3E6FF);
+  static const indigo200 = Color(0xFFCCD2FF);
+  static const indigo300 = Color(0xFFA3B0FF);
+  static const indigo400 = Color(0xFF8B93FF);
+  static const indigo500 = Color(0xFF6C72FF);
+  static const indigo600 = Color(0xFF5356FF); // Primary action
+  static const indigo700 = Color(0xFF3F42E6); // Pressed
+  static const indigo800 = Color(0xFF2B2EBE); // Hero card gradient base
+  static const indigo900 = Color(0xFF1B1D9A); // Section-tinted surfaces
+  static const indigo950 = Color(0xFF0C0E56); // Deep tint for sheets
+  static const indigo1000 = Color(0xFF060733); // Reserved emergency depth
 
   // ---------------------------------------------------------------------------
   // Surface scale — Nocturne (dark)

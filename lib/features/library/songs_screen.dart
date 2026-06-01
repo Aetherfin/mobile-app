@@ -516,6 +516,7 @@ class _ArtistsGrid extends ConsumerWidget {
                           child: Artwork(
                             url: a.imageUrl,
                             size: 80,
+                            radius: BorderRadius.circular(40),
                           ),
                         ),
                       ],
@@ -782,7 +783,7 @@ class _GenresGrid extends ConsumerWidget {
                         width: 70,
                         height: 70,
                         child: Opacity(
-                          opacity: 0.3,
+                          opacity: 0.65,
                           child: Transform.rotate(
                             angle: -0.2,
                             child: Artwork(

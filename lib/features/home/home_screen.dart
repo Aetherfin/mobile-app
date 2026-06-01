@@ -941,6 +941,7 @@ class _ReworkedArtistsSection extends ConsumerWidget {
                               child: Artwork(
                                 url: a.imageUrl,
                                 size: 90,
+                                radius: BorderRadius.circular(45),
                               ),
                             ),
                           ],
@@ -1123,7 +1124,7 @@ class _BentoGenreCard extends StatelessWidget {
               width: width * 0.6,
               height: height * 0.7,
               child: Opacity(
-                opacity: 0.35,
+                opacity: 0.65,
                 child: Transform.rotate(
                   angle: -0.2,
                   child: Artwork(
