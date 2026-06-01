@@ -1116,59 +1116,70 @@ class _BentoGenreCard extends StatelessWidget {
           ),
         ),
         clipBehavior: Clip.antiAlias,
-        child: Row(
+        child: Stack(
           children: [
-            // Left info side
-            Expanded(
-              flex: 55,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      genre.name.toUpperCase(),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AfTypography.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
-                        color: AfColors.textPrimary,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: 16,
-                      height: 2,
-                      color: tint,
-                    ),
-                  ],
+            // Right split artwork side - positioned at the right 45% width
+            Positioned(
+              top: 0,
+              bottom: 0,
+              right: 0,
+              width: width * 0.45,
+              child: ClipPath(
+                clipper: _DiagonalClipper(),
+                child: Artwork(
+                  url: genre.imageUrl,
+                  size: double.infinity,
+                  radius: BorderRadius.zero,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
-            // Right split artwork side
-            Expanded(
-              flex: 45,
-              child: Stack(
+            
+            // Thin diagonal neon outline on split border
+            Positioned(
+              top: 0,
+              bottom: 0,
+              right: 0,
+              width: width * 0.45,
+              child: CustomPaint(
+                painter: _DiagonalBorderPainter(color: tint.withValues(alpha: 0.8)),
+              ),
+            ),
+
+            // Top-most layer: Text label covering full width (but padded)
+            // It can flow over the diagonal border if it's long, looking super neat
+            Positioned(
+              top: 14,
+              left: 14,
+              right: 14,
+              bottom: 14,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Positioned.fill(
-                    child: ClipPath(
-                      clipper: _DiagonalClipper(),
-                      child: Artwork(
-                        url: genre.imageUrl,
-                        size: double.infinity,
-                        radius: BorderRadius.zero,
-                        fit: BoxFit.cover,
-                      ),
+                  Text(
+                    genre.name.toUpperCase(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AfTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                      color: AfColors.textPrimary,
+                      fontSize: 12,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.8),
+                          offset: const Offset(1, 1),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                   ),
-                  // Thin diagonal neon outline on split border
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _DiagonalBorderPainter(color: tint.withValues(alpha: 0.8)),
-                    ),
+                  const SizedBox(height: 6),
+                  Container(
+                    width: 16,
+                    height: 2,
+                    color: tint,
                   ),
                 ],
               ),
