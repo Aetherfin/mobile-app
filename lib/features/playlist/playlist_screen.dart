@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/audio/play_actions.dart';
 import '../../core/backend/music_backend.dart';
@@ -16,13 +17,8 @@ import '../../widgets/track_context_menu.dart';
 import '../../widgets/track_row.dart';
 import '../../widgets/skeletons/playlist_skeleton.dart';
 import 'export_m3u_dialog.dart';
+import 'playlist_list_screen.dart' show AbstractPlaylistCover;
 
-/// Playlist detail screen with full management:
-///   • Play / Shuffle
-///   • Drag-to-reorder tracks
-///   • Swipe-to-remove tracks
-///   • Rename playlist (appbar action)
-///   • Delete playlist (appbar action)
 class PlaylistScreen extends ConsumerStatefulWidget {
   const PlaylistScreen({super.key, required this.playlistId});
   final String playlistId;
@@ -32,7 +28,6 @@ class PlaylistScreen extends ConsumerStatefulWidget {
 }
 
 class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
-  /// Local mutable copy of the track list for optimistic reorder/remove.
   List<AfTrack>? _localTracks;
 
   @override
@@ -48,31 +43,45 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
       backgroundColor: AfColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: AfColors.surfaceCanvas,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(LucideIcons.arrowLeft, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: Text('Playlist', style: AfTypography.titleSmall),
+        title: const Text(
+          'PLAYLIST INDEX',
+          style: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AfColors.textTertiary,
+            letterSpacing: 1.0,
+          ),
+        ),
+        centerTitle: true,
         actions: [
           if (backend != null)
             PopupMenuButton<_PlaylistAction>(
-              icon: const Icon(Icons.more_vert_rounded),
+              icon: const Icon(LucideIcons.moreVertical, size: 20),
+              color: AfColors.surfaceBase,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               onSelected: (action) =>
                   _handleAction(context, action, detailAsync.valueOrNull),
               itemBuilder: (context) => [
                 const PopupMenuItem(
                   value: _PlaylistAction.rename,
                   child: ListTile(
-                    leading: Icon(Icons.edit_outlined),
-                    title: Text('Rename'),
+                    leading: Icon(LucideIcons.edit3, size: 16),
+                    title: Text('RENAME'),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
                 const PopupMenuItem(
                   value: _PlaylistAction.exportM3U,
                   child: ListTile(
-                    leading: Icon(Icons.download_rounded),
-                    title: Text('Export M3U'),
+                    leading: Icon(LucideIcons.download, size: 16),
+                    title: Text('EXPORT M3U'),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
@@ -80,11 +89,12 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
                   value: _PlaylistAction.delete,
                   child: ListTile(
                     leading: Icon(
-                      Icons.delete_outline_rounded,
+                      LucideIcons.trash2,
                       color: AfColors.semanticError,
+                      size: 16,
                     ),
                     title: Text(
-                      'Delete playlist',
+                      'DELETE',
                       style: TextStyle(color: AfColors.semanticError),
                     ),
                     contentPadding: EdgeInsets.zero,
@@ -107,7 +117,6 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
             return const Center(child: Text('Playlist not found'));
           }
           final pl = detail.playlist;
-          // Use local copy if available (after reorder/remove), else server data.
           final tracks = _localTracks ?? detail.tracks;
 
           return SafeArea(
@@ -115,12 +124,12 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
               child: CustomScrollView(
                 physics: const ClampingScrollPhysics(),
                 slivers: [
-                  // Header.
+                  // Header
                   SliverToBoxAdapter(
                     child: _Header(pl: pl, tracks: tracks),
                   ),
 
-                  // Action row.
+                  // Action row
                   SliverToBoxAdapter(
                     child: _ActionRow(
                       tracks: tracks,
@@ -136,7 +145,7 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
                   ),
 
                   const SliverToBoxAdapter(
-                    child: SizedBox(height: AfSpacing.s16),
+                    child: SizedBox(height: AfSpacing.s24),
                   ),
 
                   // Track list — reorderable when signed in.
@@ -159,6 +168,9 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
                         ),
                         itemBuilder: (context, i) {
                           final t = tracks[i];
+                          final displayIdx = (i + 1).toString().padLeft(3, '0');
+                          final isPlaying = t.id == activeId;
+
                           return Dismissible(
                             key: ValueKey('${t.id}-$i'),
                             direction: DismissDirection.endToStart,
@@ -171,47 +183,72 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
                                 alpha: 0.15,
                               ),
                               child: const Icon(
-                                Icons.delete_outline_rounded,
+                                LucideIcons.trash2,
                                 color: AfColors.semanticError,
+                                size: 20,
                               ),
                             ),
                             confirmDismiss: (_) =>
                                 _confirmRemove(context, t.title),
                             onDismissed: (_) =>
                                 _removeTrack(i, tracks, backend, pl.id),
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: AfSpacing.s4,
+                            child: Container(
+                              key: ValueKey('container-${t.id}-$i'),
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: AfColors.surfaceBase,
+                                    width: 1,
+                                  ),
+                                ),
                               ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: TrackRow(
-                                      track: t,
-                                      isActive: t.id == activeId,
-                                      isBuffering:
-                                          t.id == activeId && isBuffering,
-                                      activeAccent: activeAccent,
-                                      onTap: () => ref
-                                          .read(playActionsProvider)
-                                          .playQueue(tracks, startIndex: i),
-                                      onLongPress: () =>
-                                          showTrackContextMenu(context, ref, t),
-                                    ),
-                                  ),
-                                  ReorderableDragStartListener(
-                                    index: i,
-                                    child: const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: AfSpacing.s8,
-                                      ),
-                                      child: Icon(
-                                        Icons.drag_indicator_rounded,
-                                        color: AfColors.textTertiary,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  children: [
+                                    // Three-digit serial
+                                    SizedBox(
+                                      width: 32,
+                                      child: Text(
+                                        displayIdx,
+                                        style: TextStyle(
+                                          fontFamily: 'monospace',
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: isPlaying ? AfColors.indigo400 : AfColors.textDisabled,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: TrackRow(
+                                        track: t,
+                                        isActive: isPlaying,
+                                        isBuffering:
+                                            isPlaying && isBuffering,
+                                        activeAccent: activeAccent,
+                                        onTap: () => ref
+                                            .read(playActionsProvider)
+                                            .playQueue(tracks, startIndex: i),
+                                        onLongPress: () =>
+                                            showTrackContextMenu(context, ref, t),
+                                      ),
+                                    ),
+                                    ReorderableDragStartListener(
+                                      index: i,
+                                      child: const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: AfSpacing.s8,
+                                        ),
+                                        child: Icon(
+                                          LucideIcons.gripVertical,
+                                          color: AfColors.textTertiary,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -225,25 +262,53 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
                         childCount: tracks.length,
                         (context, i) {
                           final t = tracks[i];
+                          final displayIdx = (i + 1).toString().padLeft(3, '0');
+                          final isPlaying = t.id == activeId;
+
                           return Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: AfSpacing.s16,
                             ),
-                            child: Column(
-                              children: [
-                                TrackRow(
-                                  track: t,
-                                  isActive: t.id == activeId,
-                                  isBuffering: t.id == activeId && isBuffering,
-                                  activeAccent: activeAccent,
-                                  onTap: () => ref
-                                      .read(playActionsProvider)
-                                      .playQueue(tracks, startIndex: i),
-                                  onLongPress: () =>
-                                      showTrackContextMenu(context, ref, t),
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: AfColors.surfaceBase,
+                                    width: 1,
+                                  ),
                                 ),
-                                const SizedBox(height: 4),
-                              ],
+                              ),
+                              child: Row(
+                                children: [
+                                  // Three-digit serial
+                                  SizedBox(
+                                    width: 32,
+                                    child: Text(
+                                      displayIdx,
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: isPlaying ? AfColors.indigo400 : AfColors.textDisabled,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: TrackRow(
+                                      track: t,
+                                      isActive: isPlaying,
+                                      isBuffering: isPlaying && isBuffering,
+                                      activeAccent: activeAccent,
+                                      onTap: () => ref
+                                          .read(playActionsProvider)
+                                          .playQueue(tracks, startIndex: i),
+                                      onLongPress: () =>
+                                          showTrackContextMenu(context, ref, t),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },
@@ -251,9 +316,7 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
                     ),
 
                   const SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: AfSpacing.bottomInsetWithMiniAndNav,
-                    ),
+                    child: SizedBox(height: AfSpacing.bottomInsetWithMiniAndNav),
                   ),
                 ],
               ),
@@ -264,8 +327,6 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
     );
   }
 
-  // ── Reorder ────────────────────────────────────────────────────────────────
-
   void _onReorder(
     int oldIndex,
     int newIndex,
@@ -273,18 +334,14 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
     MusicBackend client,
     String playlistId,
   ) {
-    // Note: no newIndex adjustment needed — onReorderItem already handles it.
     final updated = List<AfTrack>.from(tracks);
     final item = updated.removeAt(oldIndex);
     updated.insert(newIndex, item);
     setState(() => _localTracks = updated);
 
-    // Fire-and-forget server sync — uses playlist entry ID (item.id is the
-    // track ID here; movePlaylistItem uses it as the entry identifier).
     client.movePlaylistItem(playlistId, item.id, newIndex).catchError((
       Object e,
     ) {
-      // Revert on failure.
       if (mounted) {
         setState(() => _localTracks = tracks);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -293,8 +350,6 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
       }
     });
   }
-
-  // ── Remove ─────────────────────────────────────────────────────────────────
 
   Future<bool> _confirmRemove(BuildContext context, String title) async {
     return await showBlurDialog<bool>(
@@ -332,11 +387,6 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
         false;
   }
 
-  /// Remove a track from the playlist.
-  ///
-  /// Awaits the server call before invalidating providers so the refetch
-  /// sees the updated list (not the pre-delete snapshot). Reverts the
-  /// optimistic local state on failure.
   Future<void> _removeTrack(
     int index,
     List<AfTrack> tracks,
@@ -348,16 +398,12 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
     setState(() => _localTracks = updated);
 
     try {
-      // Pass the track ID as the entry ID. Jellyfin's playlist endpoint
-      // accepts both track IDs and per-entry IDs for non-duplicate playlists.
       await client.removeFromPlaylist(playlistId, [removed.id]);
 
       ref
           .read(playlistUndoBufferProvider)
           .pushRemove(playlistId, [removed.id], [removed.id]);
 
-      // Invalidate only after the server confirms the delete so the
-      // refetch sees the updated list, not the pre-delete snapshot.
       ref.invalidate(playlistDetailProvider(widget.playlistId));
       ref.invalidate(allPlaylistsProvider);
 
@@ -401,8 +447,6 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
       }
     }
   }
-
-  // ── Rename / Delete ────────────────────────────────────────────────────────
 
   Future<void> _handleAction(
     BuildContext context,
@@ -545,9 +589,7 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
 
 enum _PlaylistAction { rename, exportM3U, delete }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sub-widgets
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Sub-widgets ─────────────────────────────────────────────────────────────
 
 class _Header extends StatelessWidget {
   const _Header({required this.pl, required this.tracks});
@@ -559,46 +601,71 @@ class _Header extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AfSpacing.s16,
-        AfSpacing.s8,
         AfSpacing.s16,
         AfSpacing.s16,
+        AfSpacing.s24,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Generative playlist artwork with asymmetric borders
           Container(
-            width: 96,
-            height: 96,
-            decoration: const BoxDecoration(
-              borderRadius: AfRadii.borderMd,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AfColors.indigo700, AfColors.indigo950],
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              border: Border.all(
+                color: AfColors.surfaceHigh,
+                width: 1.5,
               ),
             ),
-            child: const Icon(
-              Icons.playlist_play_rounded,
-              color: AfColors.indigo300,
-              size: 40,
-            ),
+            clipBehavior: Clip.antiAlias,
+            child: AbstractPlaylistCover(seed: pl.id),
           ),
-          const SizedBox(width: AfSpacing.s16),
+          const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AfColors.surfaceBase,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AfColors.surfaceHigh),
+                  ),
+                  child: Text(
+                    'PL.ID // ${pl.id.substring(0, 4).toUpperCase()}',
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: AfColors.indigo400,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Text(
-                  pl.name,
-                  style: AfTypography.titleLarge,
+                  pl.name.toUpperCase(),
+                  style: AfTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.2,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: AfSpacing.s4),
+                const SizedBox(height: 8),
                 Text(
-                  '${tracks.length} ${tracks.length == 1 ? "track" : "tracks"}',
-                  style: AfTypography.bodySmall.copyWith(
+                  '${tracks.length} INDEXED TRACKS',
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 9,
                     color: AfColors.textTertiary,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ],
@@ -630,24 +697,32 @@ class _ActionRow extends StatelessWidget {
             child: PressScale(
               onTap: tracks.isEmpty ? null : onPlay,
               child: Container(
-                height: 48,
-                decoration: const BoxDecoration(
+                height: 44,
+                decoration: BoxDecoration(
                   color: AfColors.indigo600,
-                  borderRadius: AfRadii.borderPill,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AfColors.indigo500,
+                    width: 1,
+                  ),
                 ),
                 alignment: Alignment.center,
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(
-                      Icons.play_arrow_rounded,
+                      LucideIcons.play,
                       color: AfColors.textOnPrimary,
+                      size: 14,
                     ),
-                    const SizedBox(width: AfSpacing.s8),
+                    const SizedBox(width: 8),
                     Text(
-                      'Play',
+                      'PLAY SET',
                       style: AfTypography.bodyMedium.copyWith(
                         color: AfColors.textOnPrimary,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                        fontSize: 12,
                       ),
                     ),
                   ],
@@ -655,27 +730,35 @@ class _ActionRow extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: AfSpacing.s12),
+          const SizedBox(width: 12),
           Expanded(
             child: PressScale(
               onTap: tracks.isEmpty ? null : onShuffle,
               child: Container(
-                height: 48,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: AfColors.surfaceBase,
-                  borderRadius: AfRadii.borderPill,
-                  border: Border.all(color: AfColors.surfaceHigh, width: 1),
+                  color: AfColors.surfaceLow,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AfColors.surfaceHigh, width: 1.5),
                 ),
                 alignment: Alignment.center,
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(
-                      Icons.shuffle_rounded,
+                      LucideIcons.shuffle,
                       color: AfColors.textPrimary,
+                      size: 14,
                     ),
-                    const SizedBox(width: AfSpacing.s8),
-                    Text('Shuffle', style: AfTypography.bodyMedium),
+                    const SizedBox(width: 8),
+                    Text(
+                      'SHUFFLE',
+                      style: AfTypography.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),

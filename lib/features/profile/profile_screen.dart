@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,15 +18,15 @@ import '../../widgets/artwork.dart';
 import '../../widgets/bottom_sheet.dart';
 import '../../widgets/section_header.dart';
 
-/// Mockup 09 — Profile.
+/// Reworked Profile Screen — Music Identity Passport & Diagnostic Hub.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
-    final name = auth?.userName ?? 'You';
-    final serverName = auth?.server.name ?? 'Local library';
+    final name = auth?.userName ?? 'YOU';
+    final serverName = auth?.server.name ?? 'LOCAL LIBRARY';
     final profilePhoto = ref.watch(profilePhotoProvider);
 
     final mode = ref.watch(appModeProvider);
@@ -44,7 +43,6 @@ class ProfileScreen extends ConsumerWidget {
     String fmtCount<T>(AsyncValue<List<T>> async) =>
         async.maybeWhen(data: (list) => _fmt(list.length), orElse: () => '—');
 
-    // Favourites first, else most-recently-added so the row is never empty.
     final pinned = favAlbumsAsync.maybeWhen(
       data: (favs) => favs.isNotEmpty
           ? favs.take(8).toList()
@@ -64,101 +62,111 @@ class ProfileScreen extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
         children: [
-          const SizedBox(height: AfSpacing.s24),
-          Center(
-            child: Column(
-              children: [
-                _AvatarImagePicker(
-                  name: name,
-                  isUploading: profilePhoto.isUploading,
-                  localPath: profilePhoto.localPath,
-                  networkUrl: profilePhoto.networkUrl,
-                  authHeaders: ref.watch(musicBackendProvider)?.authHeaders,
-                  onPickPhoto: (source) async {
-                    final picker = ImagePicker();
-                    try {
-                      final image = await picker.pickImage(
-                        source: source,
-                        maxWidth: 512,
-                        maxHeight: 512,
-                        imageQuality: 85,
-                      );
-                      if (image != null) {
-                        final bytes = await image.readAsBytes();
-                        final mimeType = image.mimeType ?? 'image/jpeg';
-                        await ref
-                            .read(profilePhotoProvider.notifier)
-                            .updatePhoto(bytes, mimeType);
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Failed to update profile photo: $e'),
-                            backgroundColor: AfColors.semanticError,
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  onRemovePhoto: () async {
-                    try {
-                      await ref
-                          .read(profilePhotoProvider.notifier)
-                          .removePhoto();
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Failed to remove profile photo: $e'),
-                            backgroundColor: AfColors.semanticError,
-                          ),
-                        );
-                      }
-                    }
-                  },
-                ),
-                const SizedBox(height: AfSpacing.s12),
-                Text(name, style: AfTypography.titleLarge),
-                const SizedBox(height: 2),
-                Text(
-                  serverName,
-                  style: AfTypography.bodySmall.copyWith(
-                    color: AfColors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
+          const SizedBox(height: AfSpacing.s20),
+
+          // ── PHYSICAL MEMBER PASS CARD ──
+          _MemberPassCard(
+            name: name,
+            serverName: serverName,
+            profilePhoto: profilePhoto,
+            isLocal: isLocal,
+            onPickPhoto: (source) async {
+              final picker = ImagePicker();
+              try {
+                final image = await picker.pickImage(
+                  source: source,
+                  maxWidth: 512,
+                  maxHeight: 512,
+                  imageQuality: 85,
+                );
+                if (image != null) {
+                  final bytes = await image.readAsBytes();
+                  final mimeType = image.mimeType ?? 'image/jpeg';
+                  await ref
+                      .read(profilePhotoProvider.notifier)
+                      .updatePhoto(bytes, mimeType);
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to update profile photo: $e'),
+                      backgroundColor: AfColors.semanticError,
+                    ),
+                  );
+                }
+              }
+            },
+            onRemovePhoto: () async {
+              try {
+                await ref.read(profilePhotoProvider.notifier).removePhoto();
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to remove profile photo: $e'),
+                      backgroundColor: AfColors.semanticError,
+                    ),
+                  );
+                }
+              }
+            },
+            authHeaders: ref.watch(musicBackendProvider)?.authHeaders,
           ),
-          const SizedBox(height: AfSpacing.s24),
-          Row(
-            children: [
-              _StatCard(label: 'Tracks', value: fmtCount(tracksAsync)),
-              const SizedBox(width: AfSpacing.s12),
-              _StatCard(label: 'Albums', value: fmtCount(albumsAsync)),
-            ],
-          ),
-          const SizedBox(height: AfSpacing.s24),
-          const SectionHeader(title: 'Pinned', uppercase: true),
-          const SizedBox(height: AfSpacing.s8),
-          _PinnedRow(albums: pinned),
+
           const SizedBox(height: AfSpacing.s24),
 
-          // ── Listening Stats Dashboard ──────────────────────────────────────
-          const SectionHeader(title: 'Listening Stats', uppercase: true),
+          // ── SYSTEM DIAGNOSTIC STATS ──
+          Row(
+            children: [
+              _ReworkedStatCard(
+                label: 'TRACKS INDEXED',
+                value: fmtCount(tracksAsync),
+                progress: 0.72,
+              ),
+              const SizedBox(width: AfSpacing.s16),
+              _ReworkedStatCard(
+                label: 'ALBUMS INDEXED',
+                value: fmtCount(albumsAsync),
+                progress: 0.48,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: AfSpacing.s24),
+
+          // ── PINNED CD STACK / OVERLAPPING CAROUSEL ──
+          const SectionHeader(title: 'PINNED ARCHIVES', uppercase: true),
+          const SizedBox(height: AfSpacing.s12),
+          _OverlappingCDStack(albums: pinned),
+
+          const SizedBox(height: AfSpacing.s24),
+
+          // ── LISTENING STATS DASHBOARD ──
+          const SectionHeader(title: 'LISTENING INTEL', uppercase: true),
           const SizedBox(height: AfSpacing.s12),
           if (!isLastFmConnected) _LastFmConnectionCTA(),
           _StatsDashboard(isLastFmConnected: isLastFmConnected),
           const SizedBox(height: AfSpacing.s24),
 
-          const SectionHeader(title: 'Account', uppercase: true),
+          // ── ACCOUNT OPTIONS ──
+          const SectionHeader(title: 'SYSTEM SETTINGS', uppercase: true),
           const SizedBox(height: AfSpacing.s8),
           ListTile(
-            leading: const Icon(Icons.settings_outlined),
-            title: const Text('Settings'),
+            leading: const Icon(LucideIcons.settings, size: 18, color: AfColors.indigo400),
+            title: const Text(
+              'PREFERENCES & SETUP',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+              ),
+            ),
             tileColor: AfColors.surfaceBase,
             shape: const RoundedRectangleBorder(borderRadius: AfRadii.borderMd),
             onTap: () => context.push('/settings'),
+            trailing: const Icon(LucideIcons.chevronRight, size: 16, color: AfColors.textTertiary),
           ),
           const SizedBox(height: AfSpacing.bottomInsetWithMiniAndNav),
         ],
@@ -166,7 +174,6 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  /// Format a count with thousands separators ("2,247").
   String _fmt(int n) {
     final s = n.toString();
     final buf = StringBuffer();
@@ -178,29 +185,215 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value});
+/// Physical Member Pass Card with a fake barcode
+class _MemberPassCard extends StatelessWidget {
+  const _MemberPassCard({
+    required this.name,
+    required this.serverName,
+    required this.profilePhoto,
+    required this.isLocal,
+    required this.onPickPhoto,
+    required this.onRemovePhoto,
+    this.authHeaders,
+  });
+
+  final String name;
+  final String serverName;
+  final ProfilePhotoState profilePhoto;
+  final bool isLocal;
+  final ValueChanged<ImageSource> onPickPhoto;
+  final VoidCallback onRemovePhoto;
+  final Map<String, String>? authHeaders;
+
+  @override
+  Widget build(BuildContext context) {
+    final passId = 'ID.${name.hashCode.abs().toString().padLeft(6, '0').substring(0, 6)}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AfColors.surfaceLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AfColors.surfaceHigh, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Avatar on Left
+              _AvatarImagePicker(
+                name: name,
+                isUploading: profilePhoto.isUploading,
+                localPath: profilePhoto.localPath,
+                networkUrl: profilePhoto.networkUrl,
+                authHeaders: authHeaders,
+                onPickPhoto: onPickPhoto,
+                onRemovePhoto: onRemovePhoto,
+              ),
+              const SizedBox(width: 16),
+              // Pass Details on Right
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'MEMBER PASS',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: AfColors.indigo400,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        Text(
+                          isLocal ? 'OFFLINE' : 'ONLINE',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: isLocal ? AfColors.textTertiary : AfColors.semanticSuccess,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      name.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AfTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      serverName.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10,
+                        color: AfColors.textTertiary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      passId,
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 9,
+                        color: AfColors.textDisabled,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Fake barcode decoration at the bottom
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 24,
+                  child: Row(
+                    children: List.generate(24, (i) {
+                      final widths = [3.0, 1.0, 4.0, 2.0, 1.0, 3.0, 2.0, 5.0, 1.0, 2.0, 4.0, 1.0];
+                      final isGap = i % 2 == 1;
+                      final w = widths[i % widths.length];
+                      return isGap
+                          ? SizedBox(width: w)
+                          : Container(
+                              width: w,
+                              color: AfColors.textTertiary.withValues(alpha: 0.7),
+                            );
+                    }),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'SYS.AETHER.81',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 8,
+                  color: AfColors.textTertiary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Stat card with architectural diagnostics
+class _ReworkedStatCard extends StatelessWidget {
+  const _ReworkedStatCard({
+    required this.label,
+    required this.value,
+    required this.progress,
+  });
   final String label;
   final String value;
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(AfSpacing.s16),
-        decoration: const BoxDecoration(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
           color: AfColors.surfaceBase,
-          borderRadius: AfRadii.borderMd,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AfColors.surfaceHigh),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(value, style: AfTypography.titleLarge),
-            const SizedBox(height: 2),
             Text(
               label,
-              style: AfTypography.bodySmall.copyWith(
-                color: AfColors.textSecondary,
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: AfColors.textTertiary,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              value,
+              style: AfTypography.titleMedium.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Diagnostic bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 3,
+                backgroundColor: AfColors.surfaceLow,
+                valueColor: const AlwaysStoppedAnimation<Color>(AfColors.indigo400),
               ),
             ),
           ],
@@ -210,69 +403,60 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _PinnedRow extends StatelessWidget {
-  const _PinnedRow({required this.albums});
+/// CD stack / Overlapping vinyl carousel
+class _OverlappingCDStack extends StatelessWidget {
+  const _OverlappingCDStack({required this.albums});
   final List<AfAlbum> albums;
 
   @override
   Widget build(BuildContext context) {
     if (albums.isEmpty) {
-      return SizedBox(
-        height: 120,
-        child: Center(
-          child: Text(
-            'Heart an album to pin it here.',
-            style: AfTypography.bodySmall.copyWith(
-              color: AfColors.textTertiary,
-            ),
-          ),
+      return Container(
+        height: 110,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AfColors.surfaceLow,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Text(
+          'NO PINNED ITEMS',
+          style: TextStyle(fontFamily: 'monospace', fontSize: 10, color: AfColors.textTertiary),
         ),
       );
     }
+
     return SizedBox(
       height: 120,
-      child: ListView.separated(
+      child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: albums.length,
-        separatorBuilder: (context, index) =>
-            const SizedBox(width: AfSpacing.s12),
         itemBuilder: (context, i) {
-          final a = albums[i];
-          return GestureDetector(
-            onTap: () => context.push('/album/${a.id}'),
-            child: SizedBox(
-              width: 120,
-              child: Stack(
-                children: [
-                  Artwork(url: a.imageUrl, size: 120, radius: AfRadii.borderMd),
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: AfRadii.borderMd,
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.55),
-                          ],
-                          stops: const [0.5, 1.0],
-                        ),
-                      ),
-                      alignment: Alignment.bottomLeft,
-                      padding: const EdgeInsets.all(AfSpacing.s8),
-                      child: Text(
-                        a.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AfTypography.bodySmall.copyWith(
-                          color: AfColors.textOnPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+          final album = albums[i];
+          // Positive translation shift
+          final shift = i == 0 ? 0.0 : -20.0 * i;
+
+          return Transform.translate(
+            offset: Offset(shift, 0),
+            child: GestureDetector(
+              onTap: () => context.push('/album/${album.id}'),
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 4,
+                      offset: const Offset(-2, 2),
+                    )
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Artwork(
+                  url: album.imageUrl,
+                  size: 100,
+                ),
               ),
             ),
           );
@@ -303,135 +487,75 @@ class _AvatarImagePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasPhoto =
-        (localPath != null && File(localPath!).existsSync()) ||
-        networkUrl != null;
-
-    Widget avatarContent;
-    if (localPath != null && File(localPath!).existsSync()) {
-      avatarContent = Image.file(
-        File(localPath!),
-        width: 96,
-        height: 96,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _initialsAvatar(),
+    ImageProvider? imageProvider;
+    if (localPath != null && localPath!.isNotEmpty) {
+      imageProvider = FileImage(File(localPath!));
+    } else if (networkUrl != null && networkUrl!.isNotEmpty) {
+      imageProvider = CachedNetworkImageProvider(
+        networkUrl!,
+        headers: authHeaders,
       );
-    } else if (networkUrl != null) {
-      avatarContent = CachedNetworkImage(
-        imageUrl: networkUrl!,
-        httpHeaders: authHeaders,
-        width: 96,
-        height: 96,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => _initialsAvatar(),
-        errorWidget: (context, url, error) => _initialsAvatar(),
-      );
-    } else {
-      avatarContent = _initialsAvatar();
     }
 
+    final fallbackChar = name.isNotEmpty ? name[0].toUpperCase() : 'Y';
+
     return GestureDetector(
-      onTap: isUploading
-          ? null
-          : () {
-              showBlurBottomSheet(
-                context: context,
-                builder: (context) => Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ListTile(
-                      leading: const Icon(
-                        Icons.photo_camera_outlined,
-                        color: AfColors.textPrimary,
-                      ),
-                      title: const Text(
-                        'Take Photo',
-                        style: TextStyle(color: AfColors.textPrimary),
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-                        onPickPhoto(ImageSource.camera);
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(
-                        Icons.photo_library_outlined,
-                        color: AfColors.textPrimary,
-                      ),
-                      title: const Text(
-                        'Choose from Gallery',
-                        style: TextStyle(color: AfColors.textPrimary),
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-                        onPickPhoto(ImageSource.gallery);
-                      },
-                    ),
-                    if (hasPhoto)
-                      ListTile(
-                        leading: const Icon(
-                          Icons.delete_outline,
-                          color: AfColors.semanticError,
-                        ),
-                        title: const Text(
-                          'Remove Photo',
-                          style: TextStyle(color: AfColors.semanticError),
-                        ),
-                        onTap: () {
-                          Navigator.pop(context);
-                          onRemovePhoto();
-                        },
-                      ),
-                    const SizedBox(height: AfSpacing.s12),
-                  ],
-                ),
-              );
-            },
+      onTap: () => _showPickerSheet(context),
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AfColors.indigo600, width: 2),
-            ),
-            child: ClipOval(child: avatarContent),
-          ),
-          if (!isUploading)
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AfColors.indigo600,
-                ),
-                child: const Icon(
-                  Icons.camera_alt_outlined,
-                  size: 14,
-                  color: AfColors.textOnPrimary,
+          // Visual offset ring
+          Positioned(
+            top: 2,
+            left: 2,
+            child: Container(
+              width: 78,
+              height: 78,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AfColors.indigo400.withValues(alpha: 0.4),
+                  width: 1.5,
                 ),
               ),
             ),
-          if (isUploading)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.black.withValues(alpha: 0.5),
-                ),
-                child: const Center(
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: AfColors.indigo300,
+          ),
+          Container(
+            width: 78,
+            height: 78,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AfColors.surfaceBase,
+              border: Border.all(color: AfColors.surfaceHigh, width: 1.5),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: imageProvider != null
+                ? Image(image: imageProvider, fit: BoxFit.cover)
+                : Center(
+                    child: Text(
+                      fallbackChar,
+                      style: AfTypography.titleLarge.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: AfColors.indigo300,
+                      ),
                     ),
+                  ),
+          ),
+          if (isUploading)
+            Container(
+              width: 78,
+              height: 78,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black45,
+              ),
+              child: const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AfColors.indigo300,
                   ),
                 ),
               ),
@@ -441,74 +565,100 @@ class _AvatarImagePicker extends StatelessWidget {
     );
   }
 
-  Widget _initialsAvatar() {
-    return Container(
-      width: 96,
-      height: 96,
-      color: AfColors.indigo800,
-      alignment: Alignment.center,
-      child: Text(
-        name.isEmpty ? 'A' : name[0].toUpperCase(),
-        style: AfTypography.titleLarge.copyWith(
-          fontSize: 32,
-          color: AfColors.textOnPrimary,
-        ),
+  void _showPickerSheet(BuildContext context) {
+    showBlurBottomSheet(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 8),
+          const Center(
+            child: Text(
+              'EDIT PHOTO',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color: AfColors.indigo400,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          ListTile(
+            leading: const Icon(LucideIcons.camera, size: 18),
+            title: const Text('TAKE PHOTO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            onTap: () {
+              Navigator.pop(context);
+              onPickPhoto(ImageSource.camera);
+            },
+          ),
+          ListTile(
+            leading: const Icon(LucideIcons.image, size: 18),
+            title: const Text('CHOOSE FROM GALLERY', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            onTap: () {
+              Navigator.pop(context);
+              onPickPhoto(ImageSource.gallery);
+            },
+          ),
+          if (localPath != null || networkUrl != null)
+            ListTile(
+              leading: const Icon(LucideIcons.trash2, color: AfColors.semanticError, size: 18),
+              title: const Text('REMOVE CURRENT PHOTO', style: TextStyle(color: AfColors.semanticError, fontSize: 12, fontWeight: FontWeight.bold)),
+              onTap: () {
+                Navigator.pop(context);
+                onRemovePhoto();
+              },
+            ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
 }
 
 class _LastFmConnectionCTA extends StatelessWidget {
+  const _LastFmConnectionCTA();
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: AfSpacing.s16),
-      padding: const EdgeInsets.all(AfSpacing.s16),
-      decoration: const BoxDecoration(
-        borderRadius: AfRadii.borderMd,
-        gradient: LinearGradient(
-          colors: [AfColors.indigo800, AfColors.semanticError],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AfColors.surfaceLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AfColors.surfaceHigh),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              const Icon(
-                LucideIcons.radio,
-                color: AfColors.textOnPrimary,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Connect to Last.fm',
-                style: AfTypography.titleSmall.copyWith(
-                  color: AfColors.textOnPrimary,
-                ),
-              ),
-            ],
+          Text(
+            'LAST.FM NOT CONNECTED',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: AfColors.indigo300,
+            ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Sync your listening habits globally, unlock detailed statistics, and get smart recommendations.',
-            style: AfTypography.bodySmall.copyWith(
-              color: AfColors.textOnPrimary.withValues(alpha: 0.9),
-            ),
+          const Text(
+            'Connect your Last.fm account in settings to track, analyze, and display your musical profile intelligence.',
+            style: TextStyle(fontSize: 11, color: AfColors.textTertiary),
           ),
           const SizedBox(height: 12),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AfColors.indigo800,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
+          TextButton(
             onPressed: () => context.push('/settings'),
-            child: const Text('Connect now'),
+            style: TextButton.styleFrom(
+              backgroundColor: AfColors.surfaceBase,
+              side: const BorderSide(color: AfColors.surfaceHigh),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+            child: const Text(
+              'LINK ACCOUNT',
+              style: TextStyle(fontFamily: 'monospace', fontSize: 11, fontWeight: FontWeight.bold, color: AfColors.textPrimary),
+            ),
           ),
         ],
       ),
@@ -533,19 +683,19 @@ class _StatsDashboard extends ConsumerWidget {
           Row(
             children: [
               _PeriodButton(
-                label: '7 Days',
+                label: '7 DAYS',
                 value: '7day',
                 activeValue: activePeriod,
               ),
               const SizedBox(width: 8),
               _PeriodButton(
-                label: '30 Days',
+                label: '30 DAYS',
                 value: '1month',
                 activeValue: activePeriod,
               ),
               const SizedBox(width: 8),
               _PeriodButton(
-                label: 'All Time',
+                label: 'ALL TIME',
                 value: 'overall',
                 activeValue: activePeriod,
               ),
@@ -564,24 +714,24 @@ class _StatsDashboard extends ConsumerWidget {
           child: Row(
             children: [
               _TabButton(
-                label: 'Songs',
+                label: 'SONGS',
                 value: 'songs',
                 activeValue: activeTab,
               ),
               _TabButton(
-                label: 'Artists',
+                label: 'ARTISTS',
                 value: 'artists',
                 activeValue: activeTab,
               ),
               _TabButton(
-                label: 'Albums',
+                label: 'ALBUMS',
                 value: 'albums',
                 activeValue: activeTab,
               ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
         // List render
         _renderActiveList(context, ref, activeTab),
@@ -670,11 +820,13 @@ class _PeriodButton extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: active ? AfColors.indigo600 : AfColors.surfaceBase,
-          borderRadius: AfRadii.borderSm,
+          borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
           label,
-          style: AfTypography.bodySmall.copyWith(
+          style: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 10,
             color: active ? AfColors.textOnPrimary : AfColors.textSecondary,
             fontWeight: active ? FontWeight.bold : FontWeight.normal,
           ),
@@ -705,11 +857,13 @@ class _TabButton extends ConsumerWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: active ? AfColors.surfaceHigh : Colors.transparent,
-            borderRadius: AfRadii.borderMd,
+            borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
             label,
-            style: AfTypography.bodySmall.copyWith(
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 11,
               color: active ? AfColors.textPrimary : AfColors.textTertiary,
               fontWeight: active ? FontWeight.bold : FontWeight.normal,
             ),
@@ -720,6 +874,7 @@ class _TabButton extends ConsumerWidget {
   }
 }
 
+/// Songs list statistics with relative progress visual indicator
 class _SongsList extends ConsumerWidget {
   const _SongsList({required this.tracks});
   final List<({String artist, String title, int playCount, String? imageUrl})>
@@ -732,79 +887,98 @@ class _SongsList extends ConsumerWidget {
         'No history logged yet. Listen to tracks to collect metrics.',
       );
     }
+
+    final maxCount = tracks.first.playCount;
+
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: tracks.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, i) {
         final t = tracks[i];
-        return ListTile(
-          dense: true,
-          tileColor: AfColors.surfaceBase,
-          shape: const RoundedRectangleBorder(borderRadius: AfRadii.borderSm),
-          leading: SizedBox(
-            width: 48,
-            child: Row(
+        final ratio = maxCount > 0 ? t.playCount / maxCount : 0.0;
+        final displayIdx = (i + 1).toString().padLeft(2, '0');
+
+        return InkWell(
+          onTap: () => _playTrackFromStats(context, ref, t.artist, t.title),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+            decoration: BoxDecoration(
+              color: AfColors.surfaceLow,
+              border: Border.all(color: AfColors.surfaceHigh),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  '${i + 1}',
-                  style: AfTypography.bodySmall.copyWith(
-                    color: AfColors.textTertiary,
+                Row(
+                  children: [
+                    Text(
+                      displayIdx,
+                      style: const TextStyle(fontFamily: 'monospace', fontSize: 10, color: AfColors.indigo400, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: t.imageUrl != null
+                          ? Artwork(url: t.imageUrl, size: 32)
+                          : Container(
+                              width: 32,
+                              height: 32,
+                              color: AfColors.surfaceHigh,
+                              child: const Icon(LucideIcons.music, size: 14, color: AfColors.textTertiary),
+                            ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            t.title.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            t.artist,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 9, color: AfColors.textTertiary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${t.playCount} SCROBBLES',
+                      style: const TextStyle(fontFamily: 'monospace', fontSize: 9, color: AfColors.indigo300),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Tiny relative popularity bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(1),
+                  child: LinearProgressIndicator(
+                    value: ratio,
+                    minHeight: 1.5,
+                    backgroundColor: Colors.transparent,
+                    valueColor: const AlwaysStoppedAnimation<Color>(AfColors.indigo400),
                   ),
                 ),
-                const Spacer(),
-                t.imageUrl != null
-                    ? Artwork(
-                        url: t.imageUrl,
-                        size: 28,
-                        radius: AfRadii.borderSm,
-                      )
-                    : Container(
-                        width: 28,
-                        height: 28,
-                        decoration: const BoxDecoration(
-                          color: AfColors.surfaceHigh,
-                          borderRadius: AfRadii.borderSm,
-                        ),
-                        child: const Icon(
-                          LucideIcons.music,
-                          size: 14,
-                          color: AfColors.textTertiary,
-                        ),
-                      ),
               ],
             ),
           ),
-          title: Text(
-            t.title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AfTypography.bodySmall.copyWith(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Text(
-            t.artist,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AfTypography.bodySmall.copyWith(
-              color: AfColors.textTertiary,
-              fontSize: 11,
-            ),
-          ),
-          trailing: Text(
-            '${t.playCount} plays',
-            style: AfTypography.bodySmall.copyWith(
-              color: AfColors.indigo300,
-              fontSize: 11,
-            ),
-          ),
-          onTap: () => _playTrackFromStats(context, ref, t.artist, t.title),
         );
       },
     );
   }
 }
 
+/// Festival Lineup Poster style list for top artists
 class _ArtistsList extends ConsumerWidget {
   const _ArtistsList({required this.artists});
   final List<({String artist, int playCount})> artists;
@@ -814,52 +988,81 @@ class _ArtistsList extends ConsumerWidget {
     if (artists.isEmpty) {
       return _emptyState('No history logged yet.');
     }
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: artists.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
-      itemBuilder: (context, i) {
-        final a = artists[i];
-        return ListTile(
-          dense: true,
-          tileColor: AfColors.surfaceBase,
-          shape: const RoundedRectangleBorder(borderRadius: AfRadii.borderSm),
-          leading: SizedBox(
-            width: 32,
-            child: Row(
-              children: [
-                Text(
-                  '${i + 1}',
-                  style: AfTypography.bodySmall.copyWith(
-                    color: AfColors.textTertiary,
+
+    final topArtists = artists.take(8).toList();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AfColors.surfaceLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AfColors.indigo400.withValues(alpha: 0.35), width: 1.5),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Festival header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'AETHERFIN INTEL',
+                style: TextStyle(fontFamily: 'monospace', fontSize: 8, color: AfColors.indigo400, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+              ),
+              Text(
+                'LINEUP / STATS',
+                style: TextStyle(fontFamily: 'monospace', fontSize: 8, color: AfColors.textTertiary.withValues(alpha: 0.8), letterSpacing: 0.5),
+              ),
+            ],
+          ),
+          const Divider(color: AfColors.surfaceHigh, height: 20, thickness: 1.0),
+          const SizedBox(height: 8),
+          
+          // Lineup text wrap
+          Wrap(
+            spacing: 12.0,
+            runSpacing: 14.0,
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: List.generate(topArtists.length, (idx) {
+              final art = topArtists[idx];
+              
+              // Scale size/weight based on ranking
+              double fSize = 11.0;
+              FontWeight fWeight = FontWeight.w500;
+              Color fColor = AfColors.textTertiary;
+              
+              if (idx == 0) {
+                fSize = 24.0;
+                fWeight = FontWeight.w900;
+                fColor = AfColors.textPrimary;
+              } else if (idx < 3) {
+                fSize = 18.0;
+                fWeight = FontWeight.w800;
+                fColor = AfColors.textSecondary;
+              } else if (idx < 6) {
+                fSize = 14.0;
+                fWeight = FontWeight.w700;
+                fColor = AfColors.textTertiary;
+              }
+              
+              return InkWell(
+                onTap: () => _navigateToArtistFromStats(context, ref, art.artist),
+                child: Text(
+                  art.artist.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: fSize,
+                    fontWeight: fWeight,
+                    color: fColor,
+                    letterSpacing: 0.5,
                   ),
                 ),
-                const Spacer(),
-                const Icon(
-                  LucideIcons.user,
-                  size: 16,
-                  color: AfColors.textTertiary,
-                ),
-              ],
-            ),
+              );
+            }),
           ),
-          title: Text(
-            a.artist,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AfTypography.bodySmall.copyWith(fontWeight: FontWeight.bold),
-          ),
-          trailing: Text(
-            '${a.playCount} plays',
-            style: AfTypography.bodySmall.copyWith(
-              color: AfColors.indigo300,
-              fontSize: 11,
-            ),
-          ),
-          onTap: () => _navigateToArtistFromStats(context, ref, a.artist),
-        );
-      },
+          const SizedBox(height: 16),
+        ],
+      ),
     );
   }
 }
@@ -878,70 +1081,67 @@ class _AlbumsList extends ConsumerWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: albums.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, i) {
         final alb = albums[i];
-        return ListTile(
-          dense: true,
-          tileColor: AfColors.surfaceBase,
-          shape: const RoundedRectangleBorder(borderRadius: AfRadii.borderSm),
-          leading: SizedBox(
-            width: 48,
+        final displayIdx = (i + 1).toString().padLeft(2, '0');
+        
+        return InkWell(
+          onTap: () => _navigateToAlbumFromStats(context, ref, alb.artist, alb.album),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+            decoration: BoxDecoration(
+              color: AfColors.surfaceLow,
+              border: Border.all(color: AfColors.surfaceHigh),
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: Row(
               children: [
                 Text(
-                  '${i + 1}',
-                  style: AfTypography.bodySmall.copyWith(
-                    color: AfColors.textTertiary,
+                  displayIdx,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 10, color: AfColors.indigo400, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: alb.imageUrl != null
+                      ? Artwork(url: alb.imageUrl, size: 32)
+                      : Container(
+                          width: 32,
+                          height: 32,
+                          color: AfColors.surfaceHigh,
+                          child: const Icon(LucideIcons.disc, size: 14, color: AfColors.textTertiary),
+                        ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        alb.album.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        alb.artist,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 9, color: AfColors.textTertiary),
+                      ),
+                    ],
                   ),
                 ),
-                const Spacer(),
-                alb.imageUrl != null
-                    ? Artwork(
-                        url: alb.imageUrl,
-                        size: 28,
-                        radius: AfRadii.borderSm,
-                      )
-                    : Container(
-                        width: 28,
-                        height: 28,
-                        decoration: const BoxDecoration(
-                          color: AfColors.surfaceHigh,
-                          borderRadius: AfRadii.borderSm,
-                        ),
-                        child: const Icon(
-                          LucideIcons.disc,
-                          size: 14,
-                          color: AfColors.textTertiary,
-                        ),
-                      ),
+                const SizedBox(width: 8),
+                Text(
+                  '${alb.playCount} SCROBBLES',
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 9, color: AfColors.indigo300),
+                ),
               ],
             ),
           ),
-          title: Text(
-            alb.album,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AfTypography.bodySmall.copyWith(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Text(
-            alb.artist,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AfTypography.bodySmall.copyWith(
-              color: AfColors.textTertiary,
-              fontSize: 11,
-            ),
-          ),
-          trailing: Text(
-            '${alb.playCount} plays',
-            style: AfTypography.bodySmall.copyWith(
-              color: AfColors.indigo300,
-              fontSize: 11,
-            ),
-          ),
-          onTap: () =>
-              _navigateToAlbumFromStats(context, ref, alb.artist, alb.album),
         );
       },
     );
@@ -968,7 +1168,7 @@ Future<void> _playTrackFromStats(
   WidgetRef ref,
   String artist,
   String title,
-) async {
+ ) async {
   unawaited(
     showDialog(
       context: context,
