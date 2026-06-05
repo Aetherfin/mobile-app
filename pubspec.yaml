@@ -22,7 +22,7 @@ dependencies:
 
   # Networking
   dio: 5.9.2
-  dio_cache_interceptor: 3.5.1
+  dio_cache_interceptor: 4.0.6
 
   # Imagery
   cached_network_image: 3.4.1
