@@ -38,7 +38,7 @@ dependencies:
   path_provider: 2.1.5
 
   # Fonts
-  google_fonts: 6.3.3
+  google_fonts: 8.1.0
   cupertino_icons: 1.0.9
 
   # Crypto (Subsonic token auth: md5(password + salt))
