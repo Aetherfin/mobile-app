@@ -62,7 +62,7 @@ dependencies:
 
   # YouTube Music
   youtube_explode_dart: ^3.1.0
-  google_sign_in: ^6.2.2
+  google_sign_in: ^7.2.0
   webview_flutter: ^4.12.0
 
   # Japanese romanization (kanji → romaji via kuromoji)
