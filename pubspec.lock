@@ -450,10 +450,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_shaders_ui
-      sha256: "552a161c91d209358a29ffa055574b90a1caf1e2128268e7a5d7dbb1cf0c83ca"
+      sha256: "9dc938dcd6fb9188319a2af035829e71a1ab329d55509b159935ac298fc00dfe"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.1"
+    version: "1.0.4"
   flutter_svg:
     dependency: "direct main"
     description:
