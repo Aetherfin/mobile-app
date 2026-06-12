@@ -46,7 +46,7 @@ dependencies:
 
   # Misc
   async: 2.13.1
-  package_info_plus: 8.3.1
+  package_info_plus: 10.1.0
   url_launcher: 6.3.2
   collection: 1.19.1
   intl: 0.20.2
