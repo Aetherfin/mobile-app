@@ -46,6 +46,15 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"/>
 
+            <!-- Stripped by manifest merger at build time. Exists only so
+                 Flutter tools (fromAndroidProject) can find a launch activity.
+                 The real LAUNCHER intent-filter is on activity-alias elements
+                 for dynamic icon switching. -->
+            <intent-filter tools:node="remove">
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
             <!-- Deep links: aetherfin://<host>/<path> -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />

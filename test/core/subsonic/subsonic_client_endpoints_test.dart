@@ -103,7 +103,7 @@ Map<String, dynamic> _artistMap({
   'id': id,
   'name': name,
   'albumCount': albumCount,
-  if (coverArt != null) 'coverArt': coverArt,
+  if (coverArt case final coverArt?) 'coverArt': coverArt,
 };
 
 Map<String, dynamic> _playlistMap({
@@ -119,7 +119,7 @@ Map<String, dynamic> _playlistMap({
   'songCount': songCount,
   'duration': duration,
   'public': isPublic,
-  if (coverArt != null) 'coverArt': coverArt,
+  if (coverArt case final coverArt?) 'coverArt': coverArt,
 };
 
 void main() {
@@ -164,7 +164,6 @@ void main() {
 
   group('Library browsing', () {
     test('recentlyAddedAlbums parses albumList2 response', () async {
-      final reqIdx = capturedRequests.length;
       client.dio.interceptors.add(
         InterceptorsWrapper(
           onRequest: (options, handler) {
