@@ -267,10 +267,6 @@ def success_message():
     reply_markup = {"inline_keyboard": buttons} if buttons else {}
     _send_text(text, reply_markup)
 
-    reply_markup = {"inline_keyboard": [buttons]} if buttons else {}
-
-    _send_text(text, reply_markup)
-
 
 def fail_message():
     """Delete progress message, then send NEW fail message."""
