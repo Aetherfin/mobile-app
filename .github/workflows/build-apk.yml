@@ -20,7 +20,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-  contents: write   # create/update draft release
+  contents: read    # no release creation needed
 
 # Cancel in-flight builds when a newer one is triggered — saves runner minutes.
 concurrency:
@@ -119,40 +119,14 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Publish APK to draft release
-        if: success()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="build-latest"
-          APK_DIR="build/app/outputs/flutter-apk"
-          APK_COUNT=$(ls "$APK_DIR"/Aetherfin-v*.apk 2>/dev/null | wc -l)
-
-          if [ "$APK_COUNT" -eq 0 ]; then
-            echo "::warning::No APKs found — skipping draft release."
-            exit 0
-          fi
-
-          # Delete existing draft release if present (clean slate)
-          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
-
-          # Create new draft release and upload all APKs
-          gh release create "$TAG" \
-            --title "Latest Build" \
-            --notes "Auto-published by CI. This is a rolling draft — replaced on every build." \
-            --draft=false \
-            --prerelease=true \
-            "$APK_DIR"/Aetherfin-v*.apk
-
-          echo "Published $(ls "$APK_DIR"/Aetherfin-v*.apk | wc -l) APK(s) to draft release."
-
       # Notify: Success — send NEW message with download link
       - name: Notify Telegram — Success
         if: success()
         env:
           TG_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TG_DOWNLOAD_URL: https://github.com/${{ github.repository }}/releases/tag/build-latest
+          TG_APK_DIR: build/app/outputs/flutter-apk
+          TG_RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: python3 tool/telegram_notifier.py success
 
       # Notify: Failed — send NEW fail message

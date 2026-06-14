@@ -174,17 +174,23 @@ jobs:
       - name: Prepare release artifacts
         run: |
           mkdir -p release-artifacts
-          src=$(ls build/app/outputs/flutter-apk/Aetherfin-v${{ env.CLEAN_VERSION }}-*.apk 2>/dev/null | grep -v -E "armeabi-v7a|arm64-v8a|x86_64" | head -1 || true)
+          APK_DIR="build/app/outputs/flutter-apk"
+
+          # Universal APK: Aetherfin-v{VERSION}-{BUILD_ID}.apk (no ABI suffix)
+          src=$(ls "$APK_DIR"/Aetherfin-v${{ env.CLEAN_VERSION }}-*.apk 2>/dev/null \
+            | grep -v -E "(armeabi-v7a|arm64-v8a|x86_64)" | head -1 || true)
           if [ -n "$src" ] && [ -f "$src" ]; then
             cp "$src" "release-artifacts/aetherfin-v${{ inputs.version }}-universal.apk"
             echo "Staged universal APK: $src"
           else
-            echo "::error::No universal APK found"
+            echo "::error::No universal APK found in $APK_DIR"
+            ls -la "$APK_DIR"/ 2>/dev/null || echo "Directory does not exist"
             exit 1
           fi
+
+          # Per-ABI APKs: Aetherfin-v{VERSION}-{ABI}-{BUILD_ID}.apk
           for abi in armeabi-v7a arm64-v8a x86_64; do
-            src="build/app/outputs/flutter-apk/Aetherfin-v${{ env.CLEAN_VERSION }}-${abi}"-*.apk
-            matched=$(ls $src 2>/dev/null | head -1 || true)
+            matched=$(ls "$APK_DIR"/Aetherfin-v${{ env.CLEAN_VERSION }}-${abi}-*.apk 2>/dev/null | head -1 || true)
             if [ -z "$matched" ]; then
               echo "::error::No APK found for $abi"
               exit 1

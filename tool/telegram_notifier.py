@@ -1,8 +1,10 @@
 import os
 import sys
 import json
+import glob
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+from urllib.parse import urlencode
 
 # Read environment variables set by GitHub Actions
 BOT_TOKEN = os.environ.get('TG_BOT_TOKEN')
@@ -110,6 +112,37 @@ def _send_text(text, reply_markup=None):
         sys.exit(1)
 
 
+def _upload_to_0x0(file_path):
+    boundary = "----AetherfinCI Upload"
+    filename = os.path.basename(file_path)
+
+    body = b""
+    body += f"--{boundary}\r\n".encode()
+    body += f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'.encode()
+    body += b"Content-Type: application/vnd.android.package-archive\r\n\r\n"
+    with open(file_path, "rb") as f:
+        body += f.read()
+    body += b"\r\n"
+    body += f"--{boundary}--\r\n".encode()
+
+    url = "https://0x0.st"
+    headers = {"Content-Type": f"multipart/form-data; boundary={boundary}"}
+
+    try:
+        req = Request(url, data=body, headers=headers)
+        with urlopen(req, timeout=300) as resp:
+            result = resp.read().decode("utf-8").strip()
+            if result.startswith("http"):
+                print(f"Uploaded to 0x0.st: {result}")
+                return result
+            else:
+                print(f"Unexpected 0x0.st response: {result}")
+                return None
+    except Exception as e:
+        print(f"Error uploading to 0x0.st: {e}")
+        return None
+
+
 def init_message():
     """Send the 'Build started' message. Saves message ID to GITHUB_ENV."""
     text = build_message("\U0001f527 Build started...")
@@ -156,28 +189,34 @@ def update_message():
 
 
 def success_message():
-    """Delete progress message, then send NEW success message with download link."""
     msg_id = os.environ.get('TG_MESSAGE_ID')
 
     # Delete the progress message first
     _delete_message(msg_id)
 
     tag = os.environ.get('TG_TAG', '')
-    download_url = os.environ.get('TG_DOWNLOAD_URL', '')
-    release_url = os.environ.get('TG_RELEASE_URL', '')
+    apk_dir = os.environ.get('TG_APK_DIR', 'build/app/outputs/flutter-apk')
     run_url = os.environ.get('TG_RUN_URL', '')
     commit_url = os.environ.get('TG_COMMIT_URL', '')
 
-    # Build title based on whether it's a release or build
+    apk_files = glob.glob(os.path.join(apk_dir, "Aetherfin-v*.apk"))
+    download_url = None
+    if apk_files:
+        apk_path = apk_files[0]
+        print(f"Uploading {apk_path} to 0x0.st...")
+        download_url = _upload_to_0x0(apk_path)
+
     title = "Release Successful!" if tag else "Build Successful!"
     icon = "\U0001f680" if tag else "\u2705"
 
-    header = get_header(icon)
     text = f"{icon} <b>Aetherfin {title}</b>\n"
     text += "\u2500" * 12 + "\n"
     if tag:
         text += f"<b>Tag:</b> <code>{tag}</code>\n"
-    text += "<blockquote>Published successfully!</blockquote>\n"
+    if download_url:
+        text += f"<b>APK:</b> Direct download (no zip)\n"
+    else:
+        text += "<blockquote>Build completed, but upload failed.</blockquote>\n"
     text += "\u2500" * 12 + "\n"
     timestamp = os.environ.get('TG_TIMESTAMP', '')
     if timestamp:
@@ -186,8 +225,6 @@ def success_message():
     buttons = []
     if download_url:
         buttons.append({"text": "\U0001f4e5 Download APK", "url": download_url})
-    if release_url:
-        buttons.append({"text": "\U0001f4e6 Release", "url": release_url})
     if run_url:
         buttons.append({"text": "\U0001f528 View Run", "url": run_url})
     if commit_url:
@@ -215,16 +252,20 @@ def fail_message():
     title = "Release Failed!" if tag else "Build Failed!"
     icon = "\U0001f680" if tag else "\u274c"
 
-    text = (
-        f"{icon} <b>Aetherfin {title}</b>\n"
-        "\u2500" * 12 + "\n"
-        f"<b>Tag:</b> <code>{tag}</code>\n" if tag else ""
-        f"<b>Branch:</b> <code>{branch}</code>\n"
-        f"<b>Build ID:</b> <code>{build_id}</code>\n"
-        f"<b>Triggered by:</b> <code>{actor}</code>\n"
-        "\u2500" * 12 + "\n"
-        "<blockquote>Check the error log for details.</blockquote>"
-    )
+    lines = [
+        f"{icon} <b>Aetherfin {title}</b>",
+        "\u2500" * 12,
+    ]
+    if tag:
+        lines.append(f"<b>Tag:</b> <code>{tag}</code>")
+    lines.extend([
+        f"<b>Branch:</b> <code>{branch}</code>",
+        f"<b>Build ID:</b> <code>{build_id}</code>",
+        f"<b>Triggered by:</b> <code>{actor}</code>",
+        "\u2500" * 12,
+        "<blockquote>Check the error log for details.</blockquote>",
+    ])
+    text = "\n".join(lines)
 
     buttons = []
     if run_url:
