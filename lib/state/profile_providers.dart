@@ -130,7 +130,13 @@ class ProfilePhotoNotifier extends Notifier<ProfilePhotoState> {
         version: nextVersion,
         isUploading: false,
       );
-    } on Exception catch (_) {
+    } on Exception catch (e, stack) {
+      afLog(
+        'error',
+        'Profile photo upload failed',
+        error: e,
+        stackTrace: stack,
+      );
       state = state.copyWith(isUploading: false);
       rethrow;
     }
@@ -188,7 +194,13 @@ class ProfilePhotoNotifier extends Notifier<ProfilePhotoState> {
       await prefs.remove(_getVersionKey(userId));
 
       state = ProfilePhotoState(version: 0, isUploading: false);
-    } on Exception catch (_) {
+    } on Exception catch (e, stack) {
+      afLog(
+        'error',
+        'Profile photo removal failed',
+        error: e,
+        stackTrace: stack,
+      );
       state = state.copyWith(isUploading: false);
       rethrow;
     }

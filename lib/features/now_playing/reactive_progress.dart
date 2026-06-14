@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../utils/log.dart';
 import '../../utils/time_format.dart';
 import '../../widgets/audio_visual_scrubber.dart';
 
@@ -91,8 +92,13 @@ class _ReactiveProgressState extends ConsumerState<ReactiveProgress> {
                 if (wasCompletedAtEnd && mounted) {
                   await svc.play().timeout(const Duration(seconds: 2));
                 }
-              } catch (_) {
-                // Timeout or seek error — still release the drag lock.
+              } catch (e, stack) {
+                afLog(
+                  'error',
+                  'Seek during drag failed',
+                  error: e,
+                  stackTrace: stack,
+                );
               }
               if (mounted) {
                 setState(() {

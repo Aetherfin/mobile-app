@@ -40,7 +40,7 @@ Widget buildAlbumHeroArtwork({
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   stops: [0.6, 1.0],
-                  colors: [Colors.white, Colors.transparent],
+                  colors: [AfColors.textOnPrimary, Colors.transparent],
                 ).createShader(rect);
               },
               blendMode: BlendMode.dstIn,

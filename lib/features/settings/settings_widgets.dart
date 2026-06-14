@@ -408,7 +408,7 @@ class OptionTile extends ConsumerWidget {
                 height: subtitle != null ? 28 : 20,
                 decoration: BoxDecoration(
                   color: isActive ? spectral : Colors.transparent,
-                  borderRadius: BorderRadius.circular(1.5),
+                  borderRadius: AfRadii.borderXs,
                 ),
               ),
               const SizedBox(width: AfSpacing.s12),

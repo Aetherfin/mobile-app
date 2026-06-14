@@ -37,8 +37,13 @@ class RadioGenerator {
           final withoutSeed = sorted.where((t) => t.id != seed.id).toList();
           return [seed, ...withoutSeed.take(50)];
         }
-      } catch (_) {
-        // Fall back to local library scoring if server-side similarity fails
+      } catch (e, stack) {
+        afLog(
+          'error',
+          'Server-side similarity scoring failed, falling back to local',
+          error: e,
+          stackTrace: stack,
+        );
       }
     }
 
@@ -59,7 +64,13 @@ class RadioGenerator {
         return await ref.read(localTracksProvider.future);
       }
       return await backend.allTracks(limit: 5000);
-    } catch (_) {
+    } catch (e, stack) {
+      afLog(
+        'error',
+        'Fetch all tracks for radio failed',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }

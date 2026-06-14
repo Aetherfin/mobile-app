@@ -69,7 +69,7 @@ class YouTubeSongGrid extends ConsumerWidget {
                           ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AfSpacing.s12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,7 +84,7 @@ class YouTubeSongGrid extends ConsumerWidget {
                           color: AfColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AfSpacing.s4),
                       Text(
                         item.subtitle,
                         maxLines: 1,
@@ -102,6 +102,7 @@ class YouTubeSongGrid extends ConsumerWidget {
                     size: 18,
                     color: AfColors.textSecondary,
                   ),
+                  tooltip: 'More options',
                   onPressed: () => showTrackContextMenu(context, ref, track),
                 ),
               ],
@@ -200,15 +201,13 @@ class YouTubeHomeTile extends StatelessWidget {
             AspectRatio(
               aspectRatio: 1,
               child: ClipRRect(
-                borderRadius: isArtist
-                    ? BorderRadius.circular(70)
-                    : AfRadii.borderMd,
+                borderRadius: isArtist ? AfRadii.borderPill : AfRadii.borderMd,
                 child: item.thumbnailUrl.isNotEmpty
                     ? Artwork(
                         url: item.thumbnailUrl,
                         size: 140,
                         radius: isArtist
-                            ? BorderRadius.circular(70)
+                            ? AfRadii.borderPill
                             : AfRadii.borderMd,
                       )
                     : Container(

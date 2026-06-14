@@ -54,8 +54,13 @@ final favoriteToggleProvider = Provider<Future<void> Function(AfTrack)>((ref) {
     while (pending != null) {
       try {
         await pending!;
-      } on Exception catch (_) {
-        // Previous toggle failed — proceed with next one
+      } on Exception catch (e, stack) {
+        afLog(
+          'error',
+          'Previous favorite toggle failed, proceeding',
+          error: e,
+          stackTrace: stack,
+        );
       }
     }
 

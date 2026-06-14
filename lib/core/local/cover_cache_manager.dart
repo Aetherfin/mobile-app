@@ -140,8 +140,13 @@ class CoverCacheManager {
         if (entity is File && entity.path != _metaPath) {
           try {
             await entity.delete();
-          } on Exception catch (_) {
-            // Best-effort cleanup — ignore if file already gone
+          } on Exception catch (e, stack) {
+            afLog(
+              'error',
+              'Cover cache cleanup failed',
+              error: e,
+              stackTrace: stack,
+            );
           }
         }
       }

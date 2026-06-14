@@ -464,7 +464,13 @@ class PlayerSettingsStore {
     if (json == null) return null;
     try {
       return _deserializeAudioEffects(json);
-    } on Exception catch (_) {
+    } on Exception catch (e, stack) {
+      afLog(
+        'error',
+        'DSP state deserialization failed',
+        error: e,
+        stackTrace: stack,
+      );
       return null;
     }
   }
@@ -475,7 +481,13 @@ class PlayerSettingsStore {
     if (json == null) return GraphicEqState();
     try {
       return GraphicEqState.fromJson(jsonDecode(json) as Map<String, dynamic>);
-    } on Exception catch (_) {
+    } on Exception catch (e, stack) {
+      afLog(
+        'error',
+        'Graphic EQ state deserialization failed',
+        error: e,
+        stackTrace: stack,
+      );
       return GraphicEqState();
     }
   }
@@ -488,7 +500,13 @@ class PlayerSettingsStore {
       return ParametricEqState.fromJson(
         jsonDecode(json) as Map<String, dynamic>,
       );
-    } on Exception catch (_) {
+    } on Exception catch (e, stack) {
+      afLog(
+        'error',
+        'Parametric EQ state deserialization failed',
+        error: e,
+        stackTrace: stack,
+      );
       return ParametricEqState();
     }
   }

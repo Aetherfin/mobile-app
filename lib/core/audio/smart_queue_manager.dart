@@ -153,7 +153,13 @@ class SmartQueueManager {
       _recentlyPlayedCache = result;
       _recentlyPlayedCacheTime = now;
       return result;
-    } catch (_) {
+    } catch (e, stack) {
+      afLog(
+        'error',
+        'Recently played cache query failed',
+        error: e,
+        stackTrace: stack,
+      );
       return {};
     }
   }

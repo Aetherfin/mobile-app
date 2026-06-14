@@ -504,7 +504,7 @@ Widget eqTextFieldRow(
     child: Row(
       children: [
         SizedBox(width: 100, child: Text(label, style: AfTypography.bodySmall)),
-        const SizedBox(width: 8),
+        const SizedBox(width: AfSpacing.s8),
         Expanded(
           child: TextFormField(
             initialValue: value,
@@ -667,9 +667,8 @@ class EqBandBar extends ConsumerWidget {
             gain >= 1.0
                 ? '+${((gain - 1) * 12).toStringAsFixed(0)}'
                 : ((gain - 1) * 12).toStringAsFixed(0),
-            style: AfTypography.caption.copyWith(
+            style: AfTypography.overline.copyWith(
               color: isFlat ? AfColors.textTertiary : spectral.primary,
-              fontSize: 9,
             ),
           ),
           const SizedBox(height: AfSpacing.s2),
@@ -708,10 +707,7 @@ class EqBandBar extends ConsumerWidget {
           // Frequency label.
           Text(
             label,
-            style: AfTypography.caption.copyWith(
-              color: AfColors.textTertiary,
-              fontSize: 8,
-            ),
+            style: AfTypography.overline.copyWith(color: AfColors.textTertiary),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

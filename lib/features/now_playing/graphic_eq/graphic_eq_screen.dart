@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/audio/player_settings_store.dart';
 import '../../../design_tokens/tokens.dart';
 import '../../../state/providers.dart';
+import '../../../utils/log.dart';
 import '../eq_dsp_widgets.dart';
 import '../eq_preset.dart';
 import '../eq_preset_manager.dart';
@@ -69,7 +70,13 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
           _loaded = true;
         });
       }
-    } on Exception catch (_) {
+    } on Exception catch (e, stack) {
+      afLog(
+        'error',
+        'Graphic EQ state load failed',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) setState(() => _loaded = true);
     }
   }
@@ -87,8 +94,13 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
       await svc.updateAudioEffects((current) {
         return _state.toAudioEffects(current);
       });
-    } on Exception catch (_) {
-      // Error applying audio effects — silent fail
+    } on Exception catch (e, stack) {
+      afLog(
+        'error',
+        'Graphic EQ apply audio effects failed',
+        error: e,
+        stackTrace: stack,
+      );
     }
   }
 
@@ -367,9 +379,8 @@ class _BandSlider extends StatelessWidget {
             // ── dB value ──
             Text(
               _formatDb(value),
-              style: AfTypography.caption.copyWith(
+              style: AfTypography.overline.copyWith(
                 color: value.abs() < 0.5 ? AfColors.textTertiary : activeColor,
-                fontSize: 9,
               ),
             ),
             const SizedBox(height: AfSpacing.s2),
@@ -460,9 +471,8 @@ class _BandSlider extends StatelessWidget {
             // ── Frequency label ──
             Text(
               freq,
-              style: AfTypography.caption.copyWith(
+              style: AfTypography.overline.copyWith(
                 color: AfColors.textTertiary,
-                fontSize: 8,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

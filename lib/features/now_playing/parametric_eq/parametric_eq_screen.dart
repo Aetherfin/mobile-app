@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/audio/player_settings_store.dart';
+import '../../../design_tokens/pro_audio.dart';
 import '../../../design_tokens/tokens.dart';
 import '../../../state/providers.dart';
 import '../../../utils/display_error.dart';
@@ -12,30 +13,8 @@ import '../../../utils/log.dart';
 import '../parametric_eq_state.dart';
 import '../parametric_presets.dart';
 
-// ─── Band Color Palette ─────────────────────────────────────────────────────
-
-const _kBandColors = [
-  Color(0xFF5B9BD5), // Muted blue
-  Color(0xFF7DB88F), // Soft green
-  Color(0xFFE8A87C), // Warm peach
-  Color(0xFFB39DDB), // Lavender
-  Color(0xFFEF9A9A), // Rose
-  Color(0xFF80CBC4), // Teal
-  Color(0xFFFFCC80), // Amber
-  Color(0xFF9FA8DA), // Indigo
-  Color(0xFFA5D6A7), // Mint
-  Color(0xFFFFAB91), // Coral
-  Color(0xFF80DEEA), // Cyan
-  Color(0xFFCE93D8), // Purple
-  Color(0xFFC5E1A5), // Lime
-  Color(0xFFFFF176), // Yellow
-  Color(0xFF81D4FA), // Light blue
-  Color(0xFFF48FB1), // Pink
-  Color(0xFFBCAAA4), // Taupe
-  Color(0xFF80CBC4), // Seafoam
-];
-
-Color _bandColor(int index) => _kBandColors[index % _kBandColors.length];
+Color _bandColor(int index) =>
+    ProAudioColors.bandColors[index % ProAudioColors.bandColors.length];
 
 // ─── Frequency Response Helpers ─────────────────────────────────────────────
 
@@ -758,9 +737,8 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                   for (final db in [12.0, 6.0, 0.0, -6.0, -12.0, -18.0, -24.0])
                     Text(
                       db >= 0 ? '+${db.toInt()}' : '${db.toInt()}',
-                      style: AfTypography.caption.copyWith(
+                      style: AfTypography.overline.copyWith(
                         color: AfColors.textTertiary.withValues(alpha: 0.6),
-                        fontSize: 8,
                       ),
                     ),
                 ],
@@ -777,9 +755,8 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                   for (final hz in ['20', '100', '500', '2k', '10k', '20k'])
                     Text(
                       hz,
-                      style: AfTypography.caption.copyWith(
+                      style: AfTypography.overline.copyWith(
                         color: AfColors.textTertiary.withValues(alpha: 0.6),
-                        fontSize: 8,
                       ),
                     ),
                 ],

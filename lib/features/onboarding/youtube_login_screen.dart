@@ -222,8 +222,13 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
       );
       final e1 = _cleanJsString(r1.toString());
       if (e1.contains('@')) email = e1;
-    } on Exception catch (_) {
-      // JS evaluation failed — try next source
+    } on Exception catch (e, stack) {
+      afLog(
+        'error',
+        'YouTube email source 1 failed',
+        error: e,
+        stackTrace: stack,
+      );
     }
 
     // Source 2: window.yt.config_.EMAIL
@@ -234,8 +239,13 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
         );
         final e2 = _cleanJsString(r2.toString());
         if (e2.contains('@')) email = e2;
-      } on Exception catch (_) {
-        // JS evaluation failed — try next source
+      } on Exception catch (e, stack) {
+        afLog(
+          'error',
+          'YouTube email source 2 failed',
+          error: e,
+          stackTrace: stack,
+        );
       }
     }
 
@@ -250,8 +260,13 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
       if (gaiaId.isNotEmpty) {
         profileUrl = 'https://lh3.googleusercontent.com/a-/$gaiaId=s512-c';
       }
-    } on Exception catch (_) {
-      // JS evaluation failed — try next source
+    } on Exception catch (e, stack) {
+      afLog(
+        'error',
+        'YouTube GAIA ID extraction failed',
+        error: e,
+        stackTrace: stack,
+      );
     }
 
     // Second try: find image in DOM
@@ -272,8 +287,13 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
               .replaceAll(RegExp(r'=s\d+(-c)?'), '=s512-c')
               .replaceAll(RegExp(r'/s\d+/'), '/s512/');
         }
-      } on Exception catch (_) {
-        // JS evaluation failed — try next source
+      } on Exception catch (e, stack) {
+        afLog(
+          'error',
+          'YouTube DOM image extraction failed',
+          error: e,
+          stackTrace: stack,
+        );
       }
     }
 
@@ -316,8 +336,13 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
                 .replaceAll(RegExp(r'/s\d+/'), '/s512/');
           }
         }
-      } on Exception catch (_) {
-        // Navigation or JS failed — return whatever we have
+      } on Exception catch (e, stack) {
+        afLog(
+          'error',
+          'YouTube account page extraction failed',
+          error: e,
+          stackTrace: stack,
+        );
       }
     }
 

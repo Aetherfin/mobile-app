@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:path/path.dart' as p;
 
+import '../../utils/log.dart';
+
 /// A pure Dart fallback reader for embedded lyrics from local files.
 /// Used on non-Android platforms, test environments, or raw paths.
 class EmbeddedLyricsParser {
@@ -20,8 +22,13 @@ class EmbeddedLyricsParser {
       } else if (ext == '.m4a' || ext == '.mp4') {
         return await _extractLyricsFromM4a(file);
       }
-    } on Exception catch (_) {
-      // Return null on parsing errors
+    } on Exception catch (e, stack) {
+      afLog(
+        'error',
+        'Embedded lyrics extraction failed',
+        error: e,
+        stackTrace: stack,
+      );
     }
     return null;
   }
@@ -115,7 +122,13 @@ class EmbeddedLyricsParser {
     } else if (encoding == 1 || encoding == 2) {
       try {
         return _decodeUtf16(textBytes);
-      } on Exception catch (_) {
+      } on Exception catch (e, stack) {
+        afLog(
+          'error',
+          'UTF-16 lyrics decode failed, falling back to UTF-8',
+          error: e,
+          stackTrace: stack,
+        );
         return utf8.decode(textBytes, allowMalformed: true);
       }
     } else {

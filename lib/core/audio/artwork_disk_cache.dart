@@ -172,8 +172,13 @@ class ArtworkDiskCache {
         try {
           final stat = await f.stat();
           entries.add((file: f, modified: stat.modified));
-        } catch (_) {
-          // Skip files we can't stat
+        } catch (e, stack) {
+          afLog(
+            'error',
+            'Artwork cache file stat failed',
+            error: e,
+            stackTrace: stack,
+          );
         }
       }
       entries.sort((a, b) => a.modified.compareTo(b.modified));

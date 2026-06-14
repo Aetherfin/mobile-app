@@ -222,6 +222,32 @@ class ParametricEqCurvePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     canvas.drawCircle(Offset(x, y), isSel ? 8 : 6, borderPaint);
+
+    final label = _formatBandFreq(band.frequency);
+    final tp = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: const TextStyle(
+          fontFamily: 'JetBrains Mono',
+          fontSize: 9,
+          color: Color(0x73FFFFFF),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final labelY = (y + 16 + tp.height > size.height - 14)
+        ? y - tp.height - 4
+        : y + 16;
+    tp.paint(canvas, Offset(x - tp.width / 2, labelY));
+  }
+
+  static String _formatBandFreq(double freq) {
+    if (freq >= 1000) {
+      final khz = freq / 1000;
+      if (khz == khz.roundToDouble()) return '${khz.toInt()}k';
+      return '${khz.toStringAsFixed(1)}k';
+    }
+    return '${freq.round()}Hz';
   }
 
   /// Map dB value to y pixel coordinate.

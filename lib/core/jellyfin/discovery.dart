@@ -6,6 +6,7 @@ import 'dart:math' show Random;
 import 'package:async/async.dart' show StreamGroup;
 import 'package:multicast_dns/multicast_dns.dart';
 
+import '../../utils/log.dart';
 import 'client.dart';
 import 'models/server.dart';
 
@@ -135,7 +136,13 @@ class JellyfinDiscovery {
       } finally {
         probe.close();
       }
-    } catch (_) {
+    } catch (e, stack) {
+      afLog(
+        'error',
+        'HTTPS probe failed for $addr:$port, falling back to HTTP',
+        error: e,
+        stackTrace: stack,
+      );
       return 'http://$addr:$port';
     }
   }

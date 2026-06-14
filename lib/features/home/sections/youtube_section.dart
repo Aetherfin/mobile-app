@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/youtube/innertube_client.dart';
+import '../../../utils/log.dart';
 import '../../../core/youtube/youtube_auth.dart';
 import '../../../core/youtube/youtube_home_content.dart';
 import '../../../design_tokens/tokens.dart';
@@ -227,7 +228,7 @@ class YouTubeChipsRow extends ConsumerWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
         itemCount: chips.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: AfSpacing.s8),
         itemBuilder: (context, index) {
           final chip = chips[index];
           final isSelected = selectedChip?.title == chip.title;
@@ -378,12 +379,19 @@ class YouTubeAccountButton extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () async {
-              Navigator.of(ctx).pop();
+              ctx.pop();
               // Clear WebView cookies so next login starts fresh.
               try {
                 const channel = MethodChannel('aetherfin.youtube_auth');
                 await channel.invokeMethod('clearCookies');
-              } on Exception catch (_) {}
+              } on Exception catch (e, stack) {
+                afLog(
+                  'error',
+                  'YouTube cookie clear failed',
+                  error: e,
+                  stackTrace: stack,
+                );
+              }
               unawaited(ref.read(youtubeAuthProvider.notifier).clear());
               ref.invalidate(youtubeHomeProvider);
             },
@@ -393,7 +401,7 @@ class YouTubeAccountButton extends ConsumerWidget {
             ),
           ),
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
+            onPressed: () => ctx.pop(),
             child: const Text(
               'Close',
               style: TextStyle(color: AfColors.textSecondary),

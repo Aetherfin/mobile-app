@@ -223,8 +223,13 @@ class StreamPrefetcher {
         if (await tempFile.exists()) {
           try {
             await tempFile.delete();
-          } on Exception catch (_) {
-            // Best-effort cleanup — ignore if file already gone
+          } on Exception catch (e, stack) {
+            afLog(
+              'error',
+              'Prefetch temp file cleanup failed',
+              error: e,
+              stackTrace: stack,
+            );
           }
         }
 

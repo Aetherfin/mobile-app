@@ -241,7 +241,26 @@ class FrequencyResponsePainter extends CustomPainter {
       final isSel = i == selectedBand;
 
       GlowEffects.drawBandNode(canvas, Offset(x, y), color, isActive: isSel);
+
+      final label = _formatBandFreq(band.frequency);
+      final tp = TextPainter(
+        text: TextSpan(text: label, style: ProAudioTypography.freqLabel),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      final labelY = (y + 14 + tp.height > size.height - 14)
+          ? y - tp.height - 4
+          : y + 14;
+      tp.paint(canvas, Offset(x - tp.width / 2, labelY));
     }
+  }
+
+  static String _formatBandFreq(double freq) {
+    if (freq >= 1000) {
+      final khz = freq / 1000;
+      if (khz == khz.roundToDouble()) return '${khz.toInt()}k';
+      return '${khz.toStringAsFixed(1)}k';
+    }
+    return '${freq.round()}Hz';
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

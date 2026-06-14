@@ -254,8 +254,13 @@ class SpectralExtractor {
       Spectral result;
       try {
         result = await _extractViaIsolate(provider);
-      } catch (_) {
-        // Isolate unavailable or failed — fall back to main thread.
+      } catch (e, stack) {
+        afLog(
+          'spectral',
+          'Isolate extraction failed, falling back to main thread',
+          error: e,
+          stackTrace: stack,
+        );
         result = await _extractMainThread(provider);
       }
 
@@ -354,7 +359,13 @@ class SpectralExtractor {
       Spectral result;
       try {
         result = await _extractViaIsolate(provider);
-      } catch (_) {
+      } catch (e, stack) {
+        afLog(
+          'spectral',
+          'Isolate hue extraction failed, falling back to main thread',
+          error: e,
+          stackTrace: stack,
+        );
         result = await _extractMainThread(provider);
       }
       // Extract hue from the spectral's energy color

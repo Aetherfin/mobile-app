@@ -19,11 +19,11 @@
          visit via BatteryOptPlugin / Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 
-    <!-- Android 16+ "Live Updates" (Promoted Ongoing Notifications). Required
-         for the playback live-update chip / lockscreen tile published by
-         `dev.aetherfin.aetherfin.live_update.LiveUpdatePlugin`. Older
-         devices ignore this permission and the plugin no-ops there. -->
-    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS"/>
+    <!-- Bluetooth. Required for BluetoothReceiver to receive ACL_CONNECTED /
+         ACL_DISCONNECTED broadcasts on Android 12+ (API 31). Older devices
+         use the legacy BLUETOOTH permission. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
 
     <application
         android:label="Aetherfin"

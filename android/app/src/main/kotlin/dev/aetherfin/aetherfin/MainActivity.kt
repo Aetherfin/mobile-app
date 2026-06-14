@@ -6,7 +6,6 @@ import android.content.Intent
 import android.webkit.CookieManager
 import androidx.core.content.ContextCompat
 import dev.aetherfin.aetherfin.battery.BatteryOptPlugin
-import dev.aetherfin.aetherfin.live_update.LiveUpdatePlugin
 import dev.aetherfin.aetherfin.saf.SafPlugin
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -31,16 +30,26 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        flutterEngine.plugins.add(LiveUpdatePlugin())
         flutterEngine.plugins.add(BatteryOptPlugin())
         flutterEngine.plugins.add(SafPlugin())
 
-        // YouTube auth — read cookies from android.webkit.CookieManager
+        // YouTube auth — read cookies from android.webkit.CookieManager.
+        // Server-side URL allowlist prevents exfiltrating cookies for arbitrary domains.
+        val ytAllowedHosts = setOf(
+            "music.youtube.com",
+            "www.youtube.com",
+            "accounts.google.com",
+        )
         val ytAuthChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "aetherfin.youtube_auth")
         ytAuthChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "getCookies" -> {
                     val url = call.argument<String>("url") ?: "https://music.youtube.com"
+                    val host = try { java.net.URI(url).host } catch (_: Exception) { null }
+                    if (host == null || !ytAllowedHosts.contains(host)) {
+                        result.error("INVALID_URL", "Cookies may only be read for allowed YouTube/Google hosts.", null)
+                        return@setMethodCallHandler
+                    }
                     val cookieStr = CookieManager.getInstance().getCookie(url) ?: ""
                     result.success(cookieStr)
                 }

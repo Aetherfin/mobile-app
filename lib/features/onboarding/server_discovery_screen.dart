@@ -127,8 +127,13 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
       setState(() => _busy = false);
       _continueWith(resolved);
       return;
-    } catch (_) {
-      // Not a Jellyfin server — try Subsonic/Navidrome below
+    } catch (e, stack) {
+      afLog(
+        'error',
+        'Jellyfin publicInfo probe failed, trying Subsonic',
+        error: e,
+        stackTrace: stack,
+      );
     } finally {
       jellyfinClient.close();
     }

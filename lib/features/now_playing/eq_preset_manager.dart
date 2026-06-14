@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/audio/player_settings_store.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../utils/log.dart';
 import '../../widgets/af_dialog.dart';
 import 'eq_band_logic.dart';
 import 'eq_preset.dart';
@@ -199,7 +200,13 @@ class EqPresetManager {
         (k, v) =>
             MapEntry(k, ParametricPreset.fromJson(v as Map<String, dynamic>)),
       );
-    } on Exception catch (_) {
+    } on Exception catch (e, stack) {
+      afLog(
+        'error',
+        'Parametric presets deserialization failed',
+        error: e,
+        stackTrace: stack,
+      );
       return {};
     }
   }

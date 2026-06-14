@@ -58,6 +58,28 @@ abstract final class ProAudioColors {
   /// Blue — treble.
   static const bandHigh = Color(0xFF4488FF);
 
+  /// 18-band palette for parametric EQ per-band coloring.
+  static const List<Color> bandColors = [
+    Color(0xFF5B9BD5),
+    Color(0xFF7DB88F),
+    Color(0xFFE8A87C),
+    Color(0xFFB39DDB),
+    Color(0xFFEF9A9A),
+    Color(0xFF80CBC4),
+    Color(0xFFFFCC80),
+    Color(0xFF9FA8DA),
+    Color(0xFFA5D6A7),
+    Color(0xFFFFAB91),
+    Color(0xFF80DEEA),
+    Color(0xFFCE93D8),
+    Color(0xFFC5E1A5),
+    Color(0xFFFFF176),
+    Color(0xFF81D4FA),
+    Color(0xFFF48FB1),
+    Color(0xFFBCAAA4),
+    Color(0xFF80CBC4),
+  ];
+
   // ── Meter Zones ──────────────────────────────────────────────────────────
   /// Green zone: -∞ to -6 dB.
   static const meterGreen = Color(0xFF4CAF50);

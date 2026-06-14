@@ -219,25 +219,38 @@ final playlistTrackIdsProvider = FutureProvider.autoDispose<Set<String>>((
   final playlists = await ref.watch(allPlaylistsProvider.future);
   final ids = <String>{};
 
-  const batchSize = 5;
+  const batchSize = 10;
   for (var i = 0; i < playlists.length; i += batchSize) {
     final end = (i + batchSize < playlists.length)
         ? i + batchSize
         : playlists.length;
     final batch = playlists.sublist(i, end);
     final results = await Future.wait(
-      batch.map((pl) => backend.playlist(pl.id)),
-      eagerError: false,
+      batch.map(
+        (pl) => backend
+            .playlist(pl.id)
+            .then(
+              (detail) {
+                if (detail != null) {
+                  return detail.tracks.map((t) => t.id).toSet();
+                }
+                afLog('data', 'playlist track fetch returned null id=${pl.id}');
+                return <String>{};
+              },
+              onError: (Object e, StackTrace? s) {
+                afLog(
+                  'error',
+                  'failed to fetch playlist tracks id=${pl.id}',
+                  error: e,
+                  stackTrace: s,
+                );
+                return <String>{};
+              },
+            ),
+      ),
     );
-    for (var j = 0; j < results.length; j++) {
-      final detail = results[j];
-      if (detail != null) {
-        for (final t in detail.tracks) {
-          ids.add(t.id);
-        }
-      } else {
-        afLog('data', 'playlist track fetch returned null id=${batch[j].id}');
-      }
+    for (final trackIds in results) {
+      ids.addAll(trackIds);
     }
   }
 
@@ -275,7 +288,13 @@ final allGenresProvider = FutureProvider.autoDispose<List<AfGenre>>((
           final albums = await backend.albumsByGenre(g.name, limit: 1);
           final imageUrl = albums.isNotEmpty ? albums.first.imageUrl : null;
           return AfGenre(g.name, g.tint, imageUrl: imageUrl);
-        } catch (_) {
+        } catch (e, stack) {
+          afLog(
+            'error',
+            'Genre enrichment failed for ${g.name}',
+            error: e,
+            stackTrace: stack,
+          );
           return g;
         }
       }),

@@ -449,7 +449,13 @@ class PlaybackController {
       );
       _mpvLoadedTrackId = target.id;
       onMpvLoadedTrackChanged?.call(_mpvLoadedTrackId);
-    } on Exception catch (_) {
+    } on Exception catch (e, stack) {
+      afLog(
+        'error',
+        'MPV openAll failed for track ${target.id}',
+        error: e,
+        stackTrace: stack,
+      );
       _mpvLoadedTrackId = null;
       onMpvLoadedTrackChanged?.call(null);
       rethrow;

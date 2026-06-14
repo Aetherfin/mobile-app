@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../design_tokens/tokens.dart';
+import '../utils/log.dart';
 
 /// Parses a hex color string (6 or 8 digits, optional #) into a [Color].
 /// Returns [fallback] if the string is malformed.
@@ -13,7 +14,8 @@ Color parseHexColor(String hex, {Color fallback = AfColors.accentPrimary}) {
       radix: 16,
     );
     return Color(value);
-  } catch (_) {
+  } catch (e, stack) {
+    afLog('error', 'Hex color parse failed', error: e, stackTrace: stack);
     return fallback;
   }
 }

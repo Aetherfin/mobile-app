@@ -147,7 +147,7 @@ class TrackRow extends StatelessWidget {
                   height: artSize,
                   decoration: BoxDecoration(
                     color: accent,
-                    borderRadius: BorderRadius.circular(1),
+                    borderRadius: AfRadii.borderXs,
                   ),
                 ),
               const SizedBox(width: AfSpacing.s8),

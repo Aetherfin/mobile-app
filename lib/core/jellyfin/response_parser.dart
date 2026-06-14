@@ -117,9 +117,9 @@ class JellyfinResponseParser {
   TrackQuality? parseQuality(Map<String, dynamic> m) {
     final sources = m['MediaSources'] as List?;
     if (sources == null || sources.isEmpty) return null;
-    final rawSrc = sources.firstWhere((s) => s is Map, orElse: () => null);
-    if (rawSrc is! Map) return null;
-    final src = rawSrc.cast<String, dynamic>();
+    final mapSources = sources.whereType<Map<String, dynamic>>().toList();
+    if (mapSources.isEmpty) return null;
+    final src = mapSources.first.cast<String, dynamic>();
     final streams = (src['MediaStreams'] as List? ?? const [])
         .whereType<Map<String, dynamic>>()
         .map((s) => s.cast<String, dynamic>())
@@ -147,9 +147,9 @@ class JellyfinResponseParser {
   String albumArtistName(Map<String, dynamic> m) {
     final artists = m['AlbumArtists'] as List?;
     if (artists != null && artists.isNotEmpty) {
-      final first = artists.firstWhere((a) => a is Map, orElse: () => null);
-      if (first is Map) {
-        final fm = first.cast<String, dynamic>();
+      final mapArtists = artists.whereType<Map<String, dynamic>>().toList();
+      if (mapArtists.isNotEmpty) {
+        final fm = mapArtists.first;
         final name = fm['Name'] as String?;
         if (name != null && name.isNotEmpty) return name;
       }
@@ -162,10 +162,9 @@ class JellyfinResponseParser {
   String? albumArtistId(Map<String, dynamic> m) {
     final artists = m['AlbumArtists'] as List?;
     if (artists != null && artists.isNotEmpty) {
-      final first = artists.firstWhere((a) => a is Map, orElse: () => null);
-      if (first is Map) {
-        final fm = first.cast<String, dynamic>();
-        return fm['Id'] as String?;
+      final mapArtists = artists.whereType<Map<String, dynamic>>().toList();
+      if (mapArtists.isNotEmpty) {
+        return mapArtists.first['Id'] as String?;
       }
     }
     return null;

@@ -16,7 +16,7 @@ No cloud, no telemetry, no transcoding.
 | Framework | Flutter 3.44.0, Dart 3.11.5 | Android 7.0+ (min SDK 24) |
 | State | `flutter_riverpod` ^2.6 | `FutureProvider.autoDispose`, `StateNotifierProvider`. No `ChangeNotifier` for Riverpod. |
 | Routing | `go_router` ^14.7 | Shell route with 4-tab bottom nav + overlay routes |
-| Audio engine | `mpv_audio_kit` ^0.1.3 | libmpv wrapper. NOT `just_audio`. |
+| Audio engine | `mpv_audio_kit` 0.3.6 | libmpv wrapper. NOT `just_audio`. |
 | HTTP | `dio` ^5.7 + `dio_cache_interceptor` ^3.5 | One Dio per backend client, each with its own `IOHttpClientAdapter` (adapter isolation) |
 | Persistence | `drift` ^2.19 (local DB), `flutter_secure_storage` ^9.2 (credentials), `shared_preferences` ^2.3 (settings) | |
 | Discovery | `multicast_dns` ^0.3.2 | mDNS for Jellyfin; Subsonic ping for Navidrome |

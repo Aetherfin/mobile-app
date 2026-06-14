@@ -8,6 +8,7 @@ import '../../core/local/local_backend.dart';
 import '../../core/local/m3u_parser.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../utils/log.dart';
 import '../../widgets/af_dialog.dart';
 
 /// Service/Action to import an M3U playlist.
@@ -157,7 +158,13 @@ class ImportM3UAction {
         } else {
           failed++;
         }
-      } catch (_) {
+      } catch (e, stack) {
+        afLog(
+          'error',
+          'M3U import track resolution failed',
+          error: e,
+          stackTrace: stack,
+        );
         failed++;
       }
     }

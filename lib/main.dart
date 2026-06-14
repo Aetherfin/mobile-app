@@ -439,7 +439,7 @@ class _RootErrorWidget extends StatelessWidget {
       child: ColoredBox(
         color: AfColors.surfaceCanvas,
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AfSpacing.s24),
           child: SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,7 +451,7 @@ class _RootErrorWidget extends StatelessWidget {
                     color: AfColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AfSpacing.s12),
                 Flexible(
                   child: SingleChildScrollView(
                     child: Text(
@@ -466,7 +466,7 @@ class _RootErrorWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AfSpacing.s16),
                 Text(
                   kReleaseMode
                       ? 'Tap Restart on Android to retry.'

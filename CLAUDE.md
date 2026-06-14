@@ -107,7 +107,7 @@ On HTTP error, revert. Never store favorite state only on-device.
 | Routing | `go_router` ^14.7 | Shell route with bottom nav. See `lib/app/router.dart`. |
 | HTTP | `dio` ^5.7 + `dio_cache_interceptor` ^3.5 | One Dio per client, each with its own `IOHttpClientAdapter` (adapter isolation — `close(force:true)` on one client does not kill another). Jellyfin: auth header in `BaseOptions.headers`. Subsonic: auth as query params. |
 | Crypto | `crypto` ^3.0.6 | Subsonic token auth: `md5(password + salt)`. |
-| Audio | `mpv_audio_kit` ^0.1.3 | libmpv-backed player. Replaces `just_audio` + `audio_session`. |
+| Audio | `mpv_audio_kit` 0.3.6 | libmpv-backed player. Replaces `just_audio` + `audio_session`. |
 | Lock-screen | Native MediaSession | Custom Kotlin service (`AetherfinMediaSessionService`) with `MethodChannel` (`aetherfin.media_session`). |
 | Storage | `flutter_secure_storage` ^9.2 (creds + deviceId), `shared_preferences` ^2.3 (settings), `drift` ^2.19 (local metadata cache) | Never store creds in shared_preferences. |
 | Discovery | `multicast_dns` ^0.3.2 | mDNS scan for `_jellyfin._tcp`. Navidrome: probed via Subsonic `ping.view`. |
