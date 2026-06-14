@@ -258,13 +258,13 @@ def success_message():
 
     buttons = []
     if download_url:
-        buttons.append({"text": "\U0001f4e5 Download APK", "url": download_url})
+        buttons.append([{"text": "\U0001f4e5 Download APK", "url": download_url}])
     if run_url:
-        buttons.append({"text": "\U0001f528 View Run", "url": run_url})
+        buttons.append([{"text": "\U0001f528 View Run", "url": run_url}])
     if commit_url:
-        buttons.append({"text": "\U0001f4bb Commit", "url": commit_url})
+        buttons.append([{"text": "\U0001f4bb Commit", "url": commit_url}])
 
-    reply_markup = {"inline_keyboard": [buttons]} if buttons else {}
+    reply_markup = {"inline_keyboard": buttons} if buttons else {}
     _send_text(text, reply_markup)
 
     reply_markup = {"inline_keyboard": [buttons]} if buttons else {}
