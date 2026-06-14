@@ -245,7 +245,8 @@ esac
 # ---------------------------------------------------------------------------
 # Setup
 # ---------------------------------------------------------------------------
-mkdir -p "${TG_MSG_FILE:+$(dirname "$TG_MSG_FILE")}" "$OUTDIR"
+[ -n "${TG_MSG_FILE:-}" ] && mkdir -p "$(dirname "$TG_MSG_FILE")"
+mkdir -p "$OUTDIR"
 cd "$ROOT"
 
 # In CI, skip banner + toolchain — saves ~5-10s per run.
