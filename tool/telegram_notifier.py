@@ -207,37 +207,63 @@ def update_message():
 
 def success_message():
     msg_id = os.environ.get('TG_MESSAGE_ID')
-
-    # Delete the progress message first
     _delete_message(msg_id)
 
     tag = os.environ.get('TG_TAG', '')
     apk_dir = os.environ.get('TG_APK_DIR', 'build/app/outputs/flutter-apk')
     run_url = os.environ.get('TG_RUN_URL', '')
     commit_url = os.environ.get('TG_COMMIT_URL', '')
+    mode = os.environ.get('TG_MODE', 'release')
+    branch = os.environ.get('TG_BRANCH', 'unknown')
+    build_id = os.environ.get('TG_BUILD_ID', 'unknown')
+    actor = os.environ.get('TG_ACTOR', 'unknown')
+    sha = os.environ.get('TG_SHA', '')
+    commit = os.environ.get('TG_COMMIT', '')
+    timestamp = os.environ.get('TG_TIMESTAMP', '')
 
     apk_files = glob.glob(os.path.join(apk_dir, "Aetherfin-v*.apk"))
     download_url = None
+    apk_name = None
+    apk_size = None
     if apk_files:
         apk_path = apk_files[0]
-        print(f"Uploading {apk_path} to gofile...")
+        apk_name = os.path.basename(apk_path)
+        apk_size = os.path.getsize(apk_path)
+        print(f"Uploading {apk_name} to gofile...")
         download_url = _upload_to_gofile(apk_path)
 
-    title = "Release Successful!" if tag else "Build Successful!"
     icon = "\U0001f680" if tag else "\u2705"
+    status = "Release Successful!" if tag else "Build Successful!"
 
-    text = f"{icon} <b>Aetherfin {title}</b>\n"
-    text += "\u2500" * 12 + "\n"
-    if tag:
-        text += f"<b>Tag:</b> <code>{tag}</code>\n"
+    lines = []
     if download_url:
-        text += f"<b>APK:</b> Direct download (no zip)\n"
-    else:
-        text += "<blockquote>Build completed, but upload failed.</blockquote>\n"
-    text += "\u2500" * 12 + "\n"
-    timestamp = os.environ.get('TG_TIMESTAMP', '')
+        lines.append(f"\U0001f4e5 <b>{apk_name}</b>")
+        if apk_size:
+            size_mb = apk_size / (1024 * 1024)
+            lines.append(f"   {size_mb:.1f} MB")
+        lines.append("")
+
+    lines.append(f"{icon} <b>Aetherfin {status}</b>")
+    lines.append("")
+    if apk_name:
+        lines.append(f"<b>App:</b> {apk_name}")
+    lines.append(f"<b>Mode:</b> <code>{mode}</code>")
+    if apk_size:
+        size_mb = apk_size / (1024 * 1024)
+        lines.append(f"<b>Size:</b> {size_mb:.0f}MB")
+    lines.append("")
+    lines.append(f"<b>Branch:</b> <code>{branch}</code>")
+    lines.append(f"<b>Build ID:</b> <code>{build_id}</code>")
+    lines.append(f"<b>Triggered by:</b> <code>{actor}</code>")
+    if sha and commit:
+        lines.append("")
+        lines.append(f"<b>Last Commit:</b>")
+        lines.append(f"<code>{sha}</code> \u2014 {commit}")
+    lines.append("")
     if timestamp:
-        text += f"<i>{timestamp}</i>"
+        lines.append(f"<i>{timestamp}</i>")
+
+    text = "\n".join(lines)
 
     buttons = []
     if download_url:
@@ -246,6 +272,9 @@ def success_message():
         buttons.append({"text": "\U0001f528 View Run", "url": run_url})
     if commit_url:
         buttons.append({"text": "\U0001f4bb Commit", "url": commit_url})
+
+    reply_markup = {"inline_keyboard": [buttons]} if buttons else {}
+    _send_text(text, reply_markup)
 
     reply_markup = {"inline_keyboard": [buttons]} if buttons else {}
 
