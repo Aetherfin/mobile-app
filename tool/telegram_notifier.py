@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import glob
+import subprocess
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from urllib.parse import urlencode
@@ -113,31 +114,29 @@ def _send_text(text, reply_markup=None):
 
 
 def _upload_to_0x0(file_path):
-    boundary = "----AetherfinCI Upload"
     filename = os.path.basename(file_path)
 
-    body = b""
-    body += f"--{boundary}\r\n".encode()
-    body += f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'.encode()
-    body += b"Content-Type: application/vnd.android.package-archive\r\n\r\n"
-    with open(file_path, "rb") as f:
-        body += f.read()
-    body += b"\r\n"
-    body += f"--{boundary}--\r\n".encode()
-
-    url = "https://0x0.st"
-    headers = {"Content-Type": f"multipart/form-data; boundary={boundary}"}
-
     try:
-        req = Request(url, data=body, headers=headers)
-        with urlopen(req, timeout=300) as resp:
-            result = resp.read().decode("utf-8").strip()
-            if result.startswith("http"):
-                print(f"Uploaded to 0x0.st: {result}")
-                return result
+        result = subprocess.run(
+            ["curl", "-s", "-F", f"file=@{file_path}", "https://0x0.st"],
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
+        if result.returncode == 0:
+            url = result.stdout.strip()
+            if url.startswith("http"):
+                print(f"Uploaded to 0x0.st: {url}")
+                return url
             else:
-                print(f"Unexpected 0x0.st response: {result}")
+                print(f"Unexpected 0x0.st response: {url}")
                 return None
+        else:
+            print(f"curl failed: {result.stderr}")
+            return None
+    except subprocess.TimeoutExpired:
+        print("Upload to 0x0.st timed out")
+        return None
     except Exception as e:
         print(f"Error uploading to 0x0.st: {e}")
         return None
