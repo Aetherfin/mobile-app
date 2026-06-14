@@ -296,7 +296,7 @@ void main() {
           id: 'sp-14',
           name: 'Medium bitrate',
           rules: [
-            SmartRule(
+            const SmartRule(
               field: 'bitrate',
               operator: 'inTheRange',
               value: [200, 300],
@@ -750,7 +750,7 @@ void main() {
         id: 'local-sp-13',
         name: 'Mid length',
         rules: [
-          SmartRule(
+          const SmartRule(
             field: 'duration',
             operator: 'inTheRange',
             // SQL maps duration to duration_ms column (milliseconds)

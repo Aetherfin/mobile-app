@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
 import 'package:aetherfin/core/subsonic/client.dart';
 import 'package:aetherfin/core/jellyfin/models/server.dart';
-import 'package:aetherfin/core/jellyfin/models/items.dart';
 
 SubsonicClient _client({
   String baseUrl = 'http://srv:4533',
@@ -61,13 +60,13 @@ Map<String, dynamic> _trackMap({
   'artistId': artistId,
   'track': track,
   'duration': duration,
-  if (suffix != null) 'suffix': suffix,
-  if (bitRate != null) 'bitRate': bitRate,
-  if (coverArt != null) 'coverArt': coverArt,
-  if (starred != null) 'starred': starred,
-  if (samplingRate != null) 'samplingRate': samplingRate,
-  if (bitDepth != null) 'bitDepth': bitDepth,
-  if (created != null) 'created': created,
+  'suffix': ?suffix,
+  'bitRate': ?bitRate,
+  'coverArt': ?coverArt,
+  'starred': ?starred,
+  'samplingRate': ?samplingRate,
+  'bitDepth': ?bitDepth,
+  'created': ?created,
 };
 
 Map<String, dynamic> _albumMap({
@@ -88,10 +87,10 @@ Map<String, dynamic> _albumMap({
   'artistId': artistId,
   'songCount': songCount,
   'duration': duration,
-  if (year != null) 'year': year,
-  if (coverArt != null) 'coverArt': coverArt,
-  if (starred != null) 'starred': starred,
-  if (created != null) 'created': created,
+  'year': ?year,
+  'coverArt': ?coverArt,
+  'starred': ?starred,
+  'created': ?created,
 };
 
 Map<String, dynamic> _artistMap({
@@ -103,7 +102,7 @@ Map<String, dynamic> _artistMap({
   'id': id,
   'name': name,
   'albumCount': albumCount,
-  if (coverArt case final coverArt?) 'coverArt': coverArt,
+  'coverArt': ?coverArt,
 };
 
 Map<String, dynamic> _playlistMap({
@@ -119,7 +118,7 @@ Map<String, dynamic> _playlistMap({
   'songCount': songCount,
   'duration': duration,
   'public': isPublic,
-  if (coverArt case final coverArt?) 'coverArt': coverArt,
+  'coverArt': ?coverArt,
 };
 
 void main() {

@@ -5,7 +5,6 @@ import 'package:aetherfin/core/local/local_library.dart';
 import 'package:aetherfin/core/local/local_db.dart';
 import 'package:aetherfin/core/local/app_database.dart';
 import 'package:aetherfin/core/backend/music_backend.dart';
-import 'package:aetherfin/core/jellyfin/models/items.dart';
 
 void main() {
   group('LocalBackend identification', () {
@@ -17,7 +16,7 @@ void main() {
 
     test('trackStreamUrl returns trackId unchanged', () async {
       final appDb = AppDatabase.forTesting(NativeDatabase.memory());
-      addTearDown(() => appDb.close());
+      addTearDown(appDb.close);
       final localDb = LocalDb(db: appDb);
       final library = LocalLibrary(database: appDb);
       final backend = LocalBackend(library: library, db: localDb);
@@ -27,7 +26,7 @@ void main() {
 
     test('authHeaders returns empty map', () async {
       final appDb = AppDatabase.forTesting(NativeDatabase.memory());
-      addTearDown(() => appDb.close());
+      addTearDown(appDb.close);
       final localDb = LocalDb(db: appDb);
       final library = LocalLibrary(database: appDb);
       final backend = LocalBackend(library: library, db: localDb);
@@ -584,10 +583,7 @@ void main() {
         'content://uri/1',
         'content://uri/2',
       ]);
-      final pl = await backend.playlist(id!);
-      final entryIds = pl!.tracks.map((t) => t.id).toList();
-      // Need entry IDs, not track IDs
-      final entries = await localDb.playlistTracks(id);
+      final entries = await localDb.playlistTracks(id!);
       await backend.removeFromPlaylist(id, [entries.first.entryId]);
       final updated = await backend.playlist(id);
       expect(updated!.tracks, hasLength(1));
@@ -611,7 +607,7 @@ void main() {
   group('LocalBackend no-ops and lifecycle', () {
     test('reportPlaybackStart is a no-op', () async {
       final appDb = AppDatabase.forTesting(NativeDatabase.memory());
-      addTearDown(() => appDb.close());
+      addTearDown(appDb.close);
       final localDb = LocalDb(db: appDb);
       final library = LocalLibrary(database: appDb);
       final backend = LocalBackend(library: library, db: localDb);
@@ -623,7 +619,7 @@ void main() {
 
     test('savePlayQueue and getPlayQueue are no-ops', () async {
       final appDb = AppDatabase.forTesting(NativeDatabase.memory());
-      addTearDown(() => appDb.close());
+      addTearDown(appDb.close);
       final localDb = LocalDb(db: appDb);
       final library = LocalLibrary(database: appDb);
       final backend = LocalBackend(library: library, db: localDb);
@@ -634,7 +630,7 @@ void main() {
 
     test('clearCache and close are no-ops', () {
       final appDb = AppDatabase.forTesting(NativeDatabase.memory());
-      addTearDown(() => appDb.close());
+      addTearDown(appDb.close);
       final localDb = LocalDb(db: appDb);
       final library = LocalLibrary(database: appDb);
       final backend = LocalBackend(library: library, db: localDb);
@@ -645,7 +641,7 @@ void main() {
 
     test('resumeItems returns empty list', () async {
       final appDb = AppDatabase.forTesting(NativeDatabase.memory());
-      addTearDown(() => appDb.close());
+      addTearDown(appDb.close);
       final localDb = LocalDb(db: appDb);
       final library = LocalLibrary(database: appDb);
       final backend = LocalBackend(library: library, db: localDb);
@@ -655,7 +651,7 @@ void main() {
 
     test('userViews returns empty list', () async {
       final appDb = AppDatabase.forTesting(NativeDatabase.memory());
-      addTearDown(() => appDb.close());
+      addTearDown(appDb.close);
       final localDb = LocalDb(db: appDb);
       final library = LocalLibrary(database: appDb);
       final backend = LocalBackend(library: library, db: localDb);
@@ -665,7 +661,7 @@ void main() {
 
     test('instantMix returns similar tracks', () async {
       final appDb = AppDatabase.forTesting(NativeDatabase.memory());
-      addTearDown(() => appDb.close());
+      addTearDown(appDb.close);
       final localDb = LocalDb(db: appDb);
       final library = LocalLibrary(database: appDb);
       final backend = LocalBackend(library: library, db: localDb);
