@@ -113,32 +113,50 @@ def _send_text(text, reply_markup=None):
         sys.exit(1)
 
 
-def _upload_to_0x0(file_path):
+def _upload_to_gofile(file_path):
     filename = os.path.basename(file_path)
 
     try:
+        server_resp = subprocess.run(
+            ["curl", "-s", "https://api.gofile.io/servers"],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        if server_resp.returncode != 0:
+            print(f"Failed to get gofile server: {server_resp.stderr}")
+            return None
+
+        servers = json.loads(server_resp.stdout)
+        if servers.get("status") != "ok" or not servers.get("data", {}).get("servers"):
+            print(f"No gofile servers available")
+            return None
+
+        server = servers["data"]["servers"][0]["name"]
+
         result = subprocess.run(
-            ["curl", "-s", "-F", "reqtype=fileupload", "-F", "time=72h", "-F", f"fileToUpload=@{file_path}", "https://litterbox.catbox.moe/resources/internals/api.php"],
+            ["curl", "-s", "-F", f"file=@{file_path}", f"https://{server}.gofile.io/contents/uploadfile"],
             capture_output=True,
             text=True,
             timeout=300
         )
         if result.returncode == 0:
-            url = result.stdout.strip()
-            if url.startswith("http"):
-                print(f"Uploaded to catbox: {url}")
+            resp = json.loads(result.stdout)
+            if resp.get("status") == "ok":
+                url = resp["data"]["downloadPage"]
+                print(f"Uploaded to gofile: {url}")
                 return url
             else:
-                print(f"Unexpected catbox response: {url}")
+                print(f"Unexpected gofile response: {resp}")
                 return None
         else:
             print(f"curl failed: {result.stderr}")
             return None
     except subprocess.TimeoutExpired:
-        print("Upload to catbox timed out")
+        print("Upload to gofile timed out")
         return None
     except Exception as e:
-        print(f"Error uploading to catbox: {e}")
+        print(f"Error uploading to gofile: {e}")
         return None
 
 
@@ -202,8 +220,8 @@ def success_message():
     download_url = None
     if apk_files:
         apk_path = apk_files[0]
-        print(f"Uploading {apk_path} to catbox...")
-        download_url = _upload_to_0x0(apk_path)
+        print(f"Uploading {apk_path} to gofile...")
+        download_url = _upload_to_gofile(apk_path)
 
     title = "Release Successful!" if tag else "Build Successful!"
     icon = "\U0001f680" if tag else "\u2705"
