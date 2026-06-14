@@ -118,7 +118,7 @@ def _upload_to_0x0(file_path):
 
     try:
         result = subprocess.run(
-            ["curl", "-s", "-F", f"file=@{file_path}", "https://0x0.st"],
+            ["curl", "-s", "-F", "reqtype=fileupload", "-F", f"fileToUpload=@{file_path}", "https://litterbox.catbox.moe/resources/internals/api.php"],
             capture_output=True,
             text=True,
             timeout=300
@@ -126,19 +126,19 @@ def _upload_to_0x0(file_path):
         if result.returncode == 0:
             url = result.stdout.strip()
             if url.startswith("http"):
-                print(f"Uploaded to 0x0.st: {url}")
+                print(f"Uploaded to catbox: {url}")
                 return url
             else:
-                print(f"Unexpected 0x0.st response: {url}")
+                print(f"Unexpected catbox response: {url}")
                 return None
         else:
             print(f"curl failed: {result.stderr}")
             return None
     except subprocess.TimeoutExpired:
-        print("Upload to 0x0.st timed out")
+        print("Upload to catbox timed out")
         return None
     except Exception as e:
-        print(f"Error uploading to 0x0.st: {e}")
+        print(f"Error uploading to catbox: {e}")
         return None
 
 
