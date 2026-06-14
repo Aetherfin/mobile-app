@@ -50,62 +50,66 @@ class YouTubeSongGrid extends ConsumerWidget {
             ensureHitTarget: true,
             onTap: () => ref.read(playActionsProvider).playSingle(track),
             onLongPress: () => showTrackContextMenu(context, ref, track),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: AfRadii.borderMd,
-                  child: SizedBox(
-                    width: 56,
-                    height: 56,
-                    child: item.thumbnailUrl.isNotEmpty
-                        ? Artwork(
-                            url: item.thumbnailUrl,
-                            size: 56,
-                            radius: AfRadii.borderMd,
-                          )
-                        : Container(
-                            color: AfColors.surfaceHigh,
-                            child: const Icon(LucideIcons.music, size: 24),
+            child: Semantics(
+              button: true,
+              label: '${item.title} by ${item.subtitle}',
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: AfRadii.borderMd,
+                    child: SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: item.thumbnailUrl.isNotEmpty
+                          ? Artwork(
+                              url: item.thumbnailUrl,
+                              size: 56,
+                              radius: AfRadii.borderMd,
+                            )
+                          : Container(
+                              color: AfColors.surfaceHigh,
+                              child: const Icon(LucideIcons.music, size: 24),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: AfSpacing.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          item.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AfTypography.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: AfColors.textPrimary,
                           ),
-                  ),
-                ),
-                const SizedBox(width: AfSpacing.s12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        item.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AfTypography.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: AfColors.textPrimary,
                         ),
-                      ),
-                      const SizedBox(height: AfSpacing.s4),
-                      Text(
-                        item.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AfTypography.bodySmall.copyWith(
-                          color: AfColors.textTertiary,
+                        const SizedBox(height: AfSpacing.s4),
+                        Text(
+                          item.subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AfTypography.bodySmall.copyWith(
+                            color: AfColors.textTertiary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(
-                    LucideIcons.moreVertical,
-                    size: 18,
-                    color: AfColors.textSecondary,
+                  IconButton(
+                    icon: const Icon(
+                      LucideIcons.moreVertical,
+                      size: 18,
+                      color: AfColors.textSecondary,
+                    ),
+                    tooltip: 'More options',
+                    onPressed: () => showTrackContextMenu(context, ref, track),
                   ),
-                  tooltip: 'More options',
-                  onPressed: () => showTrackContextMenu(context, ref, track),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -193,54 +197,60 @@ class YouTubeHomeTile extends StatelessWidget {
       ensureHitTarget: false,
       onTap: onTap,
       onLongPress: onLongPress,
-      child: SizedBox(
-        width: 140,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AspectRatio(
-              aspectRatio: 1,
-              child: ClipRRect(
-                borderRadius: isArtist ? AfRadii.borderPill : AfRadii.borderMd,
-                child: item.thumbnailUrl.isNotEmpty
-                    ? Artwork(
-                        url: item.thumbnailUrl,
-                        size: 140,
-                        radius: isArtist
-                            ? AfRadii.borderPill
-                            : AfRadii.borderMd,
-                      )
-                    : Container(
-                        color: AfColors.surfaceHigh,
-                        child: Icon(
-                          isArtist ? LucideIcons.user : LucideIcons.music,
-                          color: AfColors.textTertiary,
-                          size: 32,
+      child: Semantics(
+        button: true,
+        label: '${item.title} by ${item.subtitle}',
+        child: SizedBox(
+          width: 140,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AspectRatio(
+                aspectRatio: 1,
+                child: ClipRRect(
+                  borderRadius: isArtist
+                      ? AfRadii.borderPill
+                      : AfRadii.borderMd,
+                  child: item.thumbnailUrl.isNotEmpty
+                      ? Artwork(
+                          url: item.thumbnailUrl,
+                          size: 140,
+                          radius: isArtist
+                              ? AfRadii.borderPill
+                              : AfRadii.borderMd,
+                        )
+                      : Container(
+                          color: AfColors.surfaceHigh,
+                          child: Icon(
+                            isArtist ? LucideIcons.user : LucideIcons.music,
+                            color: AfColors.textTertiary,
+                            size: 32,
+                          ),
                         ),
-                      ),
-              ),
-            ),
-            const SizedBox(height: AfSpacing.s8),
-            Text(
-              item.title,
-              style: AfTypography.bodySmall.copyWith(
-                color: AfColors.textPrimary,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: AfSpacing.s2),
-            if (item.subtitle.isNotEmpty)
-              Text(
-                item.subtitle,
-                style: AfTypography.bodySmall.copyWith(
-                  color: AfColors.textTertiary,
                 ),
-                maxLines: 1,
+              ),
+              const SizedBox(height: AfSpacing.s8),
+              Text(
+                item.title,
+                style: AfTypography.bodySmall.copyWith(
+                  color: AfColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-          ],
+              const SizedBox(height: AfSpacing.s2),
+              if (item.subtitle.isNotEmpty)
+                Text(
+                  item.subtitle,
+                  style: AfTypography.bodySmall.copyWith(
+                    color: AfColors.textTertiary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
         ),
       ),
     );

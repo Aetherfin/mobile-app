@@ -214,6 +214,14 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(
+                child: Text(
+                  'Step 2 of 5',
+                  style: AfTypography.caption.copyWith(
+                    color: AfColors.textTertiary,
+                  ),
+                ),
+              ),
               const SizedBox(height: AfSpacing.s8),
               Text(
                 _scanning

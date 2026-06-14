@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../design_tokens/tokens.dart';
 import 'scrubber_notifiers.dart';
 
 class ScrubCombinedBarPainter extends CustomPainter {
@@ -114,7 +115,7 @@ class ScrubOverlayPainter extends CustomPainter {
   final Paint _glowPaint = Paint();
   final Paint _hStreakPaint = Paint();
   final Paint _vStreakPaint = Paint();
-  final Paint _corePaint = Paint()..color = Colors.white;
+  final Paint _corePaint = Paint()..color = AfColors.textPrimary;
 
   // ── Hoisted MaskFilters — only 2 distinct blur radii used. ──
   static const _blur2 = MaskFilter.blur(BlurStyle.normal, 2.0);
@@ -193,7 +194,7 @@ class ScrubOverlayPainter extends CustomPainter {
 
       // Horizontal light streak — the main "shine" ray.
       _hStreakPaint
-        ..color = Colors.white.withValues(alpha: 0.85)
+        ..color = AfColors.textPrimary.withValues(alpha: 0.85)
         ..maskFilter = _blur2
         ..shader = null;
       canvas.drawOval(
@@ -207,7 +208,7 @@ class ScrubOverlayPainter extends CustomPainter {
 
       // Vertical cross-streak — gives the star/diamond shape.
       _vStreakPaint
-        ..color = Colors.white.withValues(alpha: 0.6)
+        ..color = AfColors.textPrimary.withValues(alpha: 0.6)
         ..maskFilter = _blur2
         ..shader = null;
       canvas.drawOval(

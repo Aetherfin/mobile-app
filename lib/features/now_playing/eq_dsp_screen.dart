@@ -396,7 +396,7 @@ class _EqDspScreenState extends ConsumerState<EqDspScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AfSpacing.s8),
+        borderRadius: AfRadii.borderSm,
         child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AfSpacing.s16,
@@ -411,7 +411,7 @@ class _EqDspScreenState extends ConsumerState<EqDspScreen> {
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
-            borderRadius: BorderRadius.circular(AfSpacing.s8),
+            borderRadius: AfRadii.borderSm,
             border: Border.all(
               color: AfColors.accentPrimary.withValues(alpha: 0.3),
             ),

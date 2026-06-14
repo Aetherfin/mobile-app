@@ -142,7 +142,9 @@ class Artwork extends ConsumerWidget {
           cacheManager: ArtworkCacheManager(),
           placeholder: (context, url) => placeholder,
           errorWidget: (context, url, error) => placeholder,
-          fadeInDuration: AfDurations.quick,
+          fadeInDuration: MediaQuery.maybeOf(context)?.disableAnimations == true
+              ? Duration.zero
+              : AfDurations.quick,
           memCacheWidth: cacheW,
           memCacheHeight: cacheH,
           maxHeightDiskCache: 1024,
@@ -171,11 +173,14 @@ class CircularArtwork extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxW = constraints.maxWidth;
-        final r = maxW.isFinite && maxW > 0 ? maxW / 2 : 32.0;
         return Artwork(
           url: url,
           size: maxW,
-          radius: BorderRadius.circular(r),
+          radius: maxW.isFinite && maxW > 0
+              ? AfRadii.borderPill
+              : BorderRadius.circular(
+                  AfSpacing.s32,
+                ), // no exact AfRadii match for 32dp fallback
           semanticLabel: semanticLabel,
         );
       },

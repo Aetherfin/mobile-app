@@ -64,6 +64,15 @@ class WelcomeScreen extends ConsumerWidget {
           SafeArea(
             child: Column(
               children: [
+                const SizedBox(height: AfSpacing.s16),
+                Center(
+                  child: Text(
+                    'Step 1',
+                    style: AfTypography.caption.copyWith(
+                      color: AfColors.textTertiary,
+                    ),
+                  ),
+                ),
                 const Spacer(flex: 2),
 
                 // Logo + branding

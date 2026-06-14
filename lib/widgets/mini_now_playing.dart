@@ -76,7 +76,7 @@ class _MiniPlayerContent extends ConsumerWidget {
             height: MiniNowPlaying.height,
             decoration: BoxDecoration(
               color: spectral.shadow,
-              borderRadius: BorderRadius.circular(MiniNowPlaying.height / 2),
+              borderRadius: AfRadii.borderXl,
               border: Border.all(
                 color: spectral.primary.withValues(alpha: 0.2),
                 width: 0.5,
@@ -152,7 +152,9 @@ class _ArtworkRing extends StatelessWidget {
             child: Artwork(
               url: track.imageUrl,
               size: _artworkSize,
-              radius: BorderRadius.circular(_artworkSize / 2),
+              radius: BorderRadius.circular(
+                AfSpacing.s24,
+              ), // 24dp — no exact AfRadii match
             ),
           ),
           Positioned.fill(

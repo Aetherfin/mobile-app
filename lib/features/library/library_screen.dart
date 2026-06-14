@@ -85,104 +85,110 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       ),
     );
 
-    return SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: AfLayout.maxContentWidth,
-              ),
-              child: AfScrollbar(
-                child: CustomScrollView(
-                  controller: _scroll,
-                  physics: const ClampingScrollPhysics(),
-                  slivers: [
-                    // ── Header row: gradient title + search icon ──
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AfSpacing.s16,
-                          AfSpacing.s16,
-                          AfSpacing.s16,
-                          AfSpacing.s12,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: ShaderMask(
-                                shaderCallback: (bounds) => LinearGradient(
-                                  colors: [
-                                    spectral.primary,
-                                    spectral.secondary,
-                                  ],
-                                ).createShader(bounds),
-                                child: Text(
-                                  'Library',
-                                  style: AfTypography.display.copyWith(
-                                    color: AfColors.textOnPrimary,
+    return FocusTraversalGroup(
+      child: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AfLayout.maxContentWidth,
+                ),
+                child: AfScrollbar(
+                  child: CustomScrollView(
+                    controller: _scroll,
+                    physics: const ClampingScrollPhysics(),
+                    slivers: [
+                      // ── Header row: gradient title + search icon ──
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            AfSpacing.s16,
+                            AfSpacing.s16,
+                            AfSpacing.s16,
+                            AfSpacing.s12,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: ShaderMask(
+                                  shaderCallback: (bounds) => LinearGradient(
+                                    colors: [
+                                      spectral.primary,
+                                      spectral.secondary,
+                                    ],
+                                  ).createShader(bounds),
+                                  child: Text(
+                                    'Library',
+                                    style: AfTypography.display.copyWith(
+                                      color: AfColors.textOnPrimary,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            PressScale(
-                              onTap: () => _openSearch(context),
-                              child: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: AfColors.glassFill,
-                                  borderRadius: AfRadii.borderPill,
-                                  border: Border.all(
-                                    color: AfColors.glassBorderStrong,
-                                    width: 1,
+                              PressScale(
+                                onTap: () => _openSearch(context),
+                                child: Semantics(
+                                  button: true,
+                                  label: 'Search library',
+                                  child: Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: AfColors.glassFill,
+                                      borderRadius: AfRadii.borderPill,
+                                      border: Border.all(
+                                        color: AfColors.glassBorderStrong,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      LucideIcons.search,
+                                      color: AfColors.textSecondary,
+                                      size: 18,
+                                    ),
                                   ),
                                 ),
-                                child: const Icon(
-                                  LucideIcons.search,
-                                  color: AfColors.textSecondary,
-                                  size: 18,
-                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
 
-                    // ── Recently Added ──
-                    SliverToBoxAdapter(
-                      child: _RecentlyAddedSection(isLocal: isLocal),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: AfSpacing.s12),
-                    ),
-
-                    // ── Pill Bar (pinned on scroll) ──
-                    SliverPersistentHeader(
-                      pinned: true,
-                      delegate: _PillBarDelegate(
-                        selected: _pill,
-                        onChanged: (v) => setState(() => _pill = v),
+                      // ── Recently Added ──
+                      SliverToBoxAdapter(
+                        child: _RecentlyAddedSection(isLocal: isLocal),
                       ),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: AfSpacing.s12),
-                    ),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: AfSpacing.s12),
+                      ),
 
-                    // ── Section Content ──
-                    switch (_pill) {
-                      SongsPill.songs => SongsTab(isLocal: isLocal),
-                      SongsPill.artists => ArtistsTab(isLocal: isLocal),
-                      SongsPill.albums => AlbumsTab(isLocal: isLocal),
-                      SongsPill.genres => GenresTab(isLocal: isLocal),
-                    },
-                  ],
+                      // ── Pill Bar (pinned on scroll) ──
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _PillBarDelegate(
+                          selected: _pill,
+                          onChanged: (v) => setState(() => _pill = v),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: AfSpacing.s12),
+                      ),
+
+                      // ── Section Content ──
+                      switch (_pill) {
+                        SongsPill.songs => SongsTab(isLocal: isLocal),
+                        SongsPill.artists => ArtistsTab(isLocal: isLocal),
+                        SongsPill.albums => AlbumsTab(isLocal: isLocal),
+                        SongsPill.genres => GenresTab(isLocal: isLocal),
+                      },
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -416,18 +422,22 @@ class _PillBarState extends ConsumerState<_PillBar>
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           onTap: () => widget.onChanged(pill),
-                          child: Container(
-                            height: 44,
-                            alignment: Alignment.center,
-                            child: Text(
-                              pill.label,
-                              style: AfTypography.bodyMedium.copyWith(
-                                color: pill == widget.selected
-                                    ? AfColors.textOnPrimary
-                                    : AfColors.textSecondary,
-                                fontWeight: pill == widget.selected
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
+                          child: Semantics(
+                            button: true,
+                            label: '${pill.label} tab',
+                            child: Container(
+                              height: 44,
+                              alignment: Alignment.center,
+                              child: Text(
+                                pill.label,
+                                style: AfTypography.bodyMedium.copyWith(
+                                  color: pill == widget.selected
+                                      ? AfColors.textOnPrimary
+                                      : AfColors.textSecondary,
+                                  fontWeight: pill == widget.selected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                ),
                               ),
                             ),
                           ),

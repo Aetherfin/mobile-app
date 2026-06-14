@@ -76,7 +76,7 @@ class _AfBottomNavState extends ConsumerState<AfBottomNav> {
       selected: active,
       button: true,
       label: item.label,
-      child: PressScale(
+      child: FocusPressScale(
         ensureHitTarget: false,
         onTap: () => widget.onSelect(index),
         child: AnimatedContainer(

@@ -276,7 +276,7 @@ class _ParametricEqPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(x, y), radius, handlePaint);
 
-    // White border
+    // White border — paint context (glow/highlight), not semantic
     final borderPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke

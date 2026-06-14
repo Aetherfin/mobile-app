@@ -31,7 +31,7 @@ class Tile extends StatelessWidget {
   Widget build(BuildContext context) {
     final art = Artwork(url: imageUrl, size: size, radius: AfRadii.borderLg);
 
-    return PressScale(
+    return FocusPressScale(
       ensureHitTarget: false,
       onTap: onTap,
       onLongPress: onLongPress,
@@ -98,7 +98,7 @@ class GenreTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PressScale(
+    return FocusPressScale(
       ensureHitTarget: false,
       onTap: onTap,
       child: Container(

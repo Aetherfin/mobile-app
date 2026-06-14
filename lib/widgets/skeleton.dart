@@ -68,10 +68,15 @@ class _ShimmerWrapState extends State<ShimmerWrap>
         );
 
     if (reduced) {
-      return Semantics(label: 'Loading', child: effectiveChild);
+      return Semantics(
+        liveRegion: true,
+        label: 'Loading',
+        child: effectiveChild,
+      );
     }
 
     return Semantics(
+      liveRegion: true,
       label: 'Loading',
       child: AnimatedBuilder(
         animation: _controller,

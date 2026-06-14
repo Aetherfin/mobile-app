@@ -17,6 +17,7 @@ class PressScale extends StatefulWidget {
     this.pressedScale = 0.96,
     this.behavior = HitTestBehavior.opaque,
     this.ensureHitTarget = true,
+    this.disabled = false,
   });
 
   final Widget child;
@@ -29,6 +30,10 @@ class PressScale extends StatefulWidget {
   /// Minimum hit-target enforcement. Defaults to true — every tap target
   /// inflates to 48x48 dp via transparent padding.
   final bool ensureHitTarget;
+
+  /// Disables press interaction. Shows muted appearance at [AfOpacity.disabled]
+  /// opacity, skips scale animation, and prevents [onTap] from firing.
+  final bool disabled;
 
   @override
   State<PressScale> createState() => _PressScaleState();
@@ -60,6 +65,18 @@ class _PressScaleState extends State<PressScale>
 
   @override
   Widget build(BuildContext context) {
+    if (widget.disabled) {
+      final target = Opacity(opacity: AfOpacity.disabled, child: widget.child);
+      if (!widget.ensureHitTarget) return target;
+      return ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: AfSpacing.minHitTarget,
+          minHeight: AfSpacing.minHitTarget,
+        ),
+        child: target,
+      );
+    }
+
     final reduced = MediaQuery.of(context).disableAnimations;
     final target = GestureDetector(
       behavior: widget.behavior,
@@ -105,6 +122,7 @@ class FocusPressScale extends StatefulWidget {
     this.behavior = HitTestBehavior.opaque,
     this.ensureHitTarget = true,
     this.autofocus = false,
+    this.disabled = false,
   });
 
   final Widget child;
@@ -115,6 +133,7 @@ class FocusPressScale extends StatefulWidget {
   final HitTestBehavior behavior;
   final bool ensureHitTarget;
   final bool autofocus;
+  final bool disabled;
   final FocusNode? focusNode;
 
   @override
@@ -158,6 +177,7 @@ class _FocusPressScaleState extends State<FocusPressScale> {
               pressedScale: widget.pressedScale,
               behavior: widget.behavior,
               ensureHitTarget: widget.ensureHitTarget,
+              disabled: widget.disabled,
               child: widget.child,
             ),
           );

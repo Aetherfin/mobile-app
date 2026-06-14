@@ -339,11 +339,17 @@ class _AlbumWikiPanelState extends ConsumerState<AlbumWikiPanel> {
           const SizedBox(height: AfSpacing.s8),
           GestureDetector(
             onTap: () => setState(() => _expanded = !_expanded),
-            child: Text(
-              _expanded ? 'Show less' : 'Read more',
-              style: AfTypography.bodySmall.copyWith(
-                color: spectral,
-                fontWeight: FontWeight.bold,
+            child: Semantics(
+              button: true,
+              label: _expanded
+                  ? 'Collapse album description'
+                  : 'Expand album description',
+              child: Text(
+                _expanded ? 'Show less' : 'Read more',
+                style: AfTypography.bodySmall.copyWith(
+                  color: spectral,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),

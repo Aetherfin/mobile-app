@@ -18,13 +18,15 @@ Future<T?> showBlurDialog<T>({
 }) {
   assert(child != null || builder != null, 'Provide child or builder');
 
+  final reduced = MediaQuery.of(context).disableAnimations;
+
   return Navigator.of(context, rootNavigator: true).push<T>(
     PageRouteBuilder<T>(
       opaque: false,
       barrierDismissible: barrierDismissible,
       barrierColor: Colors.transparent,
-      transitionDuration: AfDurations.standard,
-      reverseTransitionDuration: AfDurations.bounce,
+      transitionDuration: reduced ? Duration.zero : AfDurations.standard,
+      reverseTransitionDuration: reduced ? Duration.zero : AfDurations.bounce,
       pageBuilder: (context, animation, secondaryAnimation) {
         return _BlurDialogOverlay<T>(
           animation: animation,
@@ -55,8 +57,6 @@ class _BlurDialogOverlay<T> extends StatelessWidget {
   final Widget child;
   final bool barrierDismissible;
   final Animation<double> animation;
-
-  static const _borderRadius = AfRadii.lg;
 
   @override
   Widget build(BuildContext context) {
@@ -111,9 +111,7 @@ class _BlurDialogOverlay<T> extends StatelessWidget {
                                 color: AfColors.surfaceRaised.withValues(
                                   alpha: 0.85,
                                 ),
-                                borderRadius: BorderRadius.circular(
-                                  _borderRadius,
-                                ),
+                                borderRadius: AfRadii.borderLg,
                                 border: Border.all(
                                   color: AfColors.glassBorderEmphasis,
                                   width: 0.5,

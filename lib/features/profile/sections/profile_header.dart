@@ -235,64 +235,68 @@ class CompactAvatar extends ConsumerWidget {
                 ),
               );
             },
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Avatar rounded rectangle
-          Container(
-            width: 80,
-            height: 80,
-            decoration: const BoxDecoration(
-              color: AfColors.surfaceRaised,
-              borderRadius: AfRadii.borderLg,
-            ),
-            child: ClipRRect(
-              borderRadius: AfRadii.borderLg,
-              child: _buildAvatarContent(spectral.muted),
-            ),
-          ),
-
-          // Camera badge
-          if (!isUploading)
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: spectral.secondary,
-                ),
-                child: const Icon(
-                  LucideIcons.camera,
-                  size: 12,
-                  color: AfColors.textOnPrimary,
-                ),
+      child: Semantics(
+        button: true,
+        label: 'Change $name profile photo',
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Avatar rounded rectangle
+            Container(
+              width: 80,
+              height: 80,
+              decoration: const BoxDecoration(
+                color: AfColors.surfaceRaised,
+                borderRadius: AfRadii.borderLg,
+              ),
+              child: ClipRRect(
+                borderRadius: AfRadii.borderLg,
+                child: _buildAvatarContent(spectral.muted),
               ),
             ),
 
-          // Upload overlay
-          if (isUploading)
-            Positioned.fill(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: AfColors.surfaceScrim,
-                  borderRadius: AfRadii.borderLg,
+            // Camera badge
+            if (!isUploading)
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: spectral.secondary,
+                  ),
+                  child: const Icon(
+                    LucideIcons.camera,
+                    size: 12,
+                    color: AfColors.textOnPrimary,
+                  ),
                 ),
-                child: Center(
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: spectral.primary,
+              ),
+
+            // Upload overlay
+            if (isUploading)
+              Positioned.fill(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: AfColors.surfaceScrim,
+                    borderRadius: AfRadii.borderLg,
+                  ),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: spectral.primary,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

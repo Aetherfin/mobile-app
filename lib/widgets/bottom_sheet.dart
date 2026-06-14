@@ -108,6 +108,7 @@ class _BlurBottomSheetOverlayState<T> extends State<_BlurBottomSheetOverlay<T>>
   late final Animation<double> _fadeAnim;
   late final Animation<double> _blurAnim;
   bool _dismissed = false;
+  bool _didAnimate = false;
 
   @override
   void initState() {
@@ -135,7 +136,18 @@ class _BlurBottomSheetOverlayState<T> extends State<_BlurBottomSheetOverlay<T>>
         reverseCurve: AfCurves.springDismiss,
       ),
     );
-    _ctrl.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didAnimate) return;
+    _didAnimate = true;
+    if (MediaQuery.of(context).disableAnimations) {
+      _ctrl.value = 1.0; // instant show, no blur/slide
+    } else {
+      _ctrl.forward();
+    }
   }
 
   @override

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../design_tokens/tokens.dart';
 import '../state/providers.dart';
+import '../utils/time_format.dart';
 import 'scrubber_notifiers.dart';
 import 'scrubber_painters.dart';
 
@@ -78,19 +79,24 @@ class _AudioVisualScrubberState extends ConsumerState<AudioVisualScrubber>
       // Listen through shared fftFrameProvider instead of a direct
       // spectrumStream subscription — both visualizer and artwork pulse
       // share one mpv stream.
+      final reduced = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
       ref.listenManual(fftFrameProvider, (prev, next) {
         if (!_shouldRender) return;
         final frame = next.valueOrNull;
         if (frame == null) return;
-        _silenceTimer?.cancel();
-        // Update data only — ticker handles the repaint on vsync.
         _fftNotifier.ingest(frame.bands);
-        if (!_ticker.isAnimating) _ticker.repeat();
-        _silenceTimer = Timer(const Duration(milliseconds: 300), () {
-          if (mounted && _shouldRender) {
-            _fftNotifier.startFadeOut();
-          }
-        });
+        if (reduced) {
+          // Static render: flush directly, no ticker, no fade/decay.
+          _fftNotifier.flush();
+        } else {
+          _silenceTimer?.cancel();
+          if (!_ticker.isAnimating) _ticker.repeat();
+          _silenceTimer = Timer(const Duration(milliseconds: 300), () {
+            if (mounted && _shouldRender) {
+              _fftNotifier.startFadeOut();
+            }
+          });
+        }
       });
     });
   }
@@ -150,51 +156,85 @@ class _AudioVisualScrubberState extends ConsumerState<AudioVisualScrubber>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onHorizontalDragStart: (d) {
-        HapticFeedback.selectionClick();
-        _handleDragUpdate(
-          DragUpdateDetails(
-            globalPosition: d.globalPosition,
-            localPosition: d.localPosition,
+    final position = ref.watch(positionStreamProvider);
+    final duration = ref.watch(durationStreamProvider);
+    final valueStr =
+        '${formatTrackDuration(position)} of ${formatTrackDuration(duration)}';
+
+    void seekBy(Duration offset) {
+      final newMs = (position + offset).inMilliseconds;
+      final clampedMs = newMs.clamp(0, duration.inMilliseconds);
+      final p = duration.inMilliseconds > 0
+          ? clampedMs / duration.inMilliseconds
+          : 0.0;
+      widget.onScrub?.call(p);
+      widget.onScrubEnd?.call(p);
+    }
+
+    final fwd = position + const Duration(seconds: 10);
+    final bwd = position - const Duration(seconds: 10);
+    final increasedStr =
+        '${formatTrackDuration(Duration(milliseconds: fwd.inMilliseconds.clamp(0, duration.inMilliseconds)))} of ${formatTrackDuration(duration)}';
+    final decreasedStr =
+        '${formatTrackDuration(Duration(milliseconds: bwd.inMilliseconds.clamp(0, duration.inMilliseconds)))} of ${formatTrackDuration(duration)}';
+
+    return Semantics(
+      label: 'Scrubber',
+      value: valueStr,
+      increasedValue: increasedStr,
+      decreasedValue: decreasedStr,
+      onIncrease: () => seekBy(const Duration(seconds: 10)),
+      onDecrease: () => seekBy(const Duration(seconds: -10)),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragStart: (d) {
+          HapticFeedback.selectionClick();
+          _handleDragUpdate(
+            DragUpdateDetails(
+              globalPosition: d.globalPosition,
+              localPosition: d.localPosition,
+            ),
+          );
+        },
+        onHorizontalDragUpdate: _handleDragUpdate,
+        onHorizontalDragEnd: _handleDragEnd,
+        onTapDown: (d) {
+          HapticFeedback.selectionClick();
+          final p = _toProgress(d.localPosition.dx);
+          widget.onScrub?.call(p);
+          widget.onScrubEnd?.call(p);
+        },
+        child: SizedBox(
+          height: widget.height,
+          width: double.infinity,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ExcludeSemantics(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: ScrubCombinedBarPainter(
+                      fftNotifier: _fftNotifier,
+                      scrubNotifier: _scrubNotifier,
+                      playedColor: widget.playedColor,
+                      unplayedColor: widget.unplayedColor,
+                    ),
+                  ),
+                ),
+              ),
+              ExcludeSemantics(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: ScrubOverlayPainter(
+                      notifier: _scrubNotifier,
+                      playedColor: widget.playedColor,
+                      unplayedColor: widget.unplayedColor,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        );
-      },
-      onHorizontalDragUpdate: _handleDragUpdate,
-      onHorizontalDragEnd: _handleDragEnd,
-      onTapDown: (d) {
-        HapticFeedback.selectionClick();
-        final p = _toProgress(d.localPosition.dx);
-        widget.onScrub?.call(p);
-        widget.onScrubEnd?.call(p);
-      },
-      child: SizedBox(
-        height: widget.height,
-        width: double.infinity,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            RepaintBoundary(
-              child: CustomPaint(
-                painter: ScrubCombinedBarPainter(
-                  fftNotifier: _fftNotifier,
-                  scrubNotifier: _scrubNotifier,
-                  playedColor: widget.playedColor,
-                  unplayedColor: widget.unplayedColor,
-                ),
-              ),
-            ),
-            RepaintBoundary(
-              child: CustomPaint(
-                painter: ScrubOverlayPainter(
-                  notifier: _scrubNotifier,
-                  playedColor: widget.playedColor,
-                  unplayedColor: widget.unplayedColor,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

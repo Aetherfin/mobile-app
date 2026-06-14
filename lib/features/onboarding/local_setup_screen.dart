@@ -145,6 +145,14 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(
+                child: Text(
+                  'Step 2 of 2',
+                  style: AfTypography.caption.copyWith(
+                    color: AfColors.textTertiary,
+                  ),
+                ),
+              ),
               StaggerReveal(
                 children: [
                   const SizedBox(height: AfSpacing.s24),

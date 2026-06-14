@@ -249,6 +249,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(
+                child: Text(
+                  'Step 3 of 5',
+                  style: AfTypography.caption.copyWith(
+                    color: AfColors.textTertiary,
+                  ),
+                ),
+              ),
               StaggerReveal(
                 children: [
                   const SizedBox(height: AfSpacing.s16),

@@ -78,7 +78,7 @@ class _YouTubeHomeViewState extends ConsumerState<YouTubeHomeView> {
                       child: Text(
                         'YouTube Music',
                         style: AfTypography.display.copyWith(
-                          color: Colors.white,
+                          color: AfColors.textPrimary,
                         ),
                       ),
                     ),
@@ -290,7 +290,9 @@ class YouTubeAccountButton extends ConsumerWidget {
           decoration: BoxDecoration(
             color: isLoggedIn
                 ? AfColors.indigo600
-                : Colors.white.withValues(alpha: 0.06),
+                : Colors.white.withValues(
+                    alpha: 0.06,
+                  ), // decorative avatar bg — not semantic
             shape: BoxShape.circle,
           ),
           child: isLoggedIn
@@ -305,7 +307,7 @@ class YouTubeAccountButton extends ConsumerWidget {
                             (auth.email.isNotEmpty ? auth.email[0] : 'Y')
                                 .toUpperCase(),
                             style: AfTypography.bodyMedium.copyWith(
-                              color: Colors.white,
+                              color: AfColors.textOnPrimary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -315,7 +317,7 @@ class YouTubeAccountButton extends ConsumerWidget {
                             (auth.email.isNotEmpty ? auth.email[0] : 'Y')
                                 .toUpperCase(),
                             style: AfTypography.bodyMedium.copyWith(
-                              color: Colors.white,
+                              color: AfColors.textOnPrimary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -326,7 +328,7 @@ class YouTubeAccountButton extends ConsumerWidget {
                           (auth.email.isNotEmpty ? auth.email[0] : 'Y')
                               .toUpperCase(),
                           style: AfTypography.bodyMedium.copyWith(
-                            color: Colors.white,
+                            color: AfColors.textOnPrimary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

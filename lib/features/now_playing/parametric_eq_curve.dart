@@ -83,7 +83,8 @@ class ParametricEqCurvePainter extends CustomPainter {
 
   void _drawGrid(Canvas canvas, Size size) {
     final gridPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.08)
+      ..color = Colors.white
+          .withValues(alpha: 0.08) // grid line — paint context, not semantic
       ..strokeWidth = 0.5;
 
     // Horizontal grid lines (dB)
@@ -101,7 +102,8 @@ class ParametricEqCurvePainter extends CustomPainter {
 
     // Zero line (0 dB)
     final zeroPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.2)
+      ..color = Colors.white
+          .withValues(alpha: 0.2) // zero line — paint context, not semantic
       ..strokeWidth = 1;
     final zeroY = _dbToY(0, size.height);
     canvas.drawLine(Offset(0, zeroY), Offset(size.width, zeroY), zeroPaint);
@@ -216,7 +218,7 @@ class ParametricEqCurvePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(x, y), isSel ? 8 : 6, handlePaint);
 
-    // White border
+    // White border — paint context (glow/highlight), not semantic
     final borderPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
@@ -230,7 +232,9 @@ class ParametricEqCurvePainter extends CustomPainter {
         style: const TextStyle(
           fontFamily: 'JetBrains Mono',
           fontSize: 9,
-          color: Color(0x73FFFFFF),
+          color: Color(
+            0x73FFFFFF,
+          ), // paint context — canvas label, not semantic
         ),
       ),
       textDirection: TextDirection.ltr,

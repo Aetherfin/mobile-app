@@ -69,11 +69,16 @@ abstract final class GlowEffects {
       // Border stroke
       Paint()
         ..color =
-            const Color(0xEBFFFFFF) // 92% white
+            const Color(
+              0xEBFFFFFF,
+            ) // 92% white // glow/paint context — not semantic
         ..style = PaintingStyle.stroke
         ..strokeWidth = isActive ? 1.6 : 1.0,
       // Specular highlight
-      Paint()..color = Colors.white.withValues(alpha: 0.4),
+      Paint()
+        ..color = Colors.white.withValues(
+          alpha: 0.4,
+        ), // glow/paint context — not semantic
     ];
   }
 
@@ -106,7 +111,10 @@ abstract final class GlowEffects {
     canvas.drawCircle(
       center - Offset(actualRadius * 0.2, actualRadius * 0.2),
       actualRadius * 0.4,
-      Paint()..color = Colors.white.withValues(alpha: 0.4),
+      Paint()
+        ..color = Colors.white.withValues(
+          alpha: 0.4,
+        ), // glow/paint context — not semantic
     );
 
     // Border stroke
@@ -114,7 +122,10 @@ abstract final class GlowEffects {
       center,
       actualRadius,
       Paint()
-        ..color = const Color(0xEBFFFFFF)
+        ..color =
+            const Color(
+              0xEBFFFFFF,
+            ) // 92% white — glow/paint context, not semantic
         ..style = PaintingStyle.stroke
         ..strokeWidth = isActive ? 1.6 : 1.0,
     );

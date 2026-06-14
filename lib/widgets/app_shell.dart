@@ -12,6 +12,24 @@ import 'bottom_nav.dart';
 import 'bottom_sheet.dart';
 import 'mini_now_playing.dart';
 
+// ── Media key intents ─────────────────────────────────────────────────────────
+
+class _PlayPauseIntent extends Intent {
+  const _PlayPauseIntent();
+}
+
+class _MediaNextIntent extends Intent {
+  const _MediaNextIntent();
+}
+
+class _MediaPreviousIntent extends Intent {
+  const _MediaPreviousIntent();
+}
+
+class _MediaStopIntent extends Intent {
+  const _MediaStopIntent();
+}
+
 /// App shell — wraps every authed-app tab with the persistent 4-tab
 /// bottom nav.
 ///
@@ -85,28 +103,75 @@ class AppShell extends ConsumerWidget {
       ),
     );
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) return;
-        if (blurSheetCount.value > 0) {
-          blurSheetDismiss.value?.call();
-          return;
-        }
-        final shouldExit = await _onBackPressed(context);
-        if (shouldExit) {
-          // We deliberately *do not* call `Navigator.of(context).pop()`
-          // here — that would pop the (empty) shell navigator and crash.
-          // `SystemNavigator.pop()` returns the user to the launcher,
-          // matching the historical Android "back from root" behaviour.
-          await SystemNavigator.pop();
-        }
+    final svc = ref.read(playerServiceProvider);
+
+    return Shortcuts(
+      shortcuts: const <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.mediaPlayPause): _PlayPauseIntent(),
+        SingleActivator(LogicalKeyboardKey.mediaTrackNext): _MediaNextIntent(),
+        SingleActivator(LogicalKeyboardKey.mediaTrackPrevious):
+            _MediaPreviousIntent(),
+        SingleActivator(LogicalKeyboardKey.mediaStop): _MediaStopIntent(),
+        // Common keyboard equivalents
+        SingleActivator(LogicalKeyboardKey.space): _PlayPauseIntent(),
+        SingleActivator(LogicalKeyboardKey.mediaPlay): _PlayPauseIntent(),
+        SingleActivator(LogicalKeyboardKey.mediaPause): _PlayPauseIntent(),
       },
-      child: _buildScaffold(
-        context,
-        ref,
-        shadow: spectral.shadow,
-        energy: spectral.energy,
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          _PlayPauseIntent: CallbackAction<_PlayPauseIntent>(
+            onInvoke: (_) async {
+              if (svc.isPlaying) {
+                await svc.pause();
+              } else {
+                await svc.play();
+              }
+              return null;
+            },
+          ),
+          _MediaNextIntent: CallbackAction<_MediaNextIntent>(
+            onInvoke: (_) async {
+              await svc.skipToNext();
+              return null;
+            },
+          ),
+          _MediaPreviousIntent: CallbackAction<_MediaPreviousIntent>(
+            onInvoke: (_) async {
+              await svc.skipToPrevious();
+              return null;
+            },
+          ),
+          _MediaStopIntent: CallbackAction<_MediaStopIntent>(
+            onInvoke: (_) async {
+              await svc.pause();
+              return null;
+            },
+          ),
+        },
+        child: PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) async {
+            if (didPop) return;
+            if (blurSheetCount.value > 0) {
+              blurSheetDismiss.value?.call();
+              return;
+            }
+            final shouldExit = await _onBackPressed(context);
+            if (shouldExit) {
+              // We deliberately *do not* call `Navigator.of(context).pop()`
+              // here — that would pop the (empty) shell navigator and crash.
+              // `SystemNavigator.pop()` returns the user to the launcher,
+              // matching the historical Android "back from root" behaviour.
+              await SystemNavigator.pop();
+            }
+          },
+          child: _buildScaffold(
+            context,
+            ref,
+            shadow: spectral.shadow,
+            energy: spectral.energy,
+          ),
+        ),
       ),
     );
   }

@@ -58,6 +58,14 @@ class _AllSetScreenState extends ConsumerState<AllSetScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(
+                child: Text(
+                  'Step 5 of 5',
+                  style: AfTypography.caption.copyWith(
+                    color: AfColors.textTertiary,
+                  ),
+                ),
+              ),
               const Spacer(flex: 2),
 
               // Checkmark animation

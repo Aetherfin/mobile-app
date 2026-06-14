@@ -122,10 +122,10 @@ class _ArtworkCard extends StatelessWidget {
             image: true,
             label: '${track.title} by ${track.artistName}',
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(cardRadius),
+              borderRadius: AfRadii.borderXl,
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(cardRadius),
+                  borderRadius: AfRadii.borderXl,
                   boxShadow: [
                     BoxShadow(
                       color: AfColors.surfaceCanvas.withValues(alpha: 0.4),
@@ -142,7 +142,7 @@ class _ArtworkCard extends StatelessWidget {
                 child: Artwork(
                   url: artworkUri?.toString() ?? track.imageUrl,
                   size: double.infinity,
-                  radius: BorderRadius.circular(cardRadius),
+                  radius: AfRadii.borderXl,
                 ),
               ),
             ),

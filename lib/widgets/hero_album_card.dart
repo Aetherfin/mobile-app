@@ -23,7 +23,7 @@ class HeroAlbumCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasArt = album.imageUrl != null && album.imageUrl!.isNotEmpty;
 
-    return PressScale(
+    return FocusPressScale(
       ensureHitTarget: false,
       onTap: onTap,
       child: Semantics(
@@ -144,7 +144,7 @@ class _PlayPill extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Play $albumName',
-      child: PressScale(
+      child: FocusPressScale(
         ensureHitTarget: false,
         onTap: onTap,
         child: Container(

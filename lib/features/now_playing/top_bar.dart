@@ -107,129 +107,135 @@ class _FrostedTopBarState extends ConsumerState<FrostedTopBar>
                 widget.onToggleLyrics();
               }
             },
-            child: GlassCard(
-              borderRadius: radius,
-              blurSigma: 30,
-              color: AfColors.glassFillHeavy,
-              borderColor: AfColors.glassBorderEmphasis,
-              padding: EdgeInsets.zero,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AfSpacing.s8,
-                      vertical: AfSpacing.s4,
-                    ),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(
-                            LucideIcons.chevronDown,
-                            color: AfColors.textPrimary,
-                            size: AfIconSizes.sm,
+            child: Semantics(
+              button: true,
+              label: 'Swipe down to close lyrics',
+              child: GlassCard(
+                borderRadius: radius,
+                blurSigma: 30,
+                color: AfColors.glassFillHeavy,
+                borderColor: AfColors.glassBorderEmphasis,
+                padding: EdgeInsets.zero,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AfSpacing.s8,
+                        vertical: AfSpacing.s4,
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              LucideIcons.chevronDown,
+                              color: AfColors.textPrimary,
+                              size: AfIconSizes.sm,
+                            ),
+                            tooltip: 'Close',
+                            onPressed: () => context.pop(),
                           ),
-                          tooltip: 'Close',
-                          onPressed: () => context.pop(),
-                        ),
-                        const SizedBox(width: AfSpacing.s8),
-                        Expanded(
-                          child: PressScale(
-                            ensureHitTarget: false,
-                            onTap: track.albumId == null
-                                ? null
-                                : () => context.push('/album/${track.albumId}'),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: AfSpacing.s4,
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'PLAYING FROM ALBUM',
-                                    style: AfTypography.overline.copyWith(
-                                      color: AfColors.textSecondary,
+                          const SizedBox(width: AfSpacing.s8),
+                          Expanded(
+                            child: PressScale(
+                              ensureHitTarget: false,
+                              onTap: track.albumId == null
+                                  ? null
+                                  : () =>
+                                        context.push('/album/${track.albumId}'),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: AfSpacing.s4,
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'PLAYING FROM ALBUM',
+                                      style: AfTypography.overline.copyWith(
+                                        color: AfColors.textSecondary,
+                                      ),
                                     ),
-                                  ),
-                                  MarqueeText(
-                                    text: track.albumName,
-                                    style: AfTypography.titleSmall,
-                                  ),
-                                ],
+                                    MarqueeText(
+                                      text: track.albumName,
+                                      style: AfTypography.titleSmall,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: AfSpacing.s8),
-                        IconButton(
-                          icon: Icon(
-                            LucideIcons.mic2,
-                            color: widget.lyricsExpanded.value
-                                ? spectral
-                                : AfColors.textPrimary,
-                            size: 20,
+                          const SizedBox(width: AfSpacing.s8),
+                          IconButton(
+                            icon: Icon(
+                              LucideIcons.mic2,
+                              color: widget.lyricsExpanded.value
+                                  ? spectral
+                                  : AfColors.textPrimary,
+                              size: 20,
+                            ),
+                            tooltip: 'Lyrics',
+                            onPressed: widget.onToggleLyrics,
                           ),
-                          tooltip: 'Lyrics',
-                          onPressed: widget.onToggleLyrics,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  SizeTransition(
-                    sizeFactor: _expandAnim,
-                    child: FadeTransition(
-                      opacity: _expandAnim,
-                      child: lrc != null && lrc.lines.isNotEmpty
-                          ? Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (lyricsSource != null)
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      AfSpacing.s16,
-                                      AfSpacing.s8,
-                                      AfSpacing.s16,
-                                      0,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          LucideIcons.radio,
-                                          size: 12,
-                                          color: AfColors.textTertiary,
-                                        ),
-                                        const SizedBox(width: AfSpacing.s4),
-                                        Text(
-                                          lyricsSource.label,
-                                          style: AfTypography.caption.copyWith(
+                    SizeTransition(
+                      sizeFactor: _expandAnim,
+                      child: FadeTransition(
+                        opacity: _expandAnim,
+                        child: lrc != null && lrc.lines.isNotEmpty
+                            ? Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (lyricsSource != null)
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        AfSpacing.s16,
+                                        AfSpacing.s8,
+                                        AfSpacing.s16,
+                                        0,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            LucideIcons.radio,
+                                            size: 12,
                                             color: AfColors.textTertiary,
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: AfSpacing.s4),
+                                          Text(
+                                            lyricsSource.label,
+                                            style: AfTypography.caption
+                                                .copyWith(
+                                                  color: AfColors.textTertiary,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
+                                  LyricsList(
+                                    lrc: lrc,
+                                    spectralEnergy: spectral,
+                                    scrollController: _scrollCtrl,
+                                    isSynced: isSynced,
                                   ),
-                                LyricsList(
-                                  lrc: lrc,
-                                  spectralEnergy: spectral,
-                                  scrollController: _scrollCtrl,
-                                  isSynced: isSynced,
+                                ],
+                              )
+                            : lrcAsync.isLoading
+                            ? const Padding(
+                                padding: EdgeInsets.all(AfSpacing.s24),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AfColors.textTertiary,
+                                  ),
                                 ),
-                              ],
-                            )
-                          : lrcAsync.isLoading
-                          ? const Padding(
-                              padding: EdgeInsets.all(AfSpacing.s24),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AfColors.textTertiary,
-                                ),
-                              ),
-                            )
-                          : EmptyLyrics(track: track),
+                              )
+                            : EmptyLyrics(track: track),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

@@ -331,7 +331,7 @@ class _ExpressiveArtistCard extends StatelessWidget {
               colors: [spectral.primary, spectral.secondary],
             ),
           ),
-          padding: const EdgeInsets.all(3),
+          padding: const EdgeInsets.all(AfSpacing.s4),
           child: Container(
             decoration: const BoxDecoration(
               shape: BoxShape.circle,

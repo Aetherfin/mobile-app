@@ -45,7 +45,7 @@ class _LibraryScopeScreenState extends ConsumerState<LibraryScopeScreen> {
       if (!mounted) return;
       _selected.addAll(views.map((v) => v.id));
       ref.read(selectedLibraryIdsProvider.notifier).state = _selected.toSet();
-      context.go('/home');
+      await context.push('/onboarding/done');
       return;
     }
     if (!mounted) return;
@@ -80,6 +80,14 @@ class _LibraryScopeScreenState extends ConsumerState<LibraryScopeScreen> {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Center(
+                      child: Text(
+                        'Step 4 of 5',
+                        style: AfTypography.caption.copyWith(
+                          color: AfColors.textTertiary,
+                        ),
+                      ),
+                    ),
                     Text(
                       'Pick which libraries Aetherfin should index.',
                       style: AfTypography.bodyMedium.copyWith(
@@ -141,7 +149,7 @@ class _LibraryScopeScreenState extends ConsumerState<LibraryScopeScreen> {
                         // Persist selected library IDs
                         ref.read(selectedLibraryIdsProvider.notifier).state =
                             _selected.toSet();
-                        context.go('/home');
+                        context.push('/onboarding/done');
                       },
                       child: const Text('Continue'),
                     ),
