@@ -118,7 +118,7 @@ def _upload_to_0x0(file_path):
 
     try:
         result = subprocess.run(
-            ["curl", "-s", "-F", "reqtype=fileupload", "-F", f"fileToUpload=@{file_path}", "https://litterbox.catbox.moe/resources/internals/api.php"],
+            ["curl", "-s", "-F", "reqtype=fileupload", "-F", "time=72h", "-F", f"fileToUpload=@{file_path}", "https://litterbox.catbox.moe/resources/internals/api.php"],
             capture_output=True,
             text=True,
             timeout=300
@@ -202,7 +202,7 @@ def success_message():
     download_url = None
     if apk_files:
         apk_path = apk_files[0]
-        print(f"Uploading {apk_path} to 0x0.st...")
+        print(f"Uploading {apk_path} to catbox...")
         download_url = _upload_to_0x0(apk_path)
 
     title = "Release Successful!" if tag else "Build Successful!"
