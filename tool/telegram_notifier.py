@@ -235,16 +235,7 @@ def success_message():
     icon = "\U0001f680" if tag else "\u2705"
     status = "Release Successful!" if tag else "Build Successful!"
 
-    lines = []
-    if download_url:
-        lines.append(f"\U0001f4e5 <b>{apk_name}</b>")
-        if apk_size:
-            size_mb = apk_size / (1024 * 1024)
-            lines.append(f"   {size_mb:.1f} MB")
-        lines.append("")
-
-    lines.append(f"{icon} <b>Aetherfin {status}</b>")
-    lines.append("")
+    lines = [f"{icon} <b>Aetherfin {status}</b>", ""]
     if apk_name:
         lines.append(f"<b>App:</b> {apk_name}")
     lines.append(f"<b>Mode:</b> <code>{mode}</code>")
