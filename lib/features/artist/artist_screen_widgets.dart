@@ -137,7 +137,9 @@ List<Widget> buildArtistTopSongsSlivers({
     const SliverToBoxAdapter(child: SizedBox(height: AfSpacing.s32)),
     SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AfSpacing.gutterGenerous),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AfSpacing.gutterGenerous,
+        ),
         child: SectionHeader(
           title: 'Top Songs',
           actionLabel: onMoreTap != null ? 'More' : null,
@@ -181,7 +183,9 @@ List<Widget> buildArtistDiscographySlivers(
     const SliverToBoxAdapter(child: SizedBox(height: AfSpacing.s24)),
     SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AfSpacing.gutterGenerous),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AfSpacing.gutterGenerous,
+        ),
         child: SectionHeader(
           title: 'Discography',
           actionLabel: onMoreTap != null && albums.length > 5 ? 'More' : null,
@@ -200,7 +204,8 @@ List<Widget> buildArtistDiscographySlivers(
             horizontal: AfSpacing.gutterGenerous,
           ),
           itemCount: displayedAlbums.length,
-          separatorBuilder: (context, index) => const SizedBox(width: AfSpacing.s12),
+          separatorBuilder: (context, index) =>
+              const SizedBox(width: AfSpacing.s12),
           itemBuilder: (context, i) {
             final a = displayedAlbums[i];
             return PressScale(

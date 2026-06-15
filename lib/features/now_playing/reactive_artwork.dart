@@ -147,7 +147,8 @@ class _ArtworkCard extends ConsumerWidget {
                   // track. Only fall back to artworkUri (a file:// path
                   // written by mpv or the notification downloader) when
                   // the track has no HTTP imageUrl (e.g. local-mode files).
-                  url: (track.imageUrl != null &&
+                  url:
+                      (track.imageUrl != null &&
                           !track.imageUrl!.startsWith('file://'))
                       ? track.imageUrl
                       : (artworkUri?.toString() ?? track.imageUrl),

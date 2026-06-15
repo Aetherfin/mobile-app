@@ -137,12 +137,18 @@ Future<void> main() async {
       // Prune expired Last.fm similar-cache entries on startup.
       // Runs in background — non-fatal if it fails.
       unawaited(
-        LastFmCacheRepository(AppDatabase()).pruneExpired().catchError(
-          (Object e, StackTrace stack) {
-            afLog('error', 'Last.fm cache prune failed', error: e, stackTrace: stack);
-            return 0;
-          },
-        ),
+        LastFmCacheRepository(AppDatabase()).pruneExpired().catchError((
+          Object e,
+          StackTrace stack,
+        ) {
+          afLog(
+            'error',
+            'Last.fm cache prune failed',
+            error: e,
+            stackTrace: stack,
+          );
+          return 0;
+        }),
       );
 
       // Load offline cache settings.

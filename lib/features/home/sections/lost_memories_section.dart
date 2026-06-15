@@ -97,7 +97,9 @@ class _LostMemoryTile extends ConsumerWidget {
     final isActive = track.id == currentTrack?.id;
     final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
     final isBuffering = ref.watch(isBufferingProvider);
-    final energyColor = ref.watch(currentSpectralProvider.select((s) => s.energy));
+    final energyColor = ref.watch(
+      currentSpectralProvider.select((s) => s.energy),
+    );
 
     return Semantics(
       button: true,

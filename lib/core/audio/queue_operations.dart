@@ -340,22 +340,27 @@ extension QueueOperations on PlaybackController {
       if (_getCachedStreamUrl(nextTrackId) == null &&
           !_preResolvingTrackIds.contains(nextTrackId)) {
         _preResolvingTrackIds.add(nextTrackId);
-        afLog('audio', 'Pre-resolving stream URL in background for next track: $nextTrackId');
+        afLog(
+          'audio',
+          'Pre-resolving stream URL in background for next track: $nextTrackId',
+        );
         final resolved = _resolveStreamUrl?.call(nextTrack);
         if (resolved is Future<String>) {
-          resolved.then((nextUrl) {
-            _cacheStreamUrl(nextTrackId, nextUrl);
-            _preResolvingTrackIds.remove(nextTrackId);
-            afLog('audio', 'Pre-resolution success for $nextTrackId');
-          }).catchError((Object e, StackTrace stack) {
-            _preResolvingTrackIds.remove(nextTrackId);
-            afLog(
-              'audio',
-              'Pre-resolution failed for $nextTrackId',
-              error: e,
-              stackTrace: stack,
-            );
-          });
+          resolved
+              .then((nextUrl) {
+                _cacheStreamUrl(nextTrackId, nextUrl);
+                _preResolvingTrackIds.remove(nextTrackId);
+                afLog('audio', 'Pre-resolution success for $nextTrackId');
+              })
+              .catchError((Object e, StackTrace stack) {
+                _preResolvingTrackIds.remove(nextTrackId);
+                afLog(
+                  'audio',
+                  'Pre-resolution failed for $nextTrackId',
+                  error: e,
+                  stackTrace: stack,
+                );
+              });
         } else if (resolved is String) {
           _cacheStreamUrl(nextTrackId, resolved);
           _preResolvingTrackIds.remove(nextTrackId);

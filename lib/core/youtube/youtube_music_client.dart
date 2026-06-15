@@ -183,8 +183,8 @@ class YouTubeMusicClient implements MusicBackend {
       var browseId = id;
       if (!browseId.startsWith('VL') &&
           (browseId.startsWith('PL') ||
-           browseId.startsWith('OL') ||
-           browseId.startsWith('RD'))) {
+              browseId.startsWith('OL') ||
+              browseId.startsWith('RD'))) {
         browseId = 'VL$browseId';
       }
       final result = await _innertube.browsePlaylistWithMetadata(browseId);
@@ -238,7 +238,9 @@ class YouTubeMusicClient implements MusicBackend {
         break;
       }
     }
-    final nonSongSections = page.sections.where((s) => !s.isSongSection).toList();
+    final nonSongSections = page.sections
+        .where((s) => !s.isSongSection)
+        .toList();
     _cachedSections = nonSongSections.map((s) => s.items).toList();
     _cachedSectionTitles = nonSongSections.map((s) => s.title).toList();
     _cachedSectionMoreIds = nonSongSections.map((s) => s.moreBrowseId).toList();
@@ -312,13 +314,15 @@ class YouTubeMusicClient implements MusicBackend {
       return items
           .where((item) => item.type == InnerTubeItemType.album)
           .take(limit)
-          .map((item) => AfAlbum(
-                id: item.id,
-                name: item.title,
-                artistName: item.subtitle,
-                trackCount: 0,
-                imageUrl: item.thumbnailUrl,
-              ))
+          .map(
+            (item) => AfAlbum(
+              id: item.id,
+              name: item.title,
+              artistName: item.subtitle,
+              trackCount: 0,
+              imageUrl: item.thumbnailUrl,
+            ),
+          )
           .toList();
     } on Exception catch (e) {
       afLog('youtube', 'artistAlbums failed', error: e);
@@ -505,10 +509,11 @@ class YouTubeMusicClient implements MusicBackend {
         ytClients: [YoutubeApiClient.androidVr],
       );
       if (manifest.muxed.isEmpty && manifest.audioOnly.isEmpty) {
-        afLog('aetherfin:youtube', 'androidVr manifest empty, trying default fallback for $videoId');
-        manifest = await _yt.videos.streams.getManifest(
-          VideoId(videoId),
+        afLog(
+          'aetherfin:youtube',
+          'androidVr manifest empty, trying default fallback for $videoId',
         );
+        manifest = await _yt.videos.streams.getManifest(VideoId(videoId));
       }
       afLog(
         'aetherfin:youtube',

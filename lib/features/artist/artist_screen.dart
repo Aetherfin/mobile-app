@@ -82,20 +82,28 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
             final backend = ref.watch(musicBackendProvider);
             final ytSections = backend is YouTubeMusicClient
                 ? backend.artistSections
-                    .where((s) => s.items.isNotEmpty)
-                    .toList()
-                : <({String title, List<InnerTubeItem> items, String? moreId})>[];
+                      .where((s) => s.items.isNotEmpty)
+                      .toList()
+                : <
+                    ({String title, List<InnerTubeItem> items, String? moreId})
+                  >[];
 
             final displayTracks = topTracks;
-            final String? ytSongsMoreId = backend is YouTubeMusicClient ? backend.artistSongsMoreId : null;
+            final String? ytSongsMoreId = backend is YouTubeMusicClient
+                ? backend.artistSongsMoreId
+                : null;
             final songsMoreTap = backend is YouTubeMusicClient
                 ? (ytSongsMoreId != null
-                    ? () {
-                        debugPrint('Aetherfin: Top Songs More tapped with ID: $ytSongsMoreId');
-                        context.push('/album/$ytSongsMoreId');
-                      }
-                    : null)
-                : (topTracks.length > 5 ? () => context.push('/artist/${widget.artistId}/songs') : null);
+                      ? () {
+                          debugPrint(
+                            'Aetherfin: Top Songs More tapped with ID: $ytSongsMoreId',
+                          );
+                          context.push('/album/$ytSongsMoreId');
+                        }
+                      : null)
+                : (topTracks.length > 5
+                      ? () => context.push('/artist/${widget.artistId}/songs')
+                      : null);
             final width = MediaQuery.of(context).size.width;
             final heroHeight = width; // 1:1
 
@@ -278,14 +286,21 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                         if (section.moreId != null)
                                           GestureDetector(
                                             onTap: () {
-                                              debugPrint('Aetherfin: Section More tapped with ID: ${section.moreId}');
-                                              final title = section.title.toLowerCase();
+                                              debugPrint(
+                                                'Aetherfin: Section More tapped with ID: ${section.moreId}',
+                                              );
+                                              final title = section.title
+                                                  .toLowerCase();
                                               if (title.contains('album') ||
                                                   title.contains('single') ||
                                                   title.contains('ep')) {
-                                                context.push('/artist/${widget.artistId}/albums');
+                                                context.push(
+                                                  '/artist/${widget.artistId}/albums',
+                                                );
                                               } else {
-                                                context.push('/album/${section.moreId}');
+                                                context.push(
+                                                  '/album/${section.moreId}',
+                                                );
                                               }
                                             },
                                             child: Text(
@@ -321,9 +336,13 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                                     InnerTubeItemType
                                                         .playlist) {
                                               context.push('/album/${item.id}');
-                                            } else if (item.type == InnerTubeItemType.artist) {
-                                              context.push('/artist/${item.id}');
-                                            } else if (item.type == InnerTubeItemType.song) {
+                                            } else if (item.type ==
+                                                InnerTubeItemType.artist) {
+                                              context.push(
+                                                '/artist/${item.id}',
+                                              );
+                                            } else if (item.type ==
+                                                InnerTubeItemType.song) {
                                               final track = AfTrack(
                                                 id: item.videoId ?? item.id,
                                                 title: item.title,
@@ -332,7 +351,11 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                                 albumName: 'YouTube Music',
                                                 imageUrl: item.thumbnailUrl,
                                               );
-                                              ref.read(playActionsProvider).playQueue([track], startIndex: 0);
+                                              ref
+                                                  .read(playActionsProvider)
+                                                  .playQueue([
+                                                    track,
+                                                  ], startIndex: 0);
                                             }
                                           },
                                           child: SizedBox(
@@ -400,7 +423,8 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                         // -- Discography (non-YT Music fallback) --
                         ...buildArtistDiscographySlivers(
                           albums,
-                          onMoreTap: () => context.push('/artist/${widget.artistId}/albums'),
+                          onMoreTap: () =>
+                              context.push('/artist/${widget.artistId}/albums'),
                           activeAccent: activeAccent,
                         ),
                       ],
@@ -463,7 +487,9 @@ class ArtistAllSongsScreen extends ConsumerWidget {
         title: artistAsync.when(
           data: (artist) => Text(
             artist?.name ?? 'Top Songs',
-            style: AfTypography.titleMedium.copyWith(color: AfColors.textPrimary),
+            style: AfTypography.titleMedium.copyWith(
+              color: AfColors.textPrimary,
+            ),
           ),
           loading: () => const Text('Top Songs'),
           error: (e, s) => const Text('Top Songs'),
@@ -531,7 +557,9 @@ class ArtistAllAlbumsScreen extends ConsumerWidget {
         title: artistAsync.when(
           data: (artist) => Text(
             artist?.name ?? 'Albums',
-            style: AfTypography.titleMedium.copyWith(color: AfColors.textPrimary),
+            style: AfTypography.titleMedium.copyWith(
+              color: AfColors.textPrimary,
+            ),
           ),
           loading: () => const Text('Albums'),
           error: (e, s) => const Text('Albums'),

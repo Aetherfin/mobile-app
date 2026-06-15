@@ -431,9 +431,8 @@ final _router = GoRouter(
       name: 'search',
       path: '/search',
       parentNavigatorKey: _rootKey,
-      builder: (context, state) => SearchScreen(
-        initialQuery: state.uri.queryParameters['q'],
-      ),
+      builder: (context, state) =>
+          SearchScreen(initialQuery: state.uri.queryParameters['q']),
     ),
   ],
 );

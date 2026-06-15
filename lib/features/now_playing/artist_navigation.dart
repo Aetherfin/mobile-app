@@ -75,9 +75,7 @@ Future<void> navigateToArtist(
     // Backend search failed or returned no artists → open search screen.
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     if (context.mounted) {
-      unawaited(
-        context.push('/search?q=${Uri.encodeComponent(artistName)}'),
-      );
+      unawaited(context.push('/search?q=${Uri.encodeComponent(artistName)}'));
     }
   }
 }

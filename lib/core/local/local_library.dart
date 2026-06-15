@@ -93,8 +93,8 @@ class LocalLibrary {
   Future<List<AfTrack>> tracksByAlbum(String albumName, String artistName) =>
       _db.tracksByAlbum(albumName, artistName);
 
-  Future<List<AfTrack>> tracksByArtist(String artistName) =>
-      _db.tracksByArtist(artistName);
+  Future<List<AfTrack>> tracksByArtist(String artistName, {int? limit}) =>
+      _db.tracksByArtist(artistName, limit: limit);
 
   Future<List<AfTrack>> tracksByGenre(String genre) => _db.tracksByGenre(genre);
 

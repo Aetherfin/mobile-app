@@ -287,10 +287,14 @@ class InnerTubeClient {
       final client = _httpClient ?? HttpClient();
 
       try {
-        final request = await client.postUrl(uri).timeout(const Duration(seconds: 10));
+        final request = await client
+            .postUrl(uri)
+            .timeout(const Duration(seconds: 10));
         _applyHeaders(request, visitorData: visitorData);
         request.write(jsonEncode(body));
-        final response = await request.close().timeout(const Duration(seconds: 10));
+        final response = await request.close().timeout(
+          const Duration(seconds: 10),
+        );
 
         final completer = Completer<String>();
         final bytes = <int>[];
@@ -299,7 +303,9 @@ class InnerTubeClient {
           onDone: () => completer.complete(utf8.decode(bytes)),
           onError: (Object e) => completer.completeError(e),
         );
-        final responseBody = await completer.future.timeout(const Duration(seconds: 10));
+        final responseBody = await completer.future.timeout(
+          const Duration(seconds: 10),
+        );
 
         if (response.statusCode != 200) return null;
 
@@ -310,7 +316,11 @@ class InnerTubeClient {
         // Prefer audio-only formats
         final formats = (streamingData['adaptiveFormats'] as List?)
             ?.cast<Map<String, dynamic>>()
-            .where((f) => f['mimeType'] != null && (f['mimeType'] as String).startsWith('audio/'));
+            .where(
+              (f) =>
+                  f['mimeType'] != null &&
+                  (f['mimeType'] as String).startsWith('audio/'),
+            );
 
         if (formats == null || formats.isEmpty) return null;
 
@@ -322,7 +332,8 @@ class InnerTubeClient {
           final bitrate = (f['bitrate'] as num?)?.toInt() ?? 0;
           final channels = (f['audioChannels'] as num?)?.toInt() ?? 2;
           // Score: prefer opus, higher bitrate, more channels
-          final score = (mimeType.contains('opus') ? 1000 : 0) + bitrate + channels * 100;
+          final score =
+              (mimeType.contains('opus') ? 1000 : 0) + bitrate + channels * 100;
           if (score > bestScore) {
             bestScore = score;
             best = f;
@@ -371,7 +382,9 @@ class InnerTubeClient {
         _applyHeaders(request, visitorData: visitorData);
         request.write(jsonEncode(body));
 
-        final response = await request.close().timeout(const Duration(seconds: 15));
+        final response = await request.close().timeout(
+          const Duration(seconds: 15),
+        );
         final completer = Completer<String>();
         final bytes = <int>[];
         response.listen(
@@ -379,7 +392,9 @@ class InnerTubeClient {
           onDone: () => completer.complete(utf8.decode(bytes)),
           onError: completer.completeError,
         );
-        final responseBody = await completer.future.timeout(const Duration(seconds: 10));
+        final responseBody = await completer.future.timeout(
+          const Duration(seconds: 10),
+        );
 
         if (response.statusCode != 200) {
           return [];
@@ -424,15 +439,20 @@ class InnerTubeClient {
 
       for (final item in items) {
         final itemMap = item as Map<String, dynamic>;
-        final renderer = itemMap['musicTwoRowItemRenderer']
-                as Map<String, dynamic>? ??
-            itemMap['musicResponsiveListItemRenderer']
-                as Map<String, dynamic>?;
+        final renderer =
+            itemMap['musicTwoRowItemRenderer'] as Map<String, dynamic>? ??
+            itemMap['musicResponsiveListItemRenderer'] as Map<String, dynamic>?;
         if (renderer == null) continue;
 
         final titleObj = renderer['title'] as Map<String, dynamic>?;
         final runs = titleObj?['runs'] as List?;
-        final title = runs?.map((r) => (r as Map<String, dynamic>)['text'] as String? ?? '').join() ?? '';
+        final title =
+            runs
+                ?.map(
+                  (r) => (r as Map<String, dynamic>)['text'] as String? ?? '',
+                )
+                .join() ??
+            '';
         if (title.isEmpty) continue;
 
         final nav = renderer['navigationEndpoint'] as Map<String, dynamic>?;
@@ -441,9 +461,13 @@ class InnerTubeClient {
 
         final subtitleObj = renderer['subtitle'] as Map<String, dynamic>?;
         final subtitleRuns = subtitleObj?['runs'] as List?;
-        final countStr = subtitleRuns
-                ?.map((r) => (r as Map<String, dynamic>)['text'] as String? ?? '')
-                .join() ?? '';
+        final countStr =
+            subtitleRuns
+                ?.map(
+                  (r) => (r as Map<String, dynamic>)['text'] as String? ?? '',
+                )
+                .join() ??
+            '';
         final count = int.tryParse(countStr.replaceAll(RegExp(r'[^0-9]'), ''));
 
         final thumbRenderer =
@@ -452,20 +476,19 @@ class InnerTubeClient {
             thumbRenderer?['musicThumbnailRenderer'] as Map<String, dynamic>?;
         final thumbObj = musicThumb?['thumbnail'] as Map<String, dynamic>?;
         final thumbnails = thumbObj?['thumbnails'] as List?;
-        final imageUrl =
-            thumbnails?.isNotEmpty == true
-                ? (thumbnails!.last as Map<String, dynamic>)['url']
-                        as String? ??
-                    ''
-                : '';
+        final imageUrl = thumbnails?.isNotEmpty == true
+            ? (thumbnails!.last as Map<String, dynamic>)['url'] as String? ?? ''
+            : '';
 
-        result.add(InnerTubePlaylistInfo(
-          id: browseId.replaceFirst('VL', ''),
-          browseId: browseId,
-          title: title,
-          trackCount: count,
-          imageUrl: imageUrl,
-        ));
+        result.add(
+          InnerTubePlaylistInfo(
+            id: browseId.replaceFirst('VL', ''),
+            browseId: browseId,
+            title: title,
+            trackCount: count,
+            imageUrl: imageUrl,
+          ),
+        );
       }
     } on Exception catch (e) {
       afLog('youtube', '_parsePlaylistList failed', error: e);
@@ -494,11 +517,15 @@ class InnerTubeClient {
       final client = _httpClient ?? HttpClient();
 
       try {
-        final request = await client.postUrl(uri).timeout(const Duration(seconds: 10));
+        final request = await client
+            .postUrl(uri)
+            .timeout(const Duration(seconds: 10));
         _applyHeaders(request, visitorData: visitorData);
         request.write(jsonEncode(body));
 
-        final response = await request.close().timeout(const Duration(seconds: 15));
+        final response = await request.close().timeout(
+          const Duration(seconds: 15),
+        );
         final completer = Completer<String>();
         final bytes = <int>[];
         response.listen(
@@ -506,23 +533,38 @@ class InnerTubeClient {
           onDone: () => completer.complete(utf8.decode(bytes)),
           onError: completer.completeError,
         );
-        final responseBody = await completer.future.timeout(const Duration(seconds: 10));
+        final responseBody = await completer.future.timeout(
+          const Duration(seconds: 10),
+        );
 
         if (response.statusCode != 200) return null;
 
         final json = jsonDecode(responseBody) as Map<String, dynamic>;
 
         // Parse header — try multiple renderer types
-        var header = json['header']?['musicImmersiveHeaderRenderer'] as Map<String, dynamic>?;
-        header ??= json['header']?['musicVisualHeaderRenderer'] as Map<String, dynamic>?;
-        header ??= json['header']?['musicHeaderRenderer'] as Map<String, dynamic>?;
+        var header =
+            json['header']?['musicImmersiveHeaderRenderer']
+                as Map<String, dynamic>?;
+        header ??=
+            json['header']?['musicVisualHeaderRenderer']
+                as Map<String, dynamic>?;
+        header ??=
+            json['header']?['musicHeaderRenderer'] as Map<String, dynamic>?;
 
         final titleObj = header?['title'] as Map<String, dynamic>?;
         final runs = titleObj?['runs'] as List?;
-        final name = runs?.map((r) => (r as Map<String, dynamic>)['text'] as String? ?? '').join() ?? '';
+        final name =
+            runs
+                ?.map(
+                  (r) => (r as Map<String, dynamic>)['text'] as String? ?? '',
+                )
+                .join() ??
+            '';
         if (name.isEmpty) return null;
 
-        final thumb = header?['thumbnail']?['musicThumbnailRenderer']?['thumbnail'] as Map<String, dynamic>?;
+        final thumb =
+            header?['thumbnail']?['musicThumbnailRenderer']?['thumbnail']
+                as Map<String, dynamic>?;
         final thumbnails = thumb?['thumbnails'] as List?;
         final thumbUrl = thumbnails?.isNotEmpty == true
             ? (thumbnails!.last as Map<String, dynamic>)['url'] as String? ?? ''
@@ -530,9 +572,13 @@ class InnerTubeClient {
 
         // Parse sections — songs from musicShelfRenderer,
         // everything else from musicCarouselShelfRenderer.
-        final tabs = json['contents']?['singleColumnBrowseResultsRenderer']?['tabs'] as List?;
+        final tabs =
+            json['contents']?['singleColumnBrowseResultsRenderer']?['tabs']
+                as List?;
         final tabContent = tabs?.firstOrNull as Map<String, dynamic>?;
-        final sectionList = tabContent?['tabRenderer']?['content']?['sectionListRenderer'] as Map<String, dynamic>?;
+        final sectionList =
+            tabContent?['tabRenderer']?['content']?['sectionListRenderer']
+                as Map<String, dynamic>?;
         final sections = sectionList?['contents'] as List?;
 
         final songItems = <InnerTubeItem>[];
@@ -548,7 +594,9 @@ class InnerTubeClient {
               final contents = shelf['contents'] as List?;
               if (contents != null) {
                 for (final c in contents) {
-                  final renderer = (c as Map)['musicResponsiveListItemRenderer'] as Map<String, dynamic>?;
+                  final renderer =
+                      (c as Map)['musicResponsiveListItemRenderer']
+                          as Map<String, dynamic>?;
                   if (renderer == null) continue;
                   final parsed = InnerTubeItem.fromResponsive(renderer);
                   if (parsed != null) songItems.add(parsed);
@@ -560,32 +608,48 @@ class InnerTubeClient {
               final title = shelf['title'] as Map<String, dynamic>?;
               final titleRuns = title?['runs'] as List?;
               if (titleRuns != null && titleRuns.isNotEmpty) {
-                sectionTitle = (titleRuns[0] as Map)['text'] as String? ?? 'Songs';
+                sectionTitle =
+                    (titleRuns[0] as Map)['text'] as String? ?? 'Songs';
                 // Check for navigation endpoint on title runs
                 for (final run in titleRuns) {
-                  final nav = (run as Map)['navigationEndpoint'] as Map<String, dynamic>?;
+                  final nav =
+                      (run as Map)['navigationEndpoint']
+                          as Map<String, dynamic>?;
                   moreBrowseId = nav?['browseEndpoint']?['browseId'] as String?;
                   if (moreBrowseId != null) break;
                 }
               }
               // Also check bottomEndpoint
-              final bottomEp = shelf['bottomEndpoint']?['browseEndpoint']?['browseId'] as String?;
+              final bottomEp =
+                  shelf['bottomEndpoint']?['browseEndpoint']?['browseId']
+                      as String?;
               moreBrowseId ??= bottomEp;
-              sectionData.add(_ArtistSection(title: sectionTitle, items: songItems.toList(), isSongSection: true, moreBrowseId: moreBrowseId));
+              sectionData.add(
+                _ArtistSection(
+                  title: sectionTitle,
+                  items: songItems.toList(),
+                  isSongSection: true,
+                  moreBrowseId: moreBrowseId,
+                ),
+              );
               continue;
             }
 
             // Parse musicCarouselShelfRenderer
-            final carousel = sMap['musicCarouselShelfRenderer'] as Map<String, dynamic>?;
+            final carousel =
+                sMap['musicCarouselShelfRenderer'] as Map<String, dynamic>?;
             if (carousel != null) {
               final carouselItems = <InnerTubeItem>[];
               final contents = carousel['contents'] as List?;
               if (contents != null) {
                 for (final c in contents) {
                   final map = c as Map<String, dynamic>;
-                  final twoRow = map['musicTwoRowItemRenderer'] as Map<String, dynamic>?;
+                  final twoRow =
+                      map['musicTwoRowItemRenderer'] as Map<String, dynamic>?;
                   if (twoRow == null) {
-                    final listItem = map['musicResponsiveListItemRenderer'] as Map<String, dynamic>?;
+                    final listItem =
+                        map['musicResponsiveListItemRenderer']
+                            as Map<String, dynamic>?;
                     if (listItem != null) {
                       final parsed = InnerTubeItem.fromResponsive(listItem);
                       if (parsed != null) carouselItems.add(parsed);
@@ -599,20 +663,35 @@ class InnerTubeClient {
               // Extract section title + more endpoint
               String sectionTitle = '';
               String? moreBrowseId;
-              final header = carousel['header']?['musicCarouselShelfBasicHeaderRenderer'] as Map<String, dynamic>?;
+              final header =
+                  carousel['header']?['musicCarouselShelfBasicHeaderRenderer']
+                      as Map<String, dynamic>?;
               final headerTitle = header?['title'] as Map<String, dynamic>?;
               final headerRuns = headerTitle?['runs'] as List?;
               if (headerRuns != null && headerRuns.isNotEmpty) {
-                sectionTitle = (headerRuns.first as Map)['title']?['runs']?[0]?['text'] as String? ?? '';
+                sectionTitle =
+                    (headerRuns.first as Map)['title']?['runs']?[0]?['text']
+                        as String? ??
+                    '';
                 if (sectionTitle.isEmpty) {
-                  sectionTitle = (headerRuns.first as Map)['text'] as String? ?? '';
+                  sectionTitle =
+                      (headerRuns.first as Map)['text'] as String? ?? '';
                 }
               }
               if (sectionTitle.isEmpty) sectionTitle = 'More';
               // Get the "more" browse ID from moreContentButton
-              moreBrowseId = header?['moreContentButton']?['buttonRenderer']?['navigationEndpoint']?['browseEndpoint']?['browseId'] as String?;
+              moreBrowseId =
+                  header?['moreContentButton']?['buttonRenderer']?['navigationEndpoint']?['browseEndpoint']?['browseId']
+                      as String?;
               if (carouselItems.isNotEmpty) {
-                sectionData.add(_ArtistSection(title: sectionTitle, items: carouselItems, isSongSection: false, moreBrowseId: moreBrowseId));
+                sectionData.add(
+                  _ArtistSection(
+                    title: sectionTitle,
+                    items: carouselItems,
+                    isSongSection: false,
+                    moreBrowseId: moreBrowseId,
+                  ),
+                );
               }
             }
           }
@@ -659,12 +738,16 @@ class InnerTubeClient {
       final client = _httpClient ?? HttpClient();
 
       try {
-        final request = await client.postUrl(uri).timeout(const Duration(seconds: 10));
+        final request = await client
+            .postUrl(uri)
+            .timeout(const Duration(seconds: 10));
         _applyHeaders(request, visitorData: visitorData);
 
         request.write(jsonEncode(body));
 
-        final response = await request.close().timeout(const Duration(seconds: 15));
+        final response = await request.close().timeout(
+          const Duration(seconds: 15),
+        );
         final completer = Completer<String>();
         final bytes = <int>[];
         response.listen(
@@ -672,19 +755,23 @@ class InnerTubeClient {
           onDone: () => completer.complete(utf8.decode(bytes)),
           onError: completer.completeError,
         );
-        final responseBody = await completer.future.timeout(const Duration(seconds: 10));
+        final responseBody = await completer.future.timeout(
+          const Duration(seconds: 10),
+        );
 
         if (response.statusCode != 200) {
           return null;
         }
 
         final json = jsonDecode(responseBody) as Map<String, dynamic>;
-        
+
         // Extract album metadata from microformat
         String? albumTitle;
         String? albumArtist;
         String? albumArtUrl;
-        final mf = json['microformat']?['microformatDataRenderer'] as Map<String, dynamic>?;
+        final mf =
+            json['microformat']?['microformatDataRenderer']
+                as Map<String, dynamic>?;
         if (mf != null) {
           albumTitle = mf['title'] as String?;
           // Strip " - Album by Artist" suffix
@@ -702,7 +789,7 @@ class InnerTubeClient {
               ? (thumb!.last as Map<String, dynamic>)['url'] as String? ?? ''
               : '';
         }
-        
+
         final tracks = _parsePlaylistItems(json);
         return _BrowseResult(
           tracks: tracks,
@@ -736,8 +823,7 @@ class InnerTubeClient {
           shelf =
               contents[0]['musicPlaylistShelfRenderer']
                   as Map<String, dynamic>?;
-          shelf ??= contents[0]['musicShelfRenderer']
-                  as Map<String, dynamic>?;
+          shelf ??= contents[0]['musicShelfRenderer'] as Map<String, dynamic>?;
         }
       }
 
@@ -750,20 +836,23 @@ class InnerTubeClient {
         shelf =
             tabContent?['musicPlaylistShelfRenderer'] as Map<String, dynamic>?;
         shelf ??= tabContent?['musicShelfRenderer'] as Map<String, dynamic>?;
-        
+
         // Layout 3: sectionListRenderer with contents / grids
-        final sectionList = tabContent?['sectionListRenderer'] as Map<String, dynamic>?;
+        final sectionList =
+            tabContent?['sectionListRenderer'] as Map<String, dynamic>?;
         final sections = sectionList?['contents'] as List?;
         if (sections != null) {
           for (final section in sections) {
             var sMap = section as Map<String, dynamic>;
             if (sMap.containsKey('itemSectionRenderer')) {
-              final itemContents = sMap['itemSectionRenderer']?['contents'] as List?;
+              final itemContents =
+                  sMap['itemSectionRenderer']?['contents'] as List?;
               if (itemContents != null && itemContents.isNotEmpty) {
                 sMap = itemContents.first as Map<String, dynamic>;
               }
             }
-            shelf ??= sMap['musicPlaylistShelfRenderer'] as Map<String, dynamic>?;
+            shelf ??=
+                sMap['musicPlaylistShelfRenderer'] as Map<String, dynamic>?;
             shelf ??= sMap['musicShelfRenderer'] as Map<String, dynamic>?;
             shelf ??= sMap['gridRenderer'] as Map<String, dynamic>?;
           }
@@ -775,7 +864,7 @@ class InnerTubeClient {
         if (shelfContents != null) {
           for (final item in shelfContents) {
             final map = item as Map<String, dynamic>;
-            
+
             // Try responsive list item
             final responsive =
                 map['musicResponsiveListItemRenderer'] as Map<String, dynamic>?;
@@ -784,7 +873,7 @@ class InnerTubeClient {
               if (parsed != null) items.add(parsed);
               continue;
             }
-            
+
             // Try two-row item (grid/carousel items like videos, albums, etc.)
             final twoRow =
                 map['musicTwoRowItemRenderer'] as Map<String, dynamic>?;
@@ -1261,25 +1350,34 @@ class InnerTubeItem {
               .join() ??
           '';
       // Strip play counts and type labels like "Song", "Video", etc.
-      final parts = rawSubtitle
-          .split(RegExp(r'\s*[·•|]\s*'))
-          .where((s) {
-            final t = s.trim().toLowerCase();
-            return t != 'song' && t != 'songs' && t != 'video' && t != 'videos' &&
-                   t != 'single' && t != 'singles' && t != 'album' && t != 'albums' &&
-                   t != 'ep' && t != 'eps' && t != 'playlist' && t != 'playlists';
-          })
-          .toList();
+      final parts = rawSubtitle.split(RegExp(r'\s*[·•|]\s*')).where((s) {
+        final t = s.trim().toLowerCase();
+        return t != 'song' &&
+            t != 'songs' &&
+            t != 'video' &&
+            t != 'videos' &&
+            t != 'single' &&
+            t != 'singles' &&
+            t != 'album' &&
+            t != 'albums' &&
+            t != 'ep' &&
+            t != 'eps' &&
+            t != 'playlist' &&
+            t != 'playlists';
+      }).toList();
       final subtitle = parts.isNotEmpty ? parts.first.trim() : '';
 
       // Extract artist browse ID from first subtitle run containing browseId
       String? artistId;
       if (subtitleRuns != null) {
         for (final run in subtitleRuns) {
-          final id = (run as Map<String, dynamic>?)
-              ?['navigationEndpoint']
-              ?['browseEndpoint']
-              ?['browseId'] as String?;
+          final id =
+              (run
+                      as Map<
+                        String,
+                        dynamic
+                      >?)?['navigationEndpoint']?['browseEndpoint']?['browseId']
+                  as String?;
           if (id != null && id.isNotEmpty) {
             artistId = id;
             break;
@@ -1378,15 +1476,21 @@ class InnerTubeItem {
               .join() ??
           '';
       // Strip play counts and type labels like "Song", "Video", etc.
-      final parts = rawSubtitle
-          .split(RegExp(r'\s*[·•|]\s*'))
-          .where((s) {
-            final t = s.trim().toLowerCase();
-            return t != 'song' && t != 'songs' && t != 'video' && t != 'videos' &&
-                   t != 'single' && t != 'singles' && t != 'album' && t != 'albums' &&
-                   t != 'ep' && t != 'eps' && t != 'playlist' && t != 'playlists';
-          })
-          .toList();
+      final parts = rawSubtitle.split(RegExp(r'\s*[·•|]\s*')).where((s) {
+        final t = s.trim().toLowerCase();
+        return t != 'song' &&
+            t != 'songs' &&
+            t != 'video' &&
+            t != 'videos' &&
+            t != 'single' &&
+            t != 'singles' &&
+            t != 'album' &&
+            t != 'albums' &&
+            t != 'ep' &&
+            t != 'eps' &&
+            t != 'playlist' &&
+            t != 'playlists';
+      }).toList();
       var subtitle = parts.isNotEmpty ? parts.first.trim() : '';
 
       // If subtitle is empty (e.g., only "Song" type label), try third column.
@@ -1409,10 +1513,13 @@ class InnerTubeItem {
       String? artistId;
       if (subRuns != null) {
         for (final run in subRuns) {
-          final id = (run as Map<String, dynamic>?)
-              ?['navigationEndpoint']
-              ?['browseEndpoint']
-              ?['browseId'] as String?;
+          final id =
+              (run
+                      as Map<
+                        String,
+                        dynamic
+                      >?)?['navigationEndpoint']?['browseEndpoint']?['browseId']
+                  as String?;
           if (id != null && id.isNotEmpty) {
             artistId = id;
             break;
@@ -1479,7 +1586,12 @@ class InnerTubePlaylistInfo {
 }
 
 class _ArtistSection {
-  _ArtistSection({required this.title, required this.items, required this.isSongSection, this.moreBrowseId});
+  _ArtistSection({
+    required this.title,
+    required this.items,
+    required this.isSongSection,
+    this.moreBrowseId,
+  });
   final String title;
   final List<InnerTubeItem> items;
   final bool isSongSection;

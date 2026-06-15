@@ -96,8 +96,7 @@ class LocalBackend implements MusicBackend {
   }
 
   @override
-  Future<List<AfGenre>> genres({int limit = 200}) =>
-      db.allGenres(limit: limit);
+  Future<List<AfGenre>> genres({int limit = 200}) => db.allGenres(limit: limit);
 
   @override
   Future<List<AfAlbum>> favoriteAlbums({int limit = 30}) =>

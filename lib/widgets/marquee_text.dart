@@ -129,11 +129,17 @@ class MarqueeTextState extends State<MarqueeText>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(widget.text,
-                                  maxLines: 1, style: widget.style),
+                              Text(
+                                widget.text,
+                                maxLines: 1,
+                                style: widget.style,
+                              ),
                               const SizedBox(width: 32),
-                              Text(widget.text,
-                                  maxLines: 1, style: widget.style),
+                              Text(
+                                widget.text,
+                                maxLines: 1,
+                                style: widget.style,
+                              ),
                             ],
                           ),
                         ),

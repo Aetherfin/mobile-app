@@ -25,7 +25,8 @@ class PlayingEqualizer extends StatefulWidget {
   State<PlayingEqualizer> createState() => _PlayingEqualizerState();
 }
 
-class _PlayingEqualizerState extends State<PlayingEqualizer> with TickerProviderStateMixin {
+class _PlayingEqualizerState extends State<PlayingEqualizer>
+    with TickerProviderStateMixin {
   late List<AnimationController> _controllers;
   late List<Animation<double>> _animations;
 
@@ -45,9 +46,10 @@ class _PlayingEqualizerState extends State<PlayingEqualizer> with TickerProvider
     });
 
     _animations = _controllers.map((controller) {
-      return Tween<double>(begin: 0.15, end: 1.0).animate(
-        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
-      );
+      return Tween<double>(
+        begin: 0.15,
+        end: 1.0,
+      ).animate(CurvedAnimation(parent: controller, curve: Curves.easeInOut));
     }).toList();
   }
 
@@ -176,22 +178,24 @@ class TrackRow extends ConsumerWidget {
         child: Center(
           child: isActive
               ? (isBuffering
-                  ? SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: accent,
+                        ),
+                      )
+                    : PlayingEqualizer(
                         color: accent,
-                      ),
-                    )
-                  : PlayingEqualizer(
-                      color: accent,
-                      size: 16.0,
-                      isPlaying: isPlaying,
-                    ))
+                        size: 16.0,
+                        isPlaying: isPlaying,
+                      ))
               : Text(
                   '${leadingNumber!}.',
-                  style: AfTypography.caption.copyWith(color: AfColors.textTertiary),
+                  style: AfTypography.caption.copyWith(
+                    color: AfColors.textTertiary,
+                  ),
                 ),
         ),
       );
@@ -289,7 +293,7 @@ class TrackRow extends ConsumerWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: AfSpacing.s2),
                         child: Text(
-                           track.subtitle(),
+                          track.subtitle(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: subtitleStyle,
@@ -316,4 +320,3 @@ class TrackRow extends ConsumerWidget {
     );
   }
 }
-

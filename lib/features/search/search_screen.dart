@@ -66,7 +66,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       _queryNotifier.value = q.toLowerCase();
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          unawaited(ref.read(searchHistoryProvider.notifier).push(q.toLowerCase()));
+          unawaited(
+            ref.read(searchHistoryProvider.notifier).push(q.toLowerCase()),
+          );
         }
       });
     }

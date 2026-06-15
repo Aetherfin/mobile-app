@@ -164,8 +164,9 @@ void main() {
       expect(find.text('Test Song'), findsOneWidget);
     });
 
-    testWidgets('swipe up past threshold triggers haptic and navigation',
-        (tester) async {
+    testWidgets('swipe up past threshold triggers haptic and navigation', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,

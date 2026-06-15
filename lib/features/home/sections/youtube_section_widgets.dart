@@ -31,7 +31,9 @@ class YouTubeSongGrid extends ConsumerWidget {
     final currentTrack = ref.watch(currentTrackProvider);
     final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
     final isBuffering = ref.watch(isBufferingProvider);
-    final activeAccent = ref.watch(currentSpectralProvider.select((s) => s.energy));
+    final activeAccent = ref.watch(
+      currentSpectralProvider.select((s) => s.energy),
+    );
 
     return SizedBox(
       height: gridHeight,
@@ -82,7 +84,10 @@ class YouTubeSongGrid extends ConsumerWidget {
                                   )
                                 : Container(
                                     color: AfColors.surfaceHigh,
-                                    child: const Icon(LucideIcons.music, size: 24),
+                                    child: const Icon(
+                                      LucideIcons.music,
+                                      size: 24,
+                                    ),
                                   ),
                           ),
                           if (isActive)
@@ -123,7 +128,9 @@ class YouTubeSongGrid extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                           style: AfTypography.bodyMedium.copyWith(
                             fontWeight: FontWeight.w500,
-                            color: isActive ? activeAccent : AfColors.textPrimary,
+                            color: isActive
+                                ? activeAccent
+                                : AfColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: AfSpacing.s4),
@@ -236,7 +243,9 @@ class YouTubeHomeTile extends ConsumerWidget {
     final currentTrack = ref.watch(currentTrackProvider);
     final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
     final isBuffering = ref.watch(isBufferingProvider);
-    final activeAccent = ref.watch(currentSpectralProvider.select((s) => s.energy));
+    final activeAccent = ref.watch(
+      currentSpectralProvider.select((s) => s.energy),
+    );
 
     final isArtist = item.type == InnerTubeItemType.artist;
     final isSong = item.type == InnerTubeItemType.song;
@@ -274,7 +283,9 @@ class YouTubeHomeTile extends ConsumerWidget {
                             : Container(
                                 color: AfColors.surfaceHigh,
                                 child: Icon(
-                                  isArtist ? LucideIcons.user : LucideIcons.music,
+                                  isArtist
+                                      ? LucideIcons.user
+                                      : LucideIcons.music,
                                   color: AfColors.textTertiary,
                                   size: 32,
                                 ),
