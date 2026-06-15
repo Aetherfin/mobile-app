@@ -113,9 +113,7 @@ def _send_text(text, reply_markup=None):
         sys.exit(1)
 
 
-def _upload_to_gofile(file_path):
-    filename = os.path.basename(file_path)
-
+def _upload_to_gofile(file_paths):
     try:
         server_resp = subprocess.run(
             ["curl", "-s", "https://api.gofile.io/servers"],
@@ -129,13 +127,18 @@ def _upload_to_gofile(file_path):
 
         servers = json.loads(server_resp.stdout)
         if servers.get("status") != "ok" or not servers.get("data", {}).get("servers"):
-            print(f"No gofile servers available")
+            print("No gofile servers available")
             return None
 
         server = servers["data"]["servers"][0]["name"]
 
+        curl_cmd = ["curl", "-s"]
+        for fp in file_paths:
+            curl_cmd.extend(["-F", f"file=@{fp}"])
+        curl_cmd.append(f"https://{server}.gofile.io/contents/uploadfile")
+
         result = subprocess.run(
-            ["curl", "-s", "-F", f"file=@{file_path}", f"https://{server}.gofile.io/contents/uploadfile"],
+            curl_cmd,
             capture_output=True,
             text=True,
             timeout=300
@@ -221,27 +224,25 @@ def success_message():
     commit = os.environ.get('TG_COMMIT', '')
     timestamp = os.environ.get('TG_TIMESTAMP', '')
 
-    apk_files = glob.glob(os.path.join(apk_dir, "Aetherfin-v*.apk"))
+    apk_files = sorted(glob.glob(os.path.join(apk_dir, "Aetherfin-v*.apk")))
+    uploaded_apks = []  # list of (name, size)
     download_url = None
-    apk_name = None
-    apk_size = None
     if apk_files:
-        apk_path = apk_files[0]
-        apk_name = os.path.basename(apk_path)
-        apk_size = os.path.getsize(apk_path)
-        print(f"Uploading {apk_name} to gofile...")
-        download_url = _upload_to_gofile(apk_path)
+        for apk_path in apk_files:
+            uploaded_apks.append((os.path.basename(apk_path), os.path.getsize(apk_path)))
+        print(f"Uploading {len(apk_files)} APK(s) to gofile...")
+        download_url = _upload_to_gofile(apk_files)
 
     icon = "\U0001f680" if tag else "\u2705"
     status = "Release Successful!" if tag else "Build Successful!"
 
     lines = [f"{icon} <b>Aetherfin {status}</b>", ""]
-    if apk_name:
-        lines.append(f"<b>App:</b> {apk_name}")
+    if uploaded_apks:
+        lines.append(f"<b>APKs:</b>")
+        for name, size in uploaded_apks:
+            size_mb = size / (1024 * 1024)
+            lines.append(f"  \u2022 <code>{name}</code> ({size_mb:.1f}MB)")
     lines.append(f"<b>Mode:</b> <code>{mode}</code>")
-    if apk_size:
-        size_mb = apk_size / (1024 * 1024)
-        lines.append(f"<b>Size:</b> {size_mb:.0f}MB")
     lines.append("")
     lines.append(f"<b>Branch:</b> <code>{branch}</code>")
     lines.append(f"<b>Build ID:</b> <code>{build_id}</code>")
@@ -258,7 +259,7 @@ def success_message():
 
     buttons = []
     if download_url:
-        buttons.append([{"text": "\U0001f4e5 Download APK", "url": download_url}])
+        buttons.append([{"text": "\U0001f4e5 Download APKs", "url": download_url}])
     if run_url:
         buttons.append([{"text": "\U0001f528 View Run", "url": run_url}])
     if commit_url:
