@@ -15,7 +15,7 @@ dependencies:
   mpv_audio_kit: 0.3.6
 
   # State management
-  flutter_riverpod: 2.6.1
+  flutter_riverpod: 3.3.2
 
   # Routing
   go_router: 14.8.1
