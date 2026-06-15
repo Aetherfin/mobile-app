@@ -255,26 +255,27 @@ class JellyfinClient implements MusicBackend {
     // Build a temporary client carrying the API key in the Authorization
     // header. We can't just swap headers on `_dio` because that would
     // mutate state shared with other callers.
-    final probe = Dio(
-      BaseOptions(
-        baseUrl: _dio.options.baseUrl,
-        connectTimeout: const Duration(seconds: 5),
-        sendTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 15),
-        headers: {
-          'Authorization': JellyfinUrlBuilder.buildAuthHeader(
-            deviceId: deviceId,
-            token: apiKey,
-            clientVersion: clientVersion,
-          ),
-          'Content-Type': 'application/json',
-          'User-Agent': JellyfinUrlBuilder.userAgentFor(clientVersion),
-          'Accept': 'application/json',
-        },
-      ),
-    );
+    final probe = SharedDioClient().dio;
     try {
-      final res = await probe.get<List<dynamic>>('Users');
+      // Build full URL since shared Dio has no baseUrl configured
+      final base = _dio.options.baseUrl.endsWith('/')
+          ? _dio.options.baseUrl
+          : '${_dio.options.baseUrl}/';
+      final res = await probe.get<List<dynamic>>(
+        '${base}Users',
+        options: Options(
+          headers: {
+            'Authorization': JellyfinUrlBuilder.buildAuthHeader(
+              deviceId: deviceId,
+              token: apiKey,
+              clientVersion: clientVersion,
+            ),
+            'Content-Type': 'application/json',
+            'User-Agent': JellyfinUrlBuilder.userAgentFor(clientVersion),
+            'Accept': 'application/json',
+          },
+        ),
+      );
       final users = (res.data ?? const []).whereType<Map<String, dynamic>>();
       final wanted = username.trim().toLowerCase();
       for (final raw in users) {
@@ -294,7 +295,8 @@ class JellyfinClient implements MusicBackend {
       // key enumerate accounts on the server.
       throw StateError('Authentication failed. Check your credentials.');
     } finally {
-      probe.close(force: true);
+      // NOT closing the shared client — it's a singleton managed by
+      // the app lifecycle, not per-request scope.
     }
   }
 

@@ -693,9 +693,7 @@ class AfPlayerService {
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
-    for (final s in _subs) {
-      await s.cancel();
-    }
+    await Future.wait(_subs.map((s) => s.cancel()), eagerError: true);
     _bridge.dispose();
     _positionTracker.dispose();
     _queueManager.dispose();

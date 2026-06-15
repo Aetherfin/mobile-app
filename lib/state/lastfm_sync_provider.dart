@@ -117,6 +117,7 @@ final lastFmSyncProvider = Provider<Future<({int toApp, int toLastFm})> Function
         eagerError: false,
       );
       resolvedTracks.addAll(results.whereType<AfTrack>());
+      await Future.delayed(const Duration(milliseconds: 200));
     }
 
     // Set favorites sequentially to respect backend rate limits.

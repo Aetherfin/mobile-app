@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/backend/music_backend.dart';
 import '../core/jellyfin/models/items.dart';
 import '../utils/log.dart';
 import 'music_backend_providers.dart';
@@ -277,6 +278,10 @@ final allGenresProvider = FutureProvider.autoDispose<List<AfGenre>>((
 
   final res = await backend.genres();
   logData('allGenres', source: 'live', extra: 'count=${res.length}');
+
+  if (backend.serverType == ServerType.subsonic) {
+    return res; // Subsonic doesn't have per-genre images
+  }
 
   if (res.every((g) => g.imageUrl != null)) return res;
 
