@@ -262,8 +262,138 @@ class InnerTubeClient {
     }
   }
 
+  /// Browse the user's saved playlists (FEmusic_library_privately_owned_playlists).
+  Future<List<InnerTubePlaylistInfo>> browsePlaylists() async {
+    await _ensureInitialized();
+
+    final parts = _locale.split('|');
+    final gl = parts[0];
+    final hl = parts[1];
+
+    try {
+      final visitorData = _cachedVisitorData;
+      final body = <String, dynamic>{
+        'context': _buildContext(gl: gl, hl: hl, visitorData: visitorData),
+        'browseId': 'FEmusic_liked_playlists',
+      };
+
+      final uri = Uri.parse('$_baseUrl/browse?prettyPrint=false');
+      final client = _httpClient ?? HttpClient();
+
+      try {
+        final request = await client.postUrl(uri);
+        _applyHeaders(request, visitorData: visitorData);
+        request.write(jsonEncode(body));
+
+        final response = await request.close().timeout(const Duration(seconds: 15));
+        final completer = Completer<String>();
+        final bytes = <int>[];
+        response.listen(
+          (chunk) => bytes.addAll(chunk),
+          onDone: () => completer.complete(utf8.decode(bytes)),
+          onError: (Object e) => completer.completeError(e),
+        );
+        final responseBody = await completer.future.timeout(const Duration(seconds: 10));
+
+        if (response.statusCode != 200) {
+          return [];
+        }
+
+        final json = jsonDecode(responseBody) as Map<String, dynamic>;
+        return _parsePlaylistList(json);
+      } on Exception catch (e) {
+        return [];
+      }
+    } on Exception catch (e, stack) {
+      return [];
+    }
+  }
+
+  /// Parse the user's playlist list from the browse response.
+  List<InnerTubePlaylistInfo> _parsePlaylistList(Map<String, dynamic> json) {
+    final result = <InnerTubePlaylistInfo>[];
+    try {
+      Map<String, dynamic>? shelf;
+      final contents =
+          json['contents']?['singleColumnBrowseResultsRenderer']?['tabs']
+              as List?;
+      final tabContent = contents?[0]?['tabRenderer']?['content'];
+      final sectionList =
+          tabContent?['sectionListRenderer'] as Map<String, dynamic>?;
+      final sections = sectionList?['contents'] as List?;
+
+      if (sections != null) {
+        for (final section in sections) {
+          final sMap = section as Map<String, dynamic>;
+          shelf ??= sMap['musicShelfRenderer'] as Map<String, dynamic>?;
+          shelf ??= sMap['gridRenderer'] as Map<String, dynamic>?;
+        }
+      }
+
+      if (shelf == null) return result;
+
+      // gridRenderer uses 'items', musicShelfRenderer uses 'contents'
+      final items = (shelf['items'] ?? shelf['contents']) as List?;
+      if (items == null) return result;
+
+      for (final item in items) {
+        final itemMap = item as Map<String, dynamic>;
+        final renderer = itemMap['musicTwoRowItemRenderer']
+                as Map<String, dynamic>? ??
+            itemMap['musicResponsiveListItemRenderer']
+                as Map<String, dynamic>?;
+        if (renderer == null) continue;
+
+        final titleObj = renderer['title'] as Map<String, dynamic>?;
+        final runs = titleObj?['runs'] as List?;
+        final title = runs?.map((r) => (r as Map<String, dynamic>)['text'] as String? ?? '').join() ?? '';
+        if (title.isEmpty) continue;
+
+        final nav = renderer['navigationEndpoint'] as Map<String, dynamic>?;
+        final browseEndpoint = nav?['browseEndpoint'] as Map<String, dynamic>?;
+        final browseId = browseEndpoint?['browseId'] as String? ?? '';
+
+        final subtitleObj = renderer['subtitle'] as Map<String, dynamic>?;
+        final subtitleRuns = subtitleObj?['runs'] as List?;
+        final countStr = subtitleRuns
+                ?.map((r) => (r as Map<String, dynamic>)['text'] as String? ?? '')
+                .join() ?? '';
+        final count = int.tryParse(countStr.replaceAll(RegExp(r'[^0-9]'), ''));
+
+        final thumbRenderer =
+            renderer['thumbnailRenderer'] as Map<String, dynamic>?;
+        final musicThumb =
+            thumbRenderer?['musicThumbnailRenderer'] as Map<String, dynamic>?;
+        final thumbObj = musicThumb?['thumbnail'] as Map<String, dynamic>?;
+        final thumbnails = thumbObj?['thumbnails'] as List?;
+        final imageUrl =
+            thumbnails?.isNotEmpty == true
+                ? (thumbnails!.last as Map<String, dynamic>)['url']
+                        as String? ??
+                    ''
+                : '';
+
+        result.add(InnerTubePlaylistInfo(
+          id: browseId.replaceFirst('VL', ''),
+          browseId: browseId,
+          title: title,
+          trackCount: count,
+          imageUrl: imageUrl,
+        ));
+      }
+    } on Exception catch (e) {
+      afLog('youtube', '_parsePlaylistList failed', error: e);
+    }
+    return result;
+  }
+
   /// Browse a playlist by its browseId (e.g. "VLPLxxxx") and return track items.
   Future<List<InnerTubeItem>> browsePlaylist(String browseId) async {
+    final result = await browsePlaylistWithMetadata(browseId);
+    return result?.tracks ?? [];
+  }
+
+  Future<_BrowseResult?> browsePlaylistWithMetadata(String browseId) async {
     await _ensureInitialized();
 
     final parts = _locale.split('|');
@@ -282,24 +412,63 @@ class InnerTubeClient {
       final client = _httpClient ?? HttpClient();
 
       try {
-        final request = await client.postUrl(uri);
+        final request = await client.postUrl(uri).timeout(const Duration(seconds: 10));
         _applyHeaders(request, visitorData: visitorData);
 
         request.write(jsonEncode(body));
 
-        final response = await request.close();
-        final responseBody = await response.transform(utf8.decoder).join();
+        final response = await request.close().timeout(const Duration(seconds: 15));
+        final completer = Completer<String>();
+        final bytes = <int>[];
+        response.listen(
+          (chunk) => bytes.addAll(chunk),
+          onDone: () => completer.complete(utf8.decode(bytes)),
+          onError: (Object e) => completer.completeError(e),
+        );
+        final responseBody = await completer.future.timeout(const Duration(seconds: 10));
 
-        if (response.statusCode != 200) return [];
+        if (response.statusCode != 200) {
+          return null;
+        }
 
         final json = jsonDecode(responseBody) as Map<String, dynamic>;
-        return _parsePlaylistItems(json);
+        
+        // Extract album metadata from microformat
+        String? albumTitle;
+        String? albumArtist;
+        String? albumArtUrl;
+        final mf = json['microformat']?['microformatDataRenderer'] as Map<String, dynamic>?;
+        if (mf != null) {
+          albumTitle = mf['title'] as String?;
+          // Strip " - Album by Artist" suffix
+          if (albumTitle != null) {
+            final sep = RegExp(r' - (Album|Single|EP) by ');
+            final match = sep.firstMatch(albumTitle);
+            if (match != null) {
+              albumArtist = albumTitle!.substring(match.end);
+              albumTitle = albumTitle!.substring(0, match.start);
+            }
+          }
+          // Extract thumbnail from microformat
+          final thumb = mf['thumbnail']?['thumbnails'] as List?;
+          albumArtUrl = thumb?.isNotEmpty == true
+              ? (thumb!.last as Map<String, dynamic>)['url'] as String? ?? ''
+              : '';
+        }
+        
+        final tracks = _parsePlaylistItems(json);
+        return _BrowseResult(
+          tracks: tracks,
+          albumTitle: albumTitle,
+          albumArtist: albumArtist,
+          albumArtUrl: albumArtUrl,
+        );
       } finally {
         // Don't close persistent client
       }
     } on Exception catch (e, stack) {
       afLog('youtube', 'browsePlaylist failed', error: e, stackTrace: stack);
-      return [];
+      return null;
     }
   }
 
@@ -307,7 +476,6 @@ class InnerTubeClient {
   List<InnerTubeItem> _parsePlaylistItems(Map<String, dynamic> json) {
     final items = <InnerTubeItem>[];
     try {
-      // Find musicPlaylistShelfRenderer in any response layout.
       Map<String, dynamic>? shelf;
 
       // Layout 1: twoColumnBrowseResultsRenderer (playlists)
@@ -321,6 +489,8 @@ class InnerTubeClient {
           shelf =
               contents[0]['musicPlaylistShelfRenderer']
                   as Map<String, dynamic>?;
+          shelf ??= contents[0]['musicShelfRenderer']
+                  as Map<String, dynamic>?;
         }
       }
 
@@ -333,6 +503,14 @@ class InnerTubeClient {
         shelf =
             tabContent?['musicPlaylistShelfRenderer'] as Map<String, dynamic>?;
         shelf ??= tabContent?['musicShelfRenderer'] as Map<String, dynamic>?;
+      }
+
+      if (shelf == null) {
+        final mf = json['microformat'];
+        if (mf is Map) {
+          final mfr = mf['microformatDataRenderer'] as Map<String, dynamic>?;
+          }
+        return items;
       }
 
       if (shelf != null) {
@@ -939,6 +1117,36 @@ class InnerTubeItem {
       return null;
     }
   }
+}
+
+/// Parsed playlist info from the browsePlaylists response.
+class InnerTubePlaylistInfo {
+  InnerTubePlaylistInfo({
+    required this.id,
+    required this.browseId,
+    required this.title,
+    this.trackCount,
+    this.imageUrl = '',
+  });
+
+  final String id;
+  final String browseId;
+  final String title;
+  final int? trackCount;
+  final String imageUrl;
+}
+
+class _BrowseResult {
+  _BrowseResult({
+    required this.tracks,
+    this.albumTitle,
+    this.albumArtist,
+    this.albumArtUrl,
+  });
+  final List<InnerTubeItem> tracks;
+  final String? albumTitle;
+  final String? albumArtist;
+  final String? albumArtUrl;
 }
 
 enum InnerTubeItemType { song, album, playlist, artist }

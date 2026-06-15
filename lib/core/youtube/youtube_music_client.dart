@@ -107,7 +107,25 @@ class YouTubeMusicClient implements MusicBackend {
   Future<List<AfArtist>> artists({int limit = 200}) async => [];
 
   @override
-  Future<List<AfPlaylist>> playlists({int limit = 200}) async => [];
+  Future<List<AfPlaylist>> playlists({int limit = 200}) async {
+    try {
+      final infos = await _innertube.browsePlaylists();
+      return infos
+          .take(limit)
+          .map(
+            (info) => AfPlaylist(
+              id: info.id.isNotEmpty ? info.id : info.browseId,
+              name: info.title,
+              trackCount: info.trackCount ?? 0,
+              imageUrl: info.imageUrl,
+            ),
+          )
+          .toList();
+    } on Exception catch (e) {
+      afLog('youtube', 'Failed to get playlists', error: e);
+      return [];
+    }
+  }
 
   @override
   Future<List<AfAlbum>> allAlbums({
@@ -135,16 +153,31 @@ class YouTubeMusicClient implements MusicBackend {
   @override
   Future<({AfAlbum album, List<AfTrack> tracks})?> album(String id) async {
     try {
-      final playlist = await _yt.playlists.get(id);
-      final videos = await _yt.playlists.getVideos(id).take(100).toList();
+      var browseId = id.startsWith('VL') ? id.substring(2) : id;
+      if (!browseId.startsWith('MPRE') && !browseId.startsWith('OL') && !browseId.startsWith('PL') && !browseId.startsWith('RD')) {
+        browseId = 'VL$browseId';
+      }
+      final result = await _innertube.browsePlaylistWithMetadata(browseId);
+      if (result == null || result.tracks.isEmpty) return null;
+
+      final tracks = result.tracks
+          .map((item) => AfTrack(
+                id: item.videoId ?? item.id,
+                title: item.title,
+                artistName: item.subtitle,
+                albumName: result.albumTitle ?? 'YouTube Music',
+                imageUrl: item.thumbnailUrl,
+              ))
+          .toList();
+
       final album = AfAlbum(
-        id: playlist.id.value,
-        name: playlist.title,
-        artistName: playlist.author,
-        trackCount: playlist.videoCount ?? videos.length,
-        imageUrl: playlist.thumbnails.highResUrl,
+        id: id,
+        name: result.albumTitle ?? 'Album',
+        artistName: result.albumArtist ?? '',
+        trackCount: tracks.length,
+        imageUrl: result.albumArtUrl ?? (tracks.isNotEmpty ? tracks.first.imageUrl : ''),
       );
-      return (album: album, tracks: videos.map(_videoToTrack).toList());
+      return (album: album, tracks: tracks);
     } on Exception catch (e) {
       afLog('youtube', 'Failed to get album', error: e);
       return null;
@@ -154,8 +187,13 @@ class YouTubeMusicClient implements MusicBackend {
   @override
   Future<AfArtist?> artist(String id) async {
     try {
-      final channel = await _yt.channels.get(ChannelId(id));
-      return _channelToArtist(channel);
+      final items = await _innertube.browsePlaylist(id);
+      if (items.isEmpty) return null;
+      return AfArtist(
+        id: id,
+        name: items.first.title,
+        imageUrl: items.first.thumbnailUrl,
+      );
     } on Exception catch (e) {
       afLog('youtube', 'Failed to get artist', error: e);
       return null;
@@ -185,16 +223,19 @@ class YouTubeMusicClient implements MusicBackend {
     int limit = 5,
   }) async {
     try {
-      final channel = await _yt.channels.get(ChannelId(artistId));
-      final uploads = _yt.channels.getUploads(channel.id);
-      final tracks = <AfTrack>[];
-      await for (final video in uploads) {
-        tracks.add(_videoToTrack(video));
-        if (tracks.length >= limit) break;
-      }
-      return tracks;
+      final items = await _innertube.browsePlaylist(artistId);
+      return items
+          .take(limit)
+          .map((item) => AfTrack(
+                id: item.videoId ?? item.id,
+                title: item.title,
+                artistName: item.subtitle,
+                albumName: 'YouTube Music',
+                imageUrl: item.thumbnailUrl,
+              ))
+          .toList();
     } on Exception catch (e) {
-      afLog('youtube', 'Failed to get artist top tracks', error: e);
+      afLog('youtube', 'artistTopTracks failed', error: e);
       return [];
     }
   }
@@ -208,14 +249,26 @@ class YouTubeMusicClient implements MusicBackend {
     String id,
   ) async {
     try {
-      final pl = await _yt.playlists.get(id);
-      final videos = await _yt.playlists.getVideos(id).take(100).toList();
+      final browseId = id.startsWith('VL') ? id : 'VL$id';
+      final innerTubeItems = await _innertube.browsePlaylist(browseId);
+      if (innerTubeItems.isEmpty) return null;
+
+      final tracks = innerTubeItems
+          .map((item) => AfTrack(
+                id: item.videoId ?? item.id,
+                title: item.title,
+                artistName: item.subtitle,
+                albumName: 'YouTube Music',
+                imageUrl: item.thumbnailUrl,
+              ))
+          .toList();
+
       final playlist = AfPlaylist(
-        id: pl.id.value,
-        name: pl.title,
-        trackCount: pl.videoCount ?? videos.length,
+        id: id,
+        name: '', // Title from playlist list
+        trackCount: tracks.length,
       );
-      return (playlist: playlist, tracks: videos.map(_videoToTrack).toList());
+      return (playlist: playlist, tracks: tracks);
     } on Exception catch (e) {
       afLog('youtube', 'Failed to get playlist', error: e);
       return null;
