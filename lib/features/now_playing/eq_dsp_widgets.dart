@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -128,38 +129,42 @@ class EqMasterBanner extends ConsumerWidget {
             ),
           ),
           // Custom pill toggle 52x30
-          GestureDetector(
-            onTap: () => onChanged(!enabled),
-            child: AnimatedContainer(
-              duration: AfDurations.quick,
-              curve: AfCurves.easeStandard,
-              width: 52,
-              height: 30,
-              decoration: BoxDecoration(
-                color: enabled ? spectral.primary : AfColors.surfaceHigh,
-                borderRadius: AfRadii.borderPill,
-                boxShadow: enabled
-                    ? [
-                        BoxShadow(
-                          color: spectral.primary.withValues(alpha: 0.4),
-                          blurRadius: 8,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: AnimatedAlign(
+          Semantics(
+            toggled: enabled,
+            label: 'DSP processing: ${enabled ? "on" : "off"}',
+            child: GestureDetector(
+              onTap: () => onChanged(!enabled),
+              child: AnimatedContainer(
                 duration: AfDurations.quick,
-                alignment: enabled
-                    ? Alignment.centerRight
-                    : Alignment.centerLeft,
                 curve: AfCurves.easeStandard,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: const BoxDecoration(
-                    color: AfColors.textPrimary,
-                    shape: BoxShape.circle,
+                width: 52,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: enabled ? spectral.primary : AfColors.surfaceHigh,
+                  borderRadius: AfRadii.borderPill,
+                  boxShadow: enabled
+                      ? [
+                          BoxShadow(
+                            color: spectral.primary.withValues(alpha: 0.4),
+                            blurRadius: 8,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: AnimatedAlign(
+                  duration: AfDurations.quick,
+                  alignment: enabled
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  curve: AfCurves.easeStandard,
+                  child: Container(
+                    width: 26,
+                    height: 26,
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    decoration: const BoxDecoration(
+                      color: AfColors.textPrimary,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
               ),
@@ -217,25 +222,35 @@ class EqAccordionSection extends ConsumerWidget {
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: onTap,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                minHeight: AfSpacing.minHitTarget,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AfSpacing.s16,
-                  vertical: AfSpacing.s12,
+            child: Focus(
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent &&
+                    (event.logicalKey == LogicalKeyboardKey.enter ||
+                        event.logicalKey == LogicalKeyboardKey.space)) {
+                  onTap();
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: AfSpacing.minHitTarget,
                 ),
-                child: Row(
-                  children: [
-                    Text(
-                      label.toUpperCase(),
-                      style: AfTypography.label.copyWith(
-                        color: isOpen
-                            ? spectral.primary
-                            : AfColors.textSecondary,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AfSpacing.s16,
+                    vertical: AfSpacing.s12,
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        label,
+                        style: AfTypography.label.copyWith(
+                          color: isOpen
+                              ? spectral.primary
+                              : AfColors.textSecondary,
+                        ),
                       ),
-                    ),
                     if (badgeCount != null) ...[
                       const SizedBox(width: AfSpacing.s8),
                       Container(
@@ -266,12 +281,13 @@ class EqAccordionSection extends ConsumerWidget {
                         color: AfColors.textTertiary,
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Content with animated cross-fade
+                   ],
+                 ),
+               ),
+             ),
+           ),
+           ),
+           // Content with animated cross-fade
           AnimatedCrossFade(
             firstChild: const SizedBox(width: double.infinity),
             secondChild: Padding(
@@ -316,56 +332,62 @@ class EqEffectToggle extends ConsumerWidget {
     final spectral = ref.watch(
       currentSpectralProvider.select((s) => s.secondary),
     );
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => onChanged(!value),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AfSpacing.s4),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(title, style: AfTypography.bodyMedium),
-                  const SizedBox(height: AfSpacing.s2),
-                  Text(
-                    subtitle,
-                    style: AfTypography.bodySmall.copyWith(
-                      color: AfColors.textTertiary,
+    return Semantics(
+      toggled: value,
+      label: '$title: ${value ? "on" : "off"}',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onChanged(!value),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AfSpacing.s8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(title, style: AfTypography.bodyMedium),
+                    const SizedBox(height: AfSpacing.s2),
+                    Text(
+                      subtitle,
+                      style: AfTypography.bodySmall.copyWith(
+                        color: AfColors.textTertiary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: AfSpacing.s8),
-            // Custom pill toggle 44x26
-            AnimatedContainer(
-              duration: AfDurations.quick,
-              curve: AfCurves.easeStandard,
-              width: 44,
-              height: 26,
-              decoration: BoxDecoration(
-                color: value ? spectral : AfColors.surfaceHigh,
-                borderRadius: AfRadii.borderPill,
-              ),
-              child: AnimatedAlign(
+              const SizedBox(width: AfSpacing.s8),
+              // Custom pill toggle 48x28 (meets 48dp hit target with padding)
+              AnimatedContainer(
                 duration: AfDurations.quick,
-                alignment: value ? Alignment.centerRight : Alignment.centerLeft,
                 curve: AfCurves.easeStandard,
-                child: Container(
-                  width: 22,
-                  height: 22,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: const BoxDecoration(
-                    color: AfColors.textPrimary,
-                    shape: BoxShape.circle,
+                width: 48,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: value ? spectral : AfColors.surfaceHigh,
+                  borderRadius: AfRadii.borderPill,
+                ),
+                child: AnimatedAlign(
+                  duration: AfDurations.quick,
+                  alignment: value
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  curve: AfCurves.easeStandard,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    decoration: const BoxDecoration(
+                      color: AfColors.textPrimary,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -492,13 +514,26 @@ Widget eqSliderRow(
 
 // ─── Text Field Row ─────────────────────────────────────────────────────────
 
+/// Validates pipe-separated numeric input (e.g. "40|60" or "0.4|0.32").
+String? _validatePipeSeparatedNumbers(String? value) {
+  if (value == null || value.trim().isEmpty) return null;
+  final parts = value.split('|');
+  for (final part in parts) {
+    if (double.tryParse(part.trim()) == null) {
+      return 'Enter numbers separated by |';
+    }
+  }
+  return null;
+}
+
 Widget eqTextFieldRow(
   BuildContext context,
   String label,
   String value,
   String hint,
-  ValueChanged<String> onSubmitted,
-) {
+  ValueChanged<String> onSubmitted, {
+  bool numericPipe = false,
+}) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),
     child: Row(
@@ -509,6 +544,8 @@ Widget eqTextFieldRow(
           child: TextFormField(
             initialValue: value,
             style: AfTypography.mono.copyWith(fontSize: 13),
+            validator: numericPipe ? _validatePipeSeparatedNumbers : null,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             decoration: InputDecoration(
               labelText: label,
               hintText: hint,
@@ -528,6 +565,14 @@ Widget eqTextFieldRow(
               enabledBorder: const OutlineInputBorder(
                 borderRadius: AfRadii.borderSm,
                 borderSide: BorderSide(color: AfColors.surfaceHigh),
+              ),
+              errorBorder: const OutlineInputBorder(
+                borderRadius: AfRadii.borderSm,
+                borderSide: BorderSide(color: AfColors.semanticError),
+              ),
+              focusedErrorBorder: const OutlineInputBorder(
+                borderRadius: AfRadii.borderSm,
+                borderSide: BorderSide(color: AfColors.semanticError),
               ),
             ),
             onFieldSubmitted: onSubmitted,
@@ -648,18 +693,22 @@ class EqBandBar extends ConsumerWidget {
     final t = ((gain - min) / (max - min)).clamp(0.0, 1.0);
     // 0.5 = flat (unity), below = cut, above = boost.
     final isFlat = (gain - 1.0).abs() < 0.05;
+    final gainDb = ((gain - 1) * 12).toStringAsFixed(0);
 
-    return GestureDetector(
-      onVerticalDragUpdate: (details) {
-        final box = context.findRenderObject() as RenderBox?;
-        if (box == null) return;
-        final height = box.size.height;
-        // Invert: drag up = increase gain.
-        final delta = -details.delta.dy / height * (max - min);
-        onChanged((gain + delta).clamp(min, max));
-      },
-      onVerticalDragEnd: (_) => onChangeEnd(),
-      child: Column(
+    return Semantics(
+      label: 'Frequency band $label, gain $gainDb dB',
+      value: isFlat ? 'flat' : (gain > 1 ? 'boost' : 'cut'),
+      child: GestureDetector(
+        onVerticalDragUpdate: (details) {
+          final box = context.findRenderObject() as RenderBox?;
+          if (box == null) return;
+          final height = box.size.height;
+          // Invert: drag up = increase gain.
+          final delta = -details.delta.dy / height * (max - min);
+          onChanged((gain + delta).clamp(min, max));
+        },
+        onVerticalDragEnd: (_) => onChangeEnd(),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Gain value label.
@@ -712,6 +761,7 @@ class EqBandBar extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ],
+      ),
       ),
     );
   }

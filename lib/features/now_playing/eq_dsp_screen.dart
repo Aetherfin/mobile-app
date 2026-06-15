@@ -9,6 +9,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart' show AudioEffects;
 import '../../core/audio/player_settings_store.dart';
 import '../../design_tokens/tokens.dart';
 import '../../utils/display_error.dart';
+import '../../widgets/af_dialog.dart';
 import '../../state/providers.dart';
 import 'eq_band_logic.dart';
 import 'eq_dsp_sections.dart';
@@ -76,6 +77,49 @@ class _EqDspScreenState extends ConsumerState<EqDspScreen> {
   }
 
   void _resetAll() {
+    showBlurDialog<void>(
+      context: context,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Reset all effects?', style: AfTypography.titleMedium),
+          const SizedBox(height: AfSpacing.s12),
+          Text(
+            'This will restore all DSP settings to their defaults.',
+            style: AfTypography.bodyMedium,
+          ),
+          const SizedBox(height: AfSpacing.s24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              Focus(
+                autofocus: true,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _performReset();
+                  },
+                  child: Text(
+                    'Reset',
+                    style: AfTypography.bodyMedium.copyWith(
+                      color: AfColors.semanticError,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _performReset() {
     setState(() {
       _s.reset();
       _openSection = null;

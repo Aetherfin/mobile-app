@@ -400,6 +400,7 @@ class _EqModulationSectionState extends State<EqModulationSection> {
                   _set('chorusDelays', v);
                   unawaited(widget.onApply());
                 },
+                numericPipe: true,
               ),
               eqTextFieldRow(
                 context,
@@ -411,6 +412,7 @@ class _EqModulationSectionState extends State<EqModulationSection> {
                   _set('chorusDecays', v);
                   unawaited(widget.onApply());
                 },
+                numericPipe: true,
               ),
               eqTextFieldRow(
                 context,
@@ -422,12 +424,20 @@ class _EqModulationSectionState extends State<EqModulationSection> {
                   _set('chorusSpeeds', v);
                   unawaited(widget.onApply());
                 },
+                numericPipe: true,
               ),
-              eqTextFieldRow(context, 'Depths', _chorusDepths, 'e.g. 2|3', (v) {
-                setState(() => _chorusDepths = v);
-                _set('chorusDepths', v);
-                unawaited(widget.onApply());
-              }),
+              eqTextFieldRow(
+                context,
+                'Depths',
+                _chorusDepths,
+                'e.g. 2|3',
+                (v) {
+                  setState(() => _chorusDepths = v);
+                  _set('chorusDepths', v);
+                  unawaited(widget.onApply());
+                },
+                numericPipe: true,
+              ),
             ],
           ),
         ),
