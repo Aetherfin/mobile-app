@@ -36,9 +36,14 @@ class MetadataRow extends ConsumerWidget {
                   label: 'Go to ${track.artistName}',
                   button: true,
                   child: GestureDetector(
-                    onTap: track.artistId != null
-                        ? () => context.push('/artist/${track.artistId}')
-                        : null,
+                    onTap: () {
+                      if (track.artistId != null) {
+                        context.push('/artist/${track.artistId}');
+                      } else {
+                        // Fallback: search for artist name
+                        context.push('/search?q=${Uri.encodeComponent(track.artistName)}');
+                      }
+                    },
                     child: Text(
                       track.artistName,
                       style: AfTypography.bodyLarge.copyWith(

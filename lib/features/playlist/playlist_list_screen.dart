@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../state/youtube_music_providers.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/skeletons/playlist_skeleton.dart';
 import '../../widgets/af_scrollbar.dart';
@@ -17,6 +18,82 @@ class PlaylistListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(appModeProvider);
+    final isYouTubeMusic = mode == AppMode.youtubeMusic;
+    final ytAuth = isYouTubeMusic ? ref.watch(youtubeAuthProvider) : null;
+    final isYtLoggedIn = ytAuth?.isValid == true;
+
+    if (isYouTubeMusic && !isYtLoggedIn) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: ref
+                      .watch(
+                        currentSpectralProvider.select((s) => s.primary),
+                      )
+                      .withValues(alpha: 0.1),
+                ),
+                child: Icon(
+                  LucideIcons.music,
+                  size: 36,
+                  color: ref.watch(
+                    currentSpectralProvider.select((s) => s.primary),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AfSpacing.s24),
+              Text(
+                'Your YouTube Music library',
+                style: AfTypography.titleMedium.copyWith(
+                  color: AfColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AfSpacing.s8),
+              Text(
+                'Sign in to see your playlists',
+                style: AfTypography.bodyMedium.copyWith(
+                  color: AfColors.textTertiary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AfSpacing.s24),
+              PressScale(
+                onTap: () => context.push('/onboarding/youtube-login'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AfSpacing.s32,
+                    vertical: AfSpacing.s16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: ref.watch(
+                      currentSpectralProvider.select((s) => s.primary),
+                    ),
+                    borderRadius: AfRadii.borderPill,
+                  ),
+                  child: Text(
+                    'Sign in with Google',
+                    style: AfTypography.bodyMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final playlists = ref.watch(allPlaylistsProvider);
     final smartPlaylists = ref.watch(smartPlaylistsProvider);
     final smartCount = smartPlaylists.maybeWhen(
@@ -203,7 +280,7 @@ class PlaylistListScreen extends ConsumerWidget {
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              mainAxisExtent: 220,
+              mainAxisExtent: 240,
               crossAxisSpacing: AfSpacing.s16,
               mainAxisSpacing: AfSpacing.s16,
             ),

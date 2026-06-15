@@ -11,7 +11,6 @@ import '../../widgets/section_header.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/tile.dart';
 import '../../widgets/bottom_sheet.dart';
-import '../../widgets/spring_chip.dart';
 import 'sections/albums_tab.dart';
 import 'sections/artists_tab.dart';
 import 'sections/genres_tab.dart';
@@ -80,6 +79,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
     final mode = ref.watch(appModeProvider);
     final isLocal = mode == AppMode.local;
+    final isYouTubeMusic = mode == AppMode.youtubeMusic;
+
+    // YouTube Music mode: hide the Songs pill.
+    final pills = isYouTubeMusic
+        ? [SongsPill.albums, SongsPill.artists, SongsPill.genres]
+        : SongsPill.values;
+    if (!pills.contains(_pill)) {
+      _pill = pills.first;
+    }
     final spectral = ref.watch(
       currentSpectralProvider.select(
         (s) => (primary: s.primary, secondary: s.secondary),
@@ -168,6 +176,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       SliverPersistentHeader(
                         pinned: true,
                         delegate: _PillBarDelegate(
+                          pills: pills,
                           selected: _pill,
                           onChanged: (v) => setState(() => _pill = v),
                         ),
@@ -198,7 +207,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 // ── Pill Bar SliverPersistentHeader Delegate ──
 
 class _PillBarDelegate extends SliverPersistentHeaderDelegate {
-  _PillBarDelegate({required this.selected, required this.onChanged});
+  _PillBarDelegate({
+    required this.pills,
+    required this.selected,
+    required this.onChanged,
+  });
+  final List<SongsPill> pills;
   final SongsPill selected;
   final ValueChanged<SongsPill> onChanged;
 
@@ -216,7 +230,7 @@ class _PillBarDelegate extends SliverPersistentHeaderDelegate {
   ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
-      child: _PillBar(selected: selected, onChanged: onChanged),
+      child: _PillBar(pills: pills, selected: selected, onChanged: onChanged),
     );
   }
 
@@ -332,37 +346,131 @@ class _RecentlyAddedSection extends ConsumerWidget {
 
 // ── Pill Bar (animated with easeOutBack) ──
 
-class _PillBar extends ConsumerWidget {
-  const _PillBar({required this.selected, required this.onChanged});
+class _PillBar extends ConsumerStatefulWidget {
+  const _PillBar({
+    required this.pills,
+    required this.selected,
+    required this.onChanged,
+  });
+  final List<SongsPill> pills;
   final SongsPill selected;
   final ValueChanged<SongsPill> onChanged;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PillBar> createState() => _PillBarState();
+}
+
+class _PillBarState extends ConsumerState<_PillBar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  int _fromIndex = 0;
+  int _toIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _toIndex = widget.pills.indexOf(widget.selected);
+    _fromIndex = _toIndex;
+    _ctrl = AnimationController(vsync: this, duration: AfDurations.long)
+      ..value = 1.0;
+  }
+
+  @override
+  void didUpdateWidget(_PillBar old) {
+    super.didUpdateWidget(old);
+    if (old.selected != widget.selected) {
+      _fromIndex = _toIndex;
+      _toIndex = widget.pills.indexOf(widget.selected);
+      _ctrl.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final spectral = ref.watch(
       currentSpectralProvider.select((s) => s.primary),
     );
+    final count = widget.pills.length;
 
-    return SizedBox(
-      height: 44,
-      child: Row(
-        children: List.generate(SongsPill.values.length, (i) {
-          final pill = SongsPill.values[i];
-          return Expanded(
-            child: Semantics(
-              button: true,
-              label: '${pill.label} tab',
-              child: SpringChip(
-                label: pill.label,
-                isSelected: pill == selected,
-                onTap: () => onChanged(pill),
-                selectedColor: spectral,
-                unselectedColor: AfColors.surfaceRaised,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final segWidth = constraints.maxWidth / count;
+
+        return ClipRRect(
+          borderRadius: AfRadii.borderPill,
+          child: DecoratedBox(
+            decoration: const BoxDecoration(color: AfColors.surfaceRaised),
+            child: SizedBox(
+              height: 44,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedBuilder(
+                    animation: _ctrl,
+                    builder: (context, _) {
+                      final curved = Curves.easeOutBack.transform(_ctrl.value);
+                      final damped = curved > 1.0
+                          ? 1.0 + (curved - 1.0) * 0.15
+                          : curved;
+                      final idx = _fromIndex + (_toIndex - _fromIndex) * damped;
+                      return Positioned(
+                        left: AfSpacing.s4 + segWidth * idx,
+                        top: 4,
+                        bottom: 4,
+                        width: segWidth - 8,
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: spectral,
+                              borderRadius: AfRadii.borderPill,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Row(
+                    children: List.generate(count, (i) {
+                      final pill = widget.pills[i];
+                      return Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => widget.onChanged(pill),
+                          child: Semantics(
+                            button: true,
+                            label: '${pill.label} tab',
+                            child: Container(
+                              height: 44,
+                              alignment: Alignment.center,
+                              child: Text(
+                                pill.label,
+                                style: AfTypography.bodyMedium.copyWith(
+                                  color: pill == widget.selected
+                                      ? AfColors.textOnPrimary
+                                      : AfColors.textSecondary,
+                                  fontWeight: pill == widget.selected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
               ),
             ),
-          );
-        }),
-      ),
+          ),
+        );
+      },
     );
   }
 }
