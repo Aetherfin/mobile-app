@@ -35,6 +35,10 @@ class YouTubeMusicClient implements MusicBackend {
   List<List<InnerTubeItem>>? _cachedSections;
   List<String>? _cachedSectionTitles;
   List<String?>? _cachedSectionMoreIds;
+  String? _cachedSongsMoreId;
+
+  /// Returns the cached songs section's "more" browse ID if any.
+  String? get artistSongsMoreId => _cachedSongsMoreId;
 
   /// Returns the cached artist page sections with titles and "more" browse IDs.
   /// Each entry is (title, items, moreBrowseId). Only valid after artist() is called.
@@ -176,8 +180,11 @@ class YouTubeMusicClient implements MusicBackend {
   @override
   Future<({AfAlbum album, List<AfTrack> tracks})?> album(String id) async {
     try {
-      var browseId = id.startsWith('VL') ? id.substring(2) : id;
-      if (!browseId.startsWith('MPRE') && !browseId.startsWith('OL') && !browseId.startsWith('PL') && !browseId.startsWith('RD')) {
+      var browseId = id;
+      if (!browseId.startsWith('VL') &&
+          (browseId.startsWith('PL') ||
+           browseId.startsWith('OL') ||
+           browseId.startsWith('RD'))) {
         browseId = 'VL$browseId';
       }
       final result = await _innertube.browsePlaylistWithMetadata(browseId);
@@ -217,9 +224,17 @@ class YouTubeMusicClient implements MusicBackend {
     _cachedArtistThumb = page.thumbUrl;
     _cachedSongs = page.songs;
     _cachedCarousel = page.carouselItems;
-    _cachedSections = page.sections.map((s) => s.items).toList();
-    _cachedSectionTitles = page.sections.map((s) => s.title).toList();
-    _cachedSectionMoreIds = page.sections.map((s) => s.moreBrowseId).toList();
+    _cachedSongsMoreId = null;
+    for (final s in page.sections) {
+      if (s.isSongSection) {
+        _cachedSongsMoreId = s.moreBrowseId;
+        break;
+      }
+    }
+    final nonSongSections = page.sections.where((s) => !s.isSongSection).toList();
+    _cachedSections = nonSongSections.map((s) => s.items).toList();
+    _cachedSectionTitles = nonSongSections.map((s) => s.title).toList();
+    _cachedSectionMoreIds = nonSongSections.map((s) => s.moreBrowseId).toList();
     return true;
   }
 
@@ -250,11 +265,40 @@ class YouTubeMusicClient implements MusicBackend {
   Future<List<AfAlbum>> artistAlbums(String artistId, {int limit = 100}) async {
     try {
       if (!await _fetchArtistPage(artistId)) return [];
-      return _cachedCarousel!.take(limit).map((item) => AfAlbum(
-        id: item.id, name: item.title, artistName: item.subtitle,
-        trackCount: 0, imageUrl: item.thumbnailUrl,
-      )).toList();
-    } on Exception catch (e) { afLog('youtube', 'artistAlbums failed', error: e); return []; }
+
+      String? moreId;
+      if (_cachedSectionTitles != null && _cachedSectionMoreIds != null) {
+        for (var i = 0; i < _cachedSectionTitles!.length; i++) {
+          final t = _cachedSectionTitles![i].toLowerCase();
+          if (t.contains('album') || t.contains('single') || t.contains('ep')) {
+            moreId = _cachedSectionMoreIds![i];
+            if (moreId != null) break;
+          }
+        }
+      }
+
+      final List<InnerTubeItem> items;
+      if (moreId != null) {
+        items = await _innertube.browsePlaylist(moreId);
+      } else {
+        items = _cachedCarousel ?? [];
+      }
+
+      return items
+          .where((item) => item.type == InnerTubeItemType.album)
+          .take(limit)
+          .map((item) => AfAlbum(
+                id: item.id,
+                name: item.title,
+                artistName: item.subtitle,
+                trackCount: 0,
+                imageUrl: item.thumbnailUrl,
+              ))
+          .toList();
+    } on Exception catch (e) {
+      afLog('youtube', 'artistAlbums failed', error: e);
+      return [];
+    }
   }
 
   @override
@@ -420,10 +464,16 @@ class YouTubeMusicClient implements MusicBackend {
   Future<String> resolveStreamUrl(String videoId) async {
     try {
       afLog('aetherfin:youtube', 'getManifest for: $videoId');
-      final manifest = await _yt.videos.streams.getManifest(
+      var manifest = await _yt.videos.streams.getManifest(
         VideoId(videoId),
-        ytClients: [YoutubeApiClient.safari, YoutubeApiClient.androidVr],
+        ytClients: [YoutubeApiClient.androidVr],
       );
+      if (manifest.muxed.isEmpty && manifest.audioOnly.isEmpty) {
+        afLog('aetherfin:youtube', 'androidVr manifest empty, trying default fallback for $videoId');
+        manifest = await _yt.videos.streams.getManifest(
+          VideoId(videoId),
+        );
+      }
       afLog(
         'aetherfin:youtube',
         'manifest OK: audioOnly=${manifest.audioOnly.length} muxed=${manifest.muxed.length}',

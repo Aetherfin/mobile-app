@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/audio/play_actions.dart';
+import '../../core/jellyfin/models/items.dart';
 import '../../core/youtube/innertube_client.dart';
 import '../../core/youtube/youtube_music_client.dart';
 import '../../design_tokens/tokens.dart';
@@ -17,6 +18,7 @@ import '../../widgets/section_header.dart';
 import '../../widgets/track_context_menu.dart';
 import '../../widgets/af_scrollbar.dart';
 import '../../widgets/skeletons/artist_skeleton.dart';
+import '../../widgets/track_row.dart';
 import 'artist_screen_widgets.dart';
 
 class ArtistScreen extends ConsumerStatefulWidget {
@@ -84,6 +86,17 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                     .where((s) => s.items.isNotEmpty)
                     .toList()
                 : <({String title, List<InnerTubeItem> items, String? moreId})>[];
+
+            final displayTracks = topTracks;
+            final String? ytSongsMoreId = backend is YouTubeMusicClient ? backend.artistSongsMoreId : null;
+            final songsMoreTap = backend is YouTubeMusicClient
+                ? (ytSongsMoreId != null
+                    ? () {
+                        print('Aetherfin: Top Songs More tapped with ID: $ytSongsMoreId');
+                        context.push('/album/$ytSongsMoreId');
+                      }
+                    : null)
+                : (topTracks.length > 5 ? () => context.push('/artist/${widget.artistId}/songs') : null);
             final width = MediaQuery.of(context).size.width;
             final heroHeight = width; // 1:1
 
@@ -199,17 +212,18 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                           ),
                         ),
                       ),
-                      if (topTracks.isNotEmpty)
+                      if (displayTracks.isNotEmpty)
                         ...buildArtistTopSongsSlivers(
-                          topTracks: topTracks,
+                          topTracks: displayTracks,
                           activeId: activeId,
                           isBuffering: isBuffering,
                           activeAccent: activeAccent,
                           onTap: (i) => ref
                               .read(playActionsProvider)
-                              .playQueue(topTracks, startIndex: i),
+                              .playQueue(displayTracks, startIndex: i),
                           onLongPress: (track) =>
                               showTrackContextMenu(context, ref, track),
+                          onMoreTap: songsMoreTap,
                         ),
                       wikiAsync.maybeWhen(
                         data: (wiki) {
@@ -260,9 +274,17 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                         ),
                                         if (section.moreId != null)
                                           GestureDetector(
-                                            onTap: () => context.push(
-                                              '/album/${section.moreId}',
-                                            ),
+                                            onTap: () {
+                                              print('Aetherfin: Section More tapped with ID: ${section.moreId}');
+                                              final title = section.title.toLowerCase();
+                                              if (title.contains('album') ||
+                                                  title.contains('single') ||
+                                                  title.contains('ep')) {
+                                                context.push('/artist/${widget.artistId}/albums');
+                                              } else {
+                                                context.push('/album/${section.moreId}');
+                                              }
+                                            },
                                             child: Text(
                                               'More',
                                               style: AfTypography.bodyMedium.copyWith(
@@ -294,6 +316,16 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                               context.push('/album/${item.id}');
                                             } else if (item.type == InnerTubeItemType.artist) {
                                               context.push('/artist/${item.id}');
+                                            } else if (item.type == InnerTubeItemType.song) {
+                                              final track = AfTrack(
+                                                id: item.videoId ?? item.id,
+                                                title: item.title,
+                                                artistName: item.subtitle,
+                                                artistId: item.artistId,
+                                                albumName: 'YouTube Music',
+                                                imageUrl: item.thumbnailUrl,
+                                              );
+                                              ref.read(playActionsProvider).playQueue([track], startIndex: 0);
                                             }
                                           },
                                           child: SizedBox(
@@ -345,7 +377,11 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                         }).toList()
                       else ...[
                         // -- Discography (non-YT Music fallback) --
-                        ...buildArtistDiscographySlivers(albums),
+                        ...buildArtistDiscographySlivers(
+                          albums,
+                          onMoreTap: () => context.push('/artist/${widget.artistId}/albums'),
+                          activeAccent: activeAccent,
+                        ),
                       ],
                       const SliverToBoxAdapter(
                         child: SizedBox(
@@ -375,6 +411,180 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class ArtistAllSongsScreen extends ConsumerWidget {
+  const ArtistAllSongsScreen({super.key, required this.artistId});
+  final String artistId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final artistAsync = ref.watch(artistDetailProvider(artistId));
+    final topTracksAsync = ref.watch(artistTopTracksProvider(artistId));
+    final activeId = ref.watch(currentTrackProvider)?.id;
+    final isBuffering = ref.watch(isBufferingProvider);
+    final activeAccent = ref.watch(
+      currentSpectralProvider.select((s) => s.energy),
+    );
+
+    return Scaffold(
+      backgroundColor: AfColors.surfaceCanvas,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AfColors.textPrimary),
+          onPressed: () => context.pop(),
+        ),
+        title: artistAsync.when(
+          data: (artist) => Text(
+            artist?.name ?? 'Top Songs',
+            style: AfTypography.titleMedium.copyWith(color: AfColors.textPrimary),
+          ),
+          loading: () => const Text('Top Songs'),
+          error: (_, __) => const Text('Top Songs'),
+        ),
+      ),
+      body: topTracksAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => AsyncErrorView(
+          label: 'Could not load top songs',
+          error: e,
+          onRetry: () => ref.invalidate(artistTopTracksProvider(artistId)),
+        ),
+        data: (topTracks) {
+          if (topTracks.isEmpty) {
+            return const Center(child: Text('No songs found'));
+          }
+          return AfScrollbar(
+            child: ListView.builder(
+              padding: const EdgeInsets.only(
+                left: AfSpacing.s16,
+                right: AfSpacing.s16,
+                bottom: AfSpacing.bottomInsetWithMiniAndNav,
+              ),
+              itemCount: topTracks.length,
+              itemBuilder: (context, i) {
+                final track = topTracks[i];
+                return TrackRow(
+                  track: track,
+                  leadingNumber: i + 1,
+                  isActive: track.id == activeId,
+                  isBuffering: track.id == activeId && isBuffering,
+                  activeAccent: activeAccent,
+                  onTap: () => ref
+                      .read(playActionsProvider)
+                      .playQueue(topTracks, startIndex: i),
+                  onLongPress: () => showTrackContextMenu(context, ref, track),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class ArtistAllAlbumsScreen extends ConsumerWidget {
+  const ArtistAllAlbumsScreen({super.key, required this.artistId});
+  final String artistId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final artistAsync = ref.watch(artistDetailProvider(artistId));
+    final albumsAsync = ref.watch(artistAlbumsProvider(artistId));
+
+    return Scaffold(
+      backgroundColor: AfColors.surfaceCanvas,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AfColors.textPrimary),
+          onPressed: () => context.pop(),
+        ),
+        title: artistAsync.when(
+          data: (artist) => Text(
+            artist?.name ?? 'Albums',
+            style: AfTypography.titleMedium.copyWith(color: AfColors.textPrimary),
+          ),
+          loading: () => const Text('Albums'),
+          error: (_, __) => const Text('Albums'),
+        ),
+      ),
+      body: albumsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => AsyncErrorView(
+          label: 'Could not load albums',
+          error: e,
+          onRetry: () => ref.invalidate(artistAlbumsProvider(artistId)),
+        ),
+        data: (albums) {
+          if (albums.isEmpty) {
+            return const Center(child: Text('No albums found'));
+          }
+          return AfScrollbar(
+            child: GridView.builder(
+              padding: const EdgeInsets.only(
+                left: AfSpacing.gutterGenerous,
+                right: AfSpacing.gutterGenerous,
+                bottom: AfSpacing.bottomInsetWithMiniAndNav,
+              ),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: AfSpacing.s16,
+                crossAxisSpacing: AfSpacing.s16,
+                childAspectRatio: 152 / 200,
+              ),
+              itemCount: albums.length,
+              itemBuilder: (context, i) {
+                final a = albums[i];
+                return PressScale(
+                  onTap: () => context.push('/album/${a.id}'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Expanded(
+                        child: LayoutBuilder(
+                          builder: (context, c) {
+                            return Artwork(
+                              url: a.imageUrl,
+                              size: c.maxWidth,
+                              radius: AfRadii.borderMd,
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: AfSpacing.s8),
+                      Text(
+                        a.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AfTypography.bodyMedium.copyWith(
+                          color: AfColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        a.artistName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AfTypography.bodySmall.copyWith(
+                          color: AfColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }

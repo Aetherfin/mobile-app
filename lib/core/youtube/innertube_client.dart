@@ -661,26 +661,49 @@ class InnerTubeClient {
         shelf =
             tabContent?['musicPlaylistShelfRenderer'] as Map<String, dynamic>?;
         shelf ??= tabContent?['musicShelfRenderer'] as Map<String, dynamic>?;
-      }
-
-      if (shelf == null) {
-        final mf = json['microformat'];
-        if (mf is Map) {
-          final mfr = mf['microformatDataRenderer'] as Map<String, dynamic>?;
+        
+        // Layout 3: sectionListRenderer with contents / grids
+        final sectionList = tabContent?['sectionListRenderer'] as Map<String, dynamic>?;
+        final sections = sectionList?['contents'] as List?;
+        if (sections != null) {
+          for (final section in sections) {
+            var sMap = section as Map<String, dynamic>;
+            if (sMap.containsKey('itemSectionRenderer')) {
+              final itemContents = sMap['itemSectionRenderer']?['contents'] as List?;
+              if (itemContents != null && itemContents.isNotEmpty) {
+                sMap = itemContents.first as Map<String, dynamic>;
+              }
+            }
+            shelf ??= sMap['musicPlaylistShelfRenderer'] as Map<String, dynamic>?;
+            shelf ??= sMap['musicShelfRenderer'] as Map<String, dynamic>?;
+            shelf ??= sMap['gridRenderer'] as Map<String, dynamic>?;
           }
-        return items;
+        }
       }
 
       if (shelf != null) {
-        final shelfContents = shelf['contents'] as List?;
+        final shelfContents = (shelf['contents'] ?? shelf['items']) as List?;
         if (shelfContents != null) {
           for (final item in shelfContents) {
             final map = item as Map<String, dynamic>;
-            final renderer =
+            
+            // Try responsive list item
+            final responsive =
                 map['musicResponsiveListItemRenderer'] as Map<String, dynamic>?;
-            if (renderer == null) continue;
-            final parsed = InnerTubeItem.fromResponsive(renderer);
-            if (parsed != null) items.add(parsed);
+            if (responsive != null) {
+              final parsed = InnerTubeItem.fromResponsive(responsive);
+              if (parsed != null) items.add(parsed);
+              continue;
+            }
+            
+            // Try two-row item (grid/carousel items like videos, albums, etc.)
+            final twoRow =
+                map['musicTwoRowItemRenderer'] as Map<String, dynamic>?;
+            if (twoRow != null) {
+              final parsed = InnerTubeItem.fromTwoRow(twoRow);
+              if (parsed != null) items.add(parsed);
+              continue;
+            }
           }
         }
       }
@@ -1148,18 +1171,31 @@ class InnerTubeItem {
               ?.map((r) => (r as Map<String, dynamic>)['text'] as String? ?? '')
               .join() ??
           '';
-      // Strip play counts — "2Pac · 5.2M subscribers" → "2Pac"
-      final subtitle = rawSubtitle
+      // Strip play counts and type labels like "Song", "Video", etc.
+      final parts = rawSubtitle
           .split(RegExp(r'\s*[·•|]\s*'))
-          .first
-          .trim();
-      // Extract artist browse ID from first subtitle run
+          .where((s) {
+            final t = s.trim().toLowerCase();
+            return t != 'song' && t != 'songs' && t != 'video' && t != 'videos' &&
+                   t != 'single' && t != 'singles' && t != 'album' && t != 'albums' &&
+                   t != 'ep' && t != 'eps' && t != 'playlist' && t != 'playlists';
+          })
+          .toList();
+      final subtitle = parts.isNotEmpty ? parts.first.trim() : '';
+
+      // Extract artist browse ID from first subtitle run containing browseId
       String? artistId;
-      if (subtitleRuns != null && subtitleRuns.isNotEmpty) {
-        artistId = (subtitleRuns[0] as Map<String, dynamic>)
-            ?['navigationEndpoint']
-            ?['browseEndpoint']
-            ?['browseId'] as String?;
+      if (subtitleRuns != null) {
+        for (final run in subtitleRuns) {
+          final id = (run as Map<String, dynamic>?)
+              ?['navigationEndpoint']
+              ?['browseEndpoint']
+              ?['browseId'] as String?;
+          if (id != null && id.isNotEmpty) {
+            artistId = id;
+            break;
+          }
+        }
       }
 
       final thumbnailRenderer =
@@ -1252,19 +1288,47 @@ class InnerTubeItem {
               ?.map((r) => (r as Map<String, dynamic>)['text'] as String? ?? '')
               .join() ??
           '';
-      // Strip play counts — "Artist · 975K plays" → "Artist"
-      final subtitle = rawSubtitle
+      // Strip play counts and type labels like "Song", "Video", etc.
+      final parts = rawSubtitle
           .split(RegExp(r'\s*[·•|]\s*'))
-          .first
-          .trim();
-      // Extract artist browse ID from first subtitle run
+          .where((s) {
+            final t = s.trim().toLowerCase();
+            return t != 'song' && t != 'songs' && t != 'video' && t != 'videos' &&
+                   t != 'single' && t != 'singles' && t != 'album' && t != 'albums' &&
+                   t != 'ep' && t != 'eps' && t != 'playlist' && t != 'playlists';
+          })
+          .toList();
+      var subtitle = parts.isNotEmpty ? parts.first.trim() : '';
+
+      // If subtitle is empty (e.g., only "Song" type label), try third column.
+      if (subtitle.isEmpty && flexColumns != null && flexColumns.length > 2) {
+        final thirdCol = flexColumns[2] as Map<String, dynamic>?;
+        final thirdRenderer =
+            thirdCol?['musicResponsiveListItemFlexColumnRenderer']
+                as Map<String, dynamic>?;
+        final thirdTextObj = thirdRenderer?['text'] as Map<String, dynamic>?;
+        final thirdRuns = thirdTextObj?['runs'] as List?;
+        if (thirdRuns != null && thirdRuns.isNotEmpty) {
+          subtitle = thirdRuns
+              .map((r) => (r as Map<String, dynamic>)['text'] as String? ?? '')
+              .join()
+              .trim();
+        }
+      }
+
+      // Extract artist browse ID from first subtitle run containing browseId
       String? artistId;
-      if (subRuns != null && subRuns.isNotEmpty) {
-        final firstRun = subRuns[0] as Map<String, dynamic>?;
-        artistId = firstRun
-            ?['navigationEndpoint']
-            ?['browseEndpoint']
-            ?['browseId'] as String?;
+      if (subRuns != null) {
+        for (final run in subRuns) {
+          final id = (run as Map<String, dynamic>?)
+              ?['navigationEndpoint']
+              ?['browseEndpoint']
+              ?['browseId'] as String?;
+          if (id != null && id.isNotEmpty) {
+            artistId = id;
+            break;
+          }
+        }
       }
 
       final thumbnailObj = renderer['thumbnail'] as Map<String, dynamic>?;
