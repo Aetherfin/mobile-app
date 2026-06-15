@@ -289,9 +289,9 @@ class InnerTubeClient {
         final completer = Completer<String>();
         final bytes = <int>[];
         response.listen(
-          (chunk) => bytes.addAll(chunk),
+          bytes.addAll,
           onDone: () => completer.complete(utf8.decode(bytes)),
-          onError: (Object e) => completer.completeError(e),
+          onError: completer.completeError,
         );
         final responseBody = await completer.future.timeout(const Duration(seconds: 10));
 
@@ -301,10 +301,10 @@ class InnerTubeClient {
 
         final json = jsonDecode(responseBody) as Map<String, dynamic>;
         return _parsePlaylistList(json);
-      } on Exception catch (e) {
+      } on Exception catch (_) {
         return [];
       }
-    } on Exception catch (e, stack) {
+    } on Exception catch (_) {
       return [];
     }
   }
@@ -389,6 +389,7 @@ class InnerTubeClient {
 
   /// Browse an artist page and return header info + songs + carousel items.
   /// Makes ONE HTTP call — like Metrolist's YouTube.artist().
+  // ignore: library_private_types_in_public_api
   Future<_ArtistPage?> browseArtistPage(String channelId) async {
     await _ensureInitialized();
 
@@ -415,9 +416,9 @@ class InnerTubeClient {
         final completer = Completer<String>();
         final bytes = <int>[];
         response.listen(
-          (chunk) => bytes.addAll(chunk),
+          bytes.addAll,
           onDone: () => completer.complete(utf8.decode(bytes)),
-          onError: (Object e) => completer.completeError(e),
+          onError: completer.completeError,
         );
         final responseBody = await completer.future.timeout(const Duration(seconds: 10));
 
@@ -495,9 +496,10 @@ class InnerTubeClient {
               final contents = carousel['contents'] as List?;
               if (contents != null) {
                 for (final c in contents) {
-                  final twoRow = (c as Map)['musicTwoRowItemRenderer'] as Map<String, dynamic>?;
+                  final map = c as Map<String, dynamic>;
+                  final twoRow = map['musicTwoRowItemRenderer'] as Map<String, dynamic>?;
                   if (twoRow == null) {
-                    final listItem = (c as Map)['musicResponsiveListItemRenderer'] as Map<String, dynamic>?;
+                    final listItem = map['musicResponsiveListItemRenderer'] as Map<String, dynamic>?;
                     if (listItem != null) {
                       final parsed = InnerTubeItem.fromResponsive(listItem);
                       if (parsed != null) carouselItems.add(parsed);
@@ -551,6 +553,7 @@ class InnerTubeClient {
     return result?.tracks ?? [];
   }
 
+  // ignore: library_private_types_in_public_api
   Future<_BrowseResult?> browsePlaylistWithMetadata(String browseId) async {
     await _ensureInitialized();
 
@@ -579,9 +582,9 @@ class InnerTubeClient {
         final completer = Completer<String>();
         final bytes = <int>[];
         response.listen(
-          (chunk) => bytes.addAll(chunk),
+          bytes.addAll,
           onDone: () => completer.complete(utf8.decode(bytes)),
-          onError: (Object e) => completer.completeError(e),
+          onError: completer.completeError,
         );
         final responseBody = await completer.future.timeout(const Duration(seconds: 10));
 
@@ -603,8 +606,8 @@ class InnerTubeClient {
             final sep = RegExp(r' - (Album|Single|EP) by ');
             final match = sep.firstMatch(albumTitle);
             if (match != null) {
-              albumArtist = albumTitle!.substring(match.end);
-              albumTitle = albumTitle!.substring(0, match.start);
+              albumArtist = albumTitle.substring(match.end);
+              albumTitle = albumTitle.substring(0, match.start);
             }
           }
           // Extract thumbnail from microformat

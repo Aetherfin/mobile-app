@@ -91,7 +91,7 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
             final songsMoreTap = backend is YouTubeMusicClient
                 ? (ytSongsMoreId != null
                     ? () {
-                        print('Aetherfin: Top Songs More tapped with ID: $ytSongsMoreId');
+                        debugPrint('Aetherfin: Top Songs More tapped with ID: $ytSongsMoreId');
                         context.push('/album/$ytSongsMoreId');
                       }
                     : null)
@@ -278,7 +278,7 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                         if (section.moreId != null)
                                           GestureDetector(
                                             onTap: () {
-                                              print('Aetherfin: Section More tapped with ID: ${section.moreId}');
+                                              debugPrint('Aetherfin: Section More tapped with ID: ${section.moreId}');
                                               final title = section.title.toLowerCase();
                                               if (title.contains('album') ||
                                                   title.contains('single') ||
@@ -466,7 +466,7 @@ class ArtistAllSongsScreen extends ConsumerWidget {
             style: AfTypography.titleMedium.copyWith(color: AfColors.textPrimary),
           ),
           loading: () => const Text('Top Songs'),
-          error: (_, __) => const Text('Top Songs'),
+          error: (e, s) => const Text('Top Songs'),
         ),
       ),
       body: topTracksAsync.when(
@@ -534,7 +534,7 @@ class ArtistAllAlbumsScreen extends ConsumerWidget {
             style: AfTypography.titleMedium.copyWith(color: AfColors.textPrimary),
           ),
           loading: () => const Text('Albums'),
-          error: (_, __) => const Text('Albums'),
+          error: (e, s) => const Text('Albums'),
         ),
       ),
       body: albumsAsync.when(

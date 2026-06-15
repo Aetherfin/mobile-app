@@ -200,7 +200,7 @@ List<Widget> buildArtistDiscographySlivers(
             horizontal: AfSpacing.gutterGenerous,
           ),
           itemCount: displayedAlbums.length,
-          separatorBuilder: (_, __) => const SizedBox(width: AfSpacing.s12),
+          separatorBuilder: (context, index) => const SizedBox(width: AfSpacing.s12),
           itemBuilder: (context, i) {
             final a = displayedAlbums[i];
             return PressScale(
