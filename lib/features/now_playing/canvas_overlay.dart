@@ -86,8 +86,7 @@ class _CanvasArtworkOverlayState extends State<CanvasArtworkOverlay>
 
 /// 25 particles floating upward with soft spectral glow.
 class _ParticlePainter extends CustomPainter {
-  _ParticlePainter({required this.progress, required this.spectral})
-    : super(repaint: ValueNotifier<double>(progress));
+  _ParticlePainter({required this.progress, required this.spectral}) : super();
 
   final double progress;
   final Spectral spectral;
@@ -187,8 +186,7 @@ class _Particle {
 
 /// 3 layered sine waves drifting horizontally across the artwork.
 class _WavePainter extends CustomPainter {
-  _WavePainter({required this.progress, required this.spectral})
-    : super(repaint: ValueNotifier<double>(progress));
+  _WavePainter({required this.progress, required this.spectral}) : super();
 
   final double progress;
   final Spectral spectral;

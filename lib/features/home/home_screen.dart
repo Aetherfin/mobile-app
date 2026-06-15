@@ -127,6 +127,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return YouTubeHomeView(scrollController: _ytScrollController);
     }
 
+    final spectralColor = ref.watch(
+      currentSpectralProvider.select((s) => s.primary),
+    );
+
     return MeshGradientBackground(
       child: FocusTraversalGroup(
         child: SafeArea(
@@ -139,9 +143,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   child: RefreshIndicator(
                     onRefresh: _onRefresh,
-                    color: ref.watch(
-                      currentSpectralProvider.select((s) => s.primary),
-                    ),
+                    color: spectralColor,
                     backgroundColor: AfColors.surfaceBase,
                     child: CustomScrollView(
                       physics: const AlwaysScrollableScrollPhysics(

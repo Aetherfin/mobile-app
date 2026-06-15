@@ -25,6 +25,10 @@ class QueueScreen extends ConsumerStatefulWidget {
 class _QueueScreenState extends ConsumerState<QueueScreen> {
   List<AfTrack> _items = const [];
   List<String> _lastQueueIds = const [];
+  List<String>? _cachedIds;
+
+  List<String> get _itemIds =>
+      _cachedIds ??= _items.map((t) => t.id).toList(growable: false);
 
   final _scrollController = ScrollController();
   bool _hasScrolledToActive = false;
@@ -134,7 +138,8 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
         if (track.id == currentId) continue;
         _items.removeAt(idx);
       }
-      _lastQueueIds = _items.map((t) => t.id).toList(growable: false);
+      _cachedIds = null;
+      _lastQueueIds = _itemIds;
       _exitSelectionMode();
     });
 
@@ -168,6 +173,7 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
     final liveIds = liveQueue.map((t) => t.id).toList(growable: false);
     if (!_listsMatch(liveIds, _lastQueueIds)) {
       _items = List<AfTrack>.from(liveQueue);
+      _cachedIds = null;
       _lastQueueIds = liveIds;
       _hasScrolledToActive = false;
       // Clear selection when queue changes externally.
@@ -356,7 +362,8 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
     setState(() {
       final item = _items.removeAt(oldIndex);
       _items.insert(newIndex, item);
-      _lastQueueIds = _items.map((t) => t.id).toList(growable: false);
+      _cachedIds = null;
+      _lastQueueIds = _itemIds;
     });
     ref
         .read(playerServiceProvider)
@@ -371,7 +378,8 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
 
     setState(() {
       _items.removeAt(i);
-      _lastQueueIds = _items.map((t) => t.id).toList(growable: false);
+      _cachedIds = null;
+      _lastQueueIds = _itemIds;
     });
     unawaited(svc.removeFromQueue(actualIndex));
     ScaffoldMessenger.of(context)

@@ -123,7 +123,9 @@ class _LyricsListState extends ConsumerState<LyricsList> {
 
   @override
   Widget build(BuildContext context) {
-    final position = ref.watch(positionStreamProvider);
+    final position = widget.isSynced
+        ? ref.watch(positionStreamProvider)
+        : Duration.zero;
     final active = widget.isSynced ? widget.lrc.activeIndex(position) : -1;
 
     // Auto-scroll to active line.

@@ -296,13 +296,15 @@ class _ParametricEqCurveViewState extends State<ParametricEqCurveView> {
       onPanStart: _handlePanStart,
       onPanUpdate: _handlePanUpdate,
       onPanEnd: (_) => setState(() => _draggingBand = null),
-      child: CustomPaint(
-        painter: ParametricEqCurvePainter(
-          bands: widget.bands,
-          selectedBand: _draggingBand,
-          accentColor: widget.accentColor,
+      child: RepaintBoundary(
+        child: CustomPaint(
+          painter: ParametricEqCurvePainter(
+            bands: widget.bands,
+            selectedBand: _draggingBand,
+            accentColor: widget.accentColor,
+          ),
+          size: Size.infinite,
         ),
-        size: Size.infinite,
       ),
     );
   }
