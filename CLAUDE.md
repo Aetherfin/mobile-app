@@ -935,6 +935,7 @@ This keeps the active directory focused on current work. Historical artifacts re
 64. 📝 GUIDANCE **"Use hardcoded durations (200ms, 300ms, 500ms) for animations."** No. Use `AfDurations` tokens (80/160/240/400/600ms) and `AfCurves` tokens. All animation durations in widgets must reference the design tokens, not literal values.
 65. 📝 GUIDANCE **"Use `ListView.separated` for staggered list animations."** No. Use `StaggerReveal` widget (`lib/widgets/stagger_reveal.dart`) which wraps children with staggered fade+slide-up reveal using `Interval` timing per `AfStagger` tokens. `ListView.separated` doesn't support staggered entrance animations.
 66. 📝 GUIDANCE **"Use `NoTransitionPage` for all shell tab switches."** No. Shell tabs use `AnimatedSwitcher` cross-fade with `AfDurations.quick`. `NoTransitionPage` is only for overlay routes like `/lyrics` and `/queue` that sit above the now-playing overlay.
+67. 📝 GUIDANCE **"Use .autoDispose on all library providers."** No. Library providers (allAlbums, allArtists, allTracks, allGenres, allPlaylists, favoriteAlbums, favoriteTracks, recentlyAddedAlbums, recentlyPlayedTracks, and local variants) use `.autoDispose.keepAlive()` via `ref.keepAlive()` inside the provider body. This prevents teardown/recreate on every tab switch. The provider storm (20+ re-fetches per auth change) was caused by `.autoDispose` on all 9 library providers.
 
 ## 16. Glossary
 

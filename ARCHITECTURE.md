@@ -232,6 +232,11 @@ Three implementations:
 ### State Management (Riverpod)
 13 provider files in `lib/state/`, barrel-exported by `providers.dart`. Providers use `musicBackendProvider` (not `jellyfinClientProvider`) for backend ops. Pattern: `FutureProvider.autoDispose` for async data, `StateNotifierProvider` for mutable state.
 
+**Provider lifecycle:**
+- Library providers (allAlbums, allArtists, etc.) use `ref.keepAlive()` inside the provider body to persist across navigation
+- Search, detail, and transient providers remain `.autoDispose` — they teardown when no longer needed
+- Manual invalidation via `ref.invalidate()` or `ref.refresh()` refreshes kept-alive providers
+
 **Token usage rules:**
 - Never hardcode colors — use `AfColors.*` tokens.
 - Never hardcode spacing — use `AfSpacing.*` tokens (e.g. `SizedBox(height: AfSpacing.s8)`).
