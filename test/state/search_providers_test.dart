@@ -202,6 +202,9 @@ void main() {
       );
       addTearDown(container.dispose);
 
+      // In riverpod 3.x, FutureProvider.autoDispose wraps errors from the
+      // builder in a ProviderException (which is an Error, not an Exception).
+      // The .future getter re-throws whatever the provider settled with.
       expect(
         () => container.read(searchProvider('test').future),
         throwsA(anything),

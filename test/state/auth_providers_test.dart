@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderException;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -161,7 +162,16 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      expect(() => container.read(deviceIdProvider), throwsA(isA<Exception>()));
+      expect(
+        () => container.read(deviceIdProvider),
+        throwsA(
+          isA<ProviderException>().having(
+            (e) => e.exception,
+            'inner',
+            isA<StateError>(),
+          ),
+        ),
+      );
     });
 
     test('aetherfinVersionProvider throws when not overridden', () {
@@ -170,7 +180,13 @@ void main() {
 
       expect(
         () => container.read(aetherfinVersionProvider),
-        throwsA(isA<Exception>()),
+        throwsA(
+          isA<ProviderException>().having(
+            (e) => e.exception,
+            'inner',
+            isA<StateError>(),
+          ),
+        ),
       );
     });
 
@@ -180,7 +196,13 @@ void main() {
 
       expect(
         () => container.read(initialAuthProvider),
-        throwsA(isA<Exception>()),
+        throwsA(
+          isA<ProviderException>().having(
+            (e) => e.exception,
+            'inner',
+            isA<StateError>(),
+          ),
+        ),
       );
     });
 
