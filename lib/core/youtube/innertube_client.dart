@@ -262,6 +262,92 @@ class InnerTubeClient {
     }
   }
 
+  /// Get the best audio stream URL using InnerTube /player endpoint.
+  /// Much faster than youtube_explode_dart's getManifest() — single HTTP call.
+  Future<String?> getStreamUrl(String videoId) async {
+    await _ensureInitialized();
+
+    final parts = _locale.split('|');
+    final gl = parts[0];
+    final hl = parts[1];
+
+    try {
+      final visitorData = _cachedVisitorData;
+      final body = <String, dynamic>{
+        'context': _buildContext(gl: gl, hl: hl, visitorData: visitorData),
+        'videoId': videoId,
+        'playbackContext': {
+          'contentPlaybackContext': {
+            'signatureTimestamp': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          },
+        },
+      };
+
+      final uri = Uri.parse('$_baseUrl/player?prettyPrint=false');
+      final client = _httpClient ?? HttpClient();
+
+      try {
+        final request = await client.postUrl(uri).timeout(const Duration(seconds: 10));
+        _applyHeaders(request, visitorData: visitorData);
+        request.write(jsonEncode(body));
+        final response = await request.close().timeout(const Duration(seconds: 10));
+
+        final completer = Completer<String>();
+        final bytes = <int>[];
+        response.listen(
+          (chunk) => bytes.addAll(chunk),
+          onDone: () => completer.complete(utf8.decode(bytes)),
+          onError: (Object e) => completer.completeError(e),
+        );
+        final responseBody = await completer.future.timeout(const Duration(seconds: 10));
+
+        if (response.statusCode != 200) return null;
+
+        final json = jsonDecode(responseBody) as Map<String, dynamic>;
+        final streamingData = json['streamingData'] as Map<String, dynamic>?;
+        if (streamingData == null) return null;
+
+        // Prefer audio-only formats
+        final formats = (streamingData['adaptiveFormats'] as List?)
+            ?.cast<Map<String, dynamic>>()
+            .where((f) => f['mimeType'] != null && (f['mimeType'] as String).startsWith('audio/'));
+
+        if (formats == null || formats.isEmpty) return null;
+
+        // Pick best: prefer higher bitrate with opus codec
+        Map<String, dynamic>? best;
+        int bestScore = -1;
+        for (final f in formats) {
+          final mimeType = f['mimeType'] as String? ?? '';
+          final bitrate = (f['bitrate'] as num?)?.toInt() ?? 0;
+          final channels = (f['audioChannels'] as num?)?.toInt() ?? 2;
+          // Score: prefer opus, higher bitrate, more channels
+          final score = (mimeType.contains('opus') ? 1000 : 0) + bitrate + channels * 100;
+          if (score > bestScore) {
+            bestScore = score;
+            best = f;
+          }
+        }
+
+        if (best == null) {
+          // Fallback: any format with url
+          for (final f in formats) {
+            if (f['url'] != null) {
+              best = f;
+              break;
+            }
+          }
+        }
+
+        return best?['url'] as String?;
+      } on Exception catch (_) {
+        return null;
+      }
+    } on Exception catch (_) {
+      return null;
+    }
+  }
+
   /// Browse the user's saved playlists (FEmusic_liked_playlists).
   Future<List<InnerTubePlaylistInfo>> browsePlaylists() async {
     await _ensureInitialized();

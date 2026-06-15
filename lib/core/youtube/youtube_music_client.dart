@@ -487,7 +487,16 @@ class YouTubeMusicClient implements MusicBackend {
   }
 
   /// Resolves the actual audio stream URL for a YouTube video.
+  /// Tries InnerTube /player endpoint first (fast), falls back to getManifest.
   Future<String> resolveStreamUrl(String videoId) async {
+    try {
+      final url = await _innertube.getStreamUrl(videoId);
+      if (url != null && url.isNotEmpty) return url;
+    } on Exception catch (e) {
+      afLog('youtube', 'InnerTube player failed, falling back', error: e);
+    }
+
+    // Fallback: youtube_explode_dart
     try {
       afLog('aetherfin:youtube', 'getManifest for: $videoId');
       var manifest = await _yt.videos.streams.getManifest(
