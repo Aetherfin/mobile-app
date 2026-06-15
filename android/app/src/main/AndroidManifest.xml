@@ -196,14 +196,12 @@
             </intent-filter>
         </receiver>
 
-        <!-- Home Screen App Widget -->
+        <!-- Home Screen App Widget (Glance) -->
         <receiver
-            android:name=".AetherfinAppWidgetProvider"
-            android:label="Aetherfin Playback"
+            android:name=".widget.AetherfinGlanceReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="dev.aetherfin.aetherfin.UPDATE_STATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

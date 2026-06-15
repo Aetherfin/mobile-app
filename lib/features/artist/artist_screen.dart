@@ -14,7 +14,6 @@ import '../../widgets/async_error_view.dart';
 import '../../widgets/opacity_app_bar.dart';
 import '../../widgets/breadcrumb.dart';
 import '../../widgets/press_scale.dart';
-import '../../widgets/section_header.dart';
 import '../../widgets/track_context_menu.dart';
 import '../../widgets/af_scrollbar.dart';
 import '../../widgets/skeletons/artist_skeleton.dart';
@@ -255,7 +254,9 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                           final items = section.items;
                           return SliverToBoxAdapter(
                             child: Padding(
-                              padding: const EdgeInsets.only(top: AfSpacing.s24),
+                              padding: const EdgeInsets.only(
+                                top: AfSpacing.s24,
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -264,13 +265,15 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                       horizontal: AfSpacing.gutterGenerous,
                                     ),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           section.title,
-                                          style: AfTypography.titleMedium.copyWith(
-                                            color: AfColors.textPrimary,
-                                          ),
+                                          style: AfTypography.titleMedium
+                                              .copyWith(
+                                                color: AfColors.textPrimary,
+                                              ),
                                         ),
                                         if (section.moreId != null)
                                           GestureDetector(
@@ -287,10 +290,11 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                             },
                                             child: Text(
                                               'More',
-                                              style: AfTypography.bodyMedium.copyWith(
-                                                color: activeAccent,
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                                              style: AfTypography.bodyMedium
+                                                  .copyWith(
+                                                    color: activeAccent,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                             ),
                                           ),
                                       ],
@@ -305,14 +309,17 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                         horizontal: AfSpacing.gutterGenerous,
                                       ),
                                       itemCount: items.length.clamp(0, 10),
-                                      separatorBuilder: (_, __) =>
+                                      separatorBuilder: (_, _) =>
                                           const SizedBox(width: AfSpacing.s12),
                                       itemBuilder: (context, i) {
                                         final item = items[i];
                                         return PressScale(
                                           onTap: () {
-                                            if (item.type == InnerTubeItemType.album ||
-                                                item.type == InnerTubeItemType.playlist) {
+                                            if (item.type ==
+                                                    InnerTubeItemType.album ||
+                                                item.type ==
+                                                    InnerTubeItemType
+                                                        .playlist) {
                                               context.push('/album/${item.id}');
                                             } else if (item.type == InnerTubeItemType.artist) {
                                               context.push('/artist/${item.id}');
@@ -331,7 +338,8 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                           child: SizedBox(
                                             width: 152,
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Artwork(
@@ -339,28 +347,40 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                                   size: 152,
                                                   radius: AfRadii.borderMd,
                                                 ),
-                                                const SizedBox(height: AfSpacing.s8),
+                                                const SizedBox(
+                                                  height: AfSpacing.s8,
+                                                ),
                                                 Text(
                                                   item.title,
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: AfTypography.titleSmall.copyWith(
-                                                    color: AfColors.textPrimary,
-                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: AfTypography.titleSmall
+                                                      .copyWith(
+                                                        color: AfColors
+                                                            .textPrimary,
+                                                      ),
                                                 ),
                                                 if (item.subtitle.isNotEmpty &&
-                                                    item.type != InnerTubeItemType.artist)
+                                                    item.type !=
+                                                        InnerTubeItemType
+                                                            .artist)
                                                   Padding(
-                                                    padding: const EdgeInsets.only(
-                                                      top: AfSpacing.s2,
-                                                    ),
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          top: AfSpacing.s2,
+                                                        ),
                                                     child: Text(
                                                       item.subtitle,
                                                       maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      style: AfTypography.bodySmall.copyWith(
-                                                        color: AfColors.textSecondary,
-                                                      ),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: AfTypography
+                                                          .bodySmall
+                                                          .copyWith(
+                                                            color: AfColors
+                                                                .textSecondary,
+                                                          ),
                                                     ),
                                                   ),
                                               ],
@@ -374,6 +394,7 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                               ),
                             ),
                           );
+                          // ignore: unnecessary_to_list_in_spreads
                         }).toList()
                       else ...[
                         // -- Discography (non-YT Music fallback) --

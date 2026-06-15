@@ -9,6 +9,7 @@ import '../../core/jellyfin/client.dart';
 import '../../core/jellyfin/models/server.dart';
 import '../../core/subsonic/client.dart';
 import '../../design_tokens/tokens.dart';
+import '../../widgets/af_loading_indicator.dart';
 import '../../state/providers.dart';
 import '../../utils/log.dart';
 import '../../utils/url.dart';
@@ -319,11 +320,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   ElevatedButton(
                     onPressed: _busy ? null : _submit,
                     child: _busy
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2.5),
-                          )
+                        ? const AfLoadingIndicator(size: 18, strokeWidth: 2.5)
                         : const Text('Sign in'),
                   ),
                   const SizedBox(height: AfSpacing.s24),

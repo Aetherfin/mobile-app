@@ -13,6 +13,7 @@ import '../../core/subsonic/client.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../utils/log.dart';
+import '../../widgets/af_loading_indicator.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/stagger_reveal.dart';
@@ -283,11 +284,7 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
               ElevatedButton(
                 onPressed: _busy ? null : _useManual,
                 child: _busy
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
-                      )
+                    ? const AfLoadingIndicator(size: 18, strokeWidth: 2.5)
                     : const Text('Continue'),
               ),
               const SizedBox(height: AfSpacing.s24),

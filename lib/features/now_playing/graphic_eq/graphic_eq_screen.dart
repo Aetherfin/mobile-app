@@ -9,6 +9,7 @@ import '../../../design_tokens/tokens.dart';
 import '../../../state/providers.dart';
 import '../../../utils/log.dart';
 import '../../../widgets/af_dialog.dart';
+import '../../../widgets/af_loading_indicator.dart';
 import '../eq_dsp_widgets.dart';
 import '../eq_preset.dart';
 import '../eq_preset_manager.dart';
@@ -308,7 +309,7 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
               ),
             )
           : const Center(
-              child: CircularProgressIndicator(color: AfColors.accentPrimary),
+              child: AfLoadingIndicator(color: AfColors.accentPrimary),
             ),
     );
   }

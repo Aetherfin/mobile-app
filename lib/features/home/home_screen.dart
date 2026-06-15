@@ -10,6 +10,8 @@ import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../state/youtube_music_providers.dart';
 import '../../widgets/async_error_view.dart';
+import '../../widgets/gradient_header.dart';
+import '../../widgets/mesh_gradient_background.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/skeletons/home_skeleton.dart';
 import 'sections/hero_carousel.dart';
@@ -117,91 +119,93 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return YouTubeHomeView(scrollController: _ytScrollController);
     }
 
-    return FocusTraversalGroup(
-      child: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: AfLayout.maxContentWidth,
-                ),
-                child: RefreshIndicator(
-                  onRefresh: _onRefresh,
-                  color: ref.watch(
-                    currentSpectralProvider.select((s) => s.primary),
+    return MeshGradientBackground(
+      child: FocusTraversalGroup(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AfLayout.maxContentWidth,
                   ),
-                  backgroundColor: AfColors.surfaceBase,
-                  child: CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(
-                      parent: ClampingScrollPhysics(),
+                  child: RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    color: ref.watch(
+                      currentSpectralProvider.select((s) => s.primary),
                     ),
-                    slivers: [
-                      // Header — "Listen" with amber gradient + cast button
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AfSpacing.s16,
-                            AfSpacing.s16,
-                            AfSpacing.s16,
-                            AfSpacing.s32,
-                          ),
-                          child: Row(
-                            children: [
-                              const _HomeHeaderGradient(),
-                              const Spacer(),
-                              _GlassCastButton(
-                                onTap: () => context.push('/cast'),
-                              ),
-                            ],
-                          ),
-                        ),
+                    backgroundColor: AfColors.surfaceBase,
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: ClampingScrollPhysics(),
                       ),
-
-                      // Hero album carousel.
-                      SliverToBoxAdapter(
-                        child: albumsAsync.when(
-                          data: (albums) => albums.isEmpty
-                              ? const SizedBox.shrink()
-                              : HeroAlbumCarousel(albums: albums),
-                          loading: () => const HomeCarouselSkeleton(),
-                          error: (e, _) => AsyncErrorView.compact(
-                            label: 'Couldn\u2019t load recent albums',
-                            error: e,
-                            height: 240,
-                            onRetry: () =>
-                                ref.invalidate(recentlyAddedAlbumsProvider),
+                      slivers: [
+                        // Header — "Listen" with amber gradient + cast button
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              AfSpacing.s16,
+                              AfSpacing.s16,
+                              AfSpacing.s16,
+                              AfSpacing.s32,
+                            ),
+                            child: Row(
+                              children: [
+                                const GradientHeader(text: 'Listen'),
+                                const Spacer(),
+                                _GlassCastButton(
+                                  onTap: () => context.push('/cast'),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
 
-                      RecentTracksSection(isLocal: isLocal),
-
-                      const LostMemoriesSection(),
-
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: AfSpacing.sectionGap),
-                      ),
-
-                      ArtistsSection(isLocal: isLocal),
-
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: AfSpacing.sectionGap),
-                      ),
-
-                      GenresSection(isLocal: isLocal),
-
-                      const SliverToBoxAdapter(
-                        child: SizedBox(
-                          height: AfSpacing.bottomInsetWithMiniAndNav,
+                        // Hero album carousel.
+                        SliverToBoxAdapter(
+                          child: albumsAsync.when(
+                            data: (albums) => albums.isEmpty
+                                ? const SizedBox.shrink()
+                                : HeroAlbumCarousel(albums: albums),
+                            loading: () => const HomeCarouselSkeleton(),
+                            error: (e, _) => AsyncErrorView.compact(
+                              label: 'Couldn\u2019t load recent albums',
+                              error: e,
+                              height: 240,
+                              onRetry: () =>
+                                  ref.invalidate(recentlyAddedAlbumsProvider),
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+
+                        RecentTracksSection(isLocal: isLocal),
+
+                        const LostMemoriesSection(),
+
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AfSpacing.sectionGap),
+                        ),
+
+                        ArtistsSection(isLocal: isLocal),
+
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AfSpacing.sectionGap),
+                        ),
+
+                        GenresSection(isLocal: isLocal),
+
+                        const SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: AfSpacing.bottomInsetWithMiniAndNav,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -211,30 +215,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 // ---------------------------------------------------------------------------
 // Local helpers
 // ---------------------------------------------------------------------------
-
-/// "Listen" header with spectral gradient text.
-class _HomeHeaderGradient extends ConsumerWidget {
-  const _HomeHeaderGradient();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final spectral = ref.watch(
-      currentSpectralProvider.select(
-        (s) => (primary: s.primary, secondary: s.secondary),
-      ),
-    );
-
-    return ShaderMask(
-      shaderCallback: (bounds) => LinearGradient(
-        colors: [spectral.primary, spectral.secondary],
-      ).createShader(bounds),
-      child: Text(
-        'Listen',
-        style: AfTypography.display.copyWith(color: AfColors.textOnPrimary),
-      ),
-    );
-  }
-}
 
 /// Glass pill button for the cast icon in the header.
 class _GlassCastButton extends StatelessWidget {

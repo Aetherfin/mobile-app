@@ -12,6 +12,7 @@ import '../../../state/providers.dart';
 import '../../../utils/display_error.dart';
 import '../../../utils/log.dart';
 import '../../../widgets/af_dialog.dart';
+import '../../../widgets/af_loading_indicator.dart';
 import '../parametric_eq_state.dart';
 import '../parametric_presets.dart';
 
@@ -777,7 +778,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
           title: const Text('Parametric EQ'),
         ),
         body: const Center(
-          child: CircularProgressIndicator(color: AfColors.accentPrimary),
+          child: AfLoadingIndicator(color: AfColors.accentPrimary),
         ),
       );
     }

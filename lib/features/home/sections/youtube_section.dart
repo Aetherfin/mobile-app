@@ -11,10 +11,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/youtube/innertube_client.dart';
 import '../../../utils/log.dart';
+import '../../../widgets/af_loading_indicator.dart';
 import '../../../core/youtube/youtube_auth.dart';
 import '../../../core/youtube/youtube_home_content.dart';
 import '../../../design_tokens/tokens.dart';
 import '../../../state/youtube_music_providers.dart';
+import '../../../widgets/gradient_header.dart';
 import '../../../widgets/press_scale.dart';
 import 'youtube_section_widgets.dart';
 
@@ -71,15 +73,11 @@ class _YouTubeHomeViewState extends ConsumerState<YouTubeHomeView> {
                 ),
                 child: Row(
                   children: [
-                    ShaderMask(
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Color(0xFFFF0000), Color(0xFFFF4444)],
-                      ).createShader(bounds),
-                      child: Text(
-                        'YouTube Music',
-                        style: AfTypography.display.copyWith(
-                          color: AfColors.textPrimary,
-                        ),
+                    GradientHeader(
+                      text: 'YouTube Music',
+                      colors: const [Color(0xFFFF0000), Color(0xFFFF4444)],
+                      style: AfTypography.display.copyWith(
+                        color: AfColors.textPrimary,
                       ),
                     ),
                     const Spacer(),
@@ -155,7 +153,7 @@ class _YouTubeHomeViewState extends ConsumerState<YouTubeHomeView> {
               loading: () => const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.all(AfSpacing.s32),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(child: AfLoadingIndicator()),
                 ),
               ),
               error: (e, _) => SliverToBoxAdapter(

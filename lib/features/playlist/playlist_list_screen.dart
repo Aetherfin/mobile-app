@@ -36,9 +36,7 @@ class PlaylistListScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: ref
-                      .watch(
-                        currentSpectralProvider.select((s) => s.primary),
-                      )
+                      .watch(currentSpectralProvider.select((s) => s.primary))
                       .withValues(alpha: 0.1),
                 ),
                 child: Icon(

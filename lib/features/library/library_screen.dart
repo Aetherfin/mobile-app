@@ -11,6 +11,7 @@ import '../../widgets/section_header.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/tile.dart';
 import '../../widgets/bottom_sheet.dart';
+import '../../widgets/gradient_header.dart';
 import 'sections/albums_tab.dart';
 import 'sections/artists_tab.dart';
 import 'sections/genres_tab.dart';
@@ -88,12 +89,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     if (!pills.contains(_pill)) {
       _pill = pills.first;
     }
-    final spectral = ref.watch(
-      currentSpectralProvider.select(
-        (s) => (primary: s.primary, secondary: s.secondary),
-      ),
-    );
-
     return FocusTraversalGroup(
       child: SafeArea(
         child: LayoutBuilder(
@@ -119,21 +114,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           ),
                           child: Row(
                             children: [
-                              Expanded(
-                                child: ShaderMask(
-                                  shaderCallback: (bounds) => LinearGradient(
-                                    colors: [
-                                      spectral.primary,
-                                      spectral.secondary,
-                                    ],
-                                  ).createShader(bounds),
-                                  child: Text(
-                                    'Library',
-                                    style: AfTypography.display.copyWith(
-                                      color: AfColors.textOnPrimary,
-                                    ),
-                                  ),
-                                ),
+                              const Expanded(
+                                child: GradientHeader(text: 'Library'),
                               ),
                               PressScale(
                                 onTap: () => _openSearch(context),
@@ -269,9 +251,8 @@ class _RecentlyAddedSection extends ConsumerWidget {
                 // 0.85-1.3 by the root MediaQuery) so this never overflows
                 // across devices or accessibility settings.
                 final mq = MediaQuery.of(context);
-                final screenH = mq.size.height;
                 final textScale = mq.textScaler.scale(1.0);
-                final artworkSize = screenH * 0.175;
+                const artworkSize = 120.0;
                 final textArea = (22 + AfSpacing.s2 + 16) * textScale + 4;
                 final rowHeight = artworkSize + AfSpacing.s8 + textArea;
                 return SizedBox(
@@ -305,32 +286,31 @@ class _RecentlyAddedSection extends ConsumerWidget {
       loading: () => Builder(
         builder: (context) {
           final mq = MediaQuery.of(context);
-          final screenH = mq.size.height;
           final textScale = mq.textScaler.scale(1.0);
-          final artworkSize = screenH * 0.175;
+          const artworkSize = 120.0;
           final textArea = (22 + AfSpacing.s2 + 16) * textScale + 4;
           final rowHeight = artworkSize + AfSpacing.s8 + textArea;
           return SizedBox(
             height: rowHeight,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: AfSpacing.s16),
               child: Row(
                 children: [
                   SkeletonBlock(
-                    width: artworkSize,
-                    height: artworkSize,
+                    width: 120.0,
+                    height: 120.0,
                     borderRadius: AfRadii.borderMd,
                   ),
-                  const SizedBox(width: AfSpacing.s12),
+                  SizedBox(width: AfSpacing.s12),
                   SkeletonBlock(
-                    width: artworkSize,
-                    height: artworkSize,
+                    width: 120.0,
+                    height: 120.0,
                     borderRadius: AfRadii.borderMd,
                   ),
-                  const SizedBox(width: AfSpacing.s12),
+                  SizedBox(width: AfSpacing.s12),
                   SkeletonBlock(
-                    width: artworkSize,
-                    height: artworkSize,
+                    width: 120.0,
+                    height: 120.0,
                     borderRadius: AfRadii.borderMd,
                   ),
                 ],

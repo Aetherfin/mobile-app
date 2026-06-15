@@ -1,8 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/jellyfin/models/items.dart';
-import '../core/youtube/innertube_client.dart';
-import '../core/youtube/youtube_music_client.dart';
 import '../utils/log.dart';
 import 'local_library_providers.dart';
 import 'music_backend_providers.dart';
