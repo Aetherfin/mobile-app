@@ -10,6 +10,7 @@ import '../../../widgets/press_scale.dart';
 import '../../../widgets/section_header.dart';
 import '../../../widgets/skeleton.dart';
 import '../../../widgets/track_context_menu.dart';
+import '../../../widgets/track_row.dart';
 
 /// Horizontal scroll of recently played-but-old tracks (lost memories).
 class LostMemoriesSection extends ConsumerWidget {
@@ -78,7 +79,7 @@ class LostMemoriesSection extends ConsumerWidget {
 }
 
 /// Lost memory tile with vignette edges.
-class _LostMemoryTile extends StatelessWidget {
+class _LostMemoryTile extends ConsumerWidget {
   const _LostMemoryTile({
     required this.track,
     required this.onTap,
@@ -91,7 +92,13 @@ class _LostMemoryTile extends StatelessWidget {
   static const double _tileSize = 100;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTrack = ref.watch(currentTrackProvider);
+    final isActive = track.id == currentTrack?.id;
+    final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
+    final isBuffering = ref.watch(isBufferingProvider);
+    final energyColor = ref.watch(currentSpectralProvider.select((s) => s.energy));
+
     return Semantics(
       button: true,
       label: '${track.title} by ${track.artistName}',
@@ -137,6 +144,26 @@ class _LostMemoryTile extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (isActive)
+                        Container(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          child: Center(
+                            child: isBuffering
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : PlayingEqualizer(
+                                    color: Colors.white,
+                                    size: 20.0,
+                                    isPlaying: isPlaying,
+                                  ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -147,7 +174,7 @@ class _LostMemoryTile extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AfTypography.bodySmall.copyWith(
-                  color: AfColors.textPrimary,
+                  color: isActive ? energyColor : AfColors.textPrimary,
                 ),
               ),
               const SizedBox(height: AfSpacing.s2),

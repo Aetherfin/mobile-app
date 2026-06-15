@@ -9,9 +9,11 @@ import '../../../core/audio/play_actions.dart';
 import '../../../core/jellyfin/models/items.dart';
 import '../../../core/youtube/innertube_client.dart';
 import '../../../design_tokens/tokens.dart';
+import '../../../state/providers.dart';
 import '../../../widgets/artwork.dart';
 import '../../../widgets/press_scale.dart';
 import '../../../widgets/track_context_menu.dart';
+import '../../../widgets/track_row.dart';
 
 /// Grid layout for YouTube song-only sections.
 class YouTubeSongGrid extends ConsumerWidget {
@@ -25,6 +27,12 @@ class YouTubeSongGrid extends ConsumerWidget {
     if (rows == 0) return const SizedBox.shrink();
     final double gridHeight =
         rowHeight * rows + (rows > 1 ? (rows - 1) * 8.0 : 0.0);
+
+    final currentTrack = ref.watch(currentTrackProvider);
+    final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
+    final isBuffering = ref.watch(isBufferingProvider);
+    final activeAccent = ref.watch(currentSpectralProvider.select((s) => s.energy));
+
     return SizedBox(
       height: gridHeight,
       child: GridView.builder(
@@ -47,6 +55,8 @@ class YouTubeSongGrid extends ConsumerWidget {
             albumName: '',
             imageUrl: item.thumbnailUrl,
           );
+          final isActive = item.id == currentTrack?.id;
+
           return FocusPressScale(
             ensureHitTarget: true,
             onTap: () => ref.read(playActionsProvider).playSingle(track),
@@ -61,16 +71,44 @@ class YouTubeSongGrid extends ConsumerWidget {
                     child: SizedBox(
                       width: 56,
                       height: 56,
-                      child: item.thumbnailUrl.isNotEmpty
-                          ? Artwork(
-                              url: item.thumbnailUrl,
-                              size: 56,
-                              radius: AfRadii.borderMd,
-                            )
-                          : Container(
-                              color: AfColors.surfaceHigh,
-                              child: const Icon(LucideIcons.music, size: 24),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: item.thumbnailUrl.isNotEmpty
+                                ? Artwork(
+                                    url: item.thumbnailUrl,
+                                    size: 56,
+                                    radius: AfRadii.borderMd,
+                                  )
+                                : Container(
+                                    color: AfColors.surfaceHigh,
+                                    child: const Icon(LucideIcons.music, size: 24),
+                                  ),
+                          ),
+                          if (isActive)
+                            Positioned.fill(
+                              child: Container(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                child: Center(
+                                  child: isBuffering
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : PlayingEqualizer(
+                                          color: Colors.white,
+                                          size: 16.0,
+                                          isPlaying: isPlaying,
+                                        ),
+                                ),
+                              ),
                             ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(width: AfSpacing.s12),
@@ -85,7 +123,7 @@ class YouTubeSongGrid extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                           style: AfTypography.bodyMedium.copyWith(
                             fontWeight: FontWeight.w500,
-                            color: AfColors.textPrimary,
+                            color: isActive ? activeAccent : AfColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: AfSpacing.s4),
@@ -182,7 +220,7 @@ class YouTubeHomeTileList extends ConsumerWidget {
 }
 
 /// Single tile in a YouTube home section.
-class YouTubeHomeTile extends StatelessWidget {
+class YouTubeHomeTile extends ConsumerWidget {
   const YouTubeHomeTile({
     super.key,
     required this.item,
@@ -194,8 +232,16 @@ class YouTubeHomeTile extends StatelessWidget {
   final VoidCallback onLongPress;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTrack = ref.watch(currentTrackProvider);
+    final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
+    final isBuffering = ref.watch(isBufferingProvider);
+    final activeAccent = ref.watch(currentSpectralProvider.select((s) => s.energy));
+
     final isArtist = item.type == InnerTubeItemType.artist;
+    final isSong = item.type == InnerTubeItemType.song;
+    final isActive = isSong && item.id == currentTrack?.id;
+
     return FocusPressScale(
       ensureHitTarget: false,
       onTap: onTap,
@@ -214,29 +260,57 @@ class YouTubeHomeTile extends StatelessWidget {
                   borderRadius: isArtist
                       ? AfRadii.borderPill
                       : AfRadii.borderMd,
-                  child: item.thumbnailUrl.isNotEmpty
-                      ? Artwork(
-                          url: item.thumbnailUrl,
-                          size: 140,
-                          radius: isArtist
-                              ? AfRadii.borderPill
-                              : AfRadii.borderMd,
-                        )
-                      : Container(
-                          color: AfColors.surfaceHigh,
-                          child: Icon(
-                            isArtist ? LucideIcons.user : LucideIcons.music,
-                            color: AfColors.textTertiary,
-                            size: 32,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: item.thumbnailUrl.isNotEmpty
+                            ? Artwork(
+                                url: item.thumbnailUrl,
+                                size: 140,
+                                radius: isArtist
+                                    ? AfRadii.borderPill
+                                    : AfRadii.borderMd,
+                              )
+                            : Container(
+                                color: AfColors.surfaceHigh,
+                                child: Icon(
+                                  isArtist ? LucideIcons.user : LucideIcons.music,
+                                  color: AfColors.textTertiary,
+                                  size: 32,
+                                ),
+                              ),
+                      ),
+                      if (isActive)
+                        Positioned.fill(
+                          child: Container(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            child: Center(
+                              child: isBuffering
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : PlayingEqualizer(
+                                      color: Colors.white,
+                                      size: 24.0,
+                                      isPlaying: isPlaying,
+                                    ),
+                            ),
                           ),
                         ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: AfSpacing.s8),
               Text(
                 item.title,
                 style: AfTypography.bodySmall.copyWith(
-                  color: AfColors.textPrimary,
+                  color: isActive ? activeAccent : AfColors.textPrimary,
                   fontWeight: FontWeight.w500,
                 ),
                 maxLines: 2,
