@@ -172,9 +172,7 @@ class _AudioVisualScrubberState extends ConsumerState<AudioVisualScrubber>
       final dur = ref.read(durationStreamProvider);
       final newMs = (pos + offset).inMilliseconds;
       final clampedMs = newMs.clamp(0, dur.inMilliseconds);
-      final p = dur.inMilliseconds > 0
-          ? clampedMs / dur.inMilliseconds
-          : 0.0;
+      final p = dur.inMilliseconds > 0 ? clampedMs / dur.inMilliseconds : 0.0;
       widget.onScrub?.call(p);
       widget.onScrubEnd?.call(p);
     }

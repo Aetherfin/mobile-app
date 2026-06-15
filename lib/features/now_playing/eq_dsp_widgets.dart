@@ -251,43 +251,43 @@ class EqAccordionSection extends ConsumerWidget {
                               : AfColors.textSecondary,
                         ),
                       ),
-                    if (badgeCount != null) ...[
-                      const SizedBox(width: AfSpacing.s8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AfSpacing.s8,
-                          vertical: AfSpacing.s2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: spectral.secondary.withValues(alpha: 0.3),
-                          borderRadius: AfRadii.borderPill,
-                        ),
-                        child: Text(
-                          '$badgeCount',
-                          style: AfTypography.overline.copyWith(
-                            color: spectral.primary,
+                      if (badgeCount != null) ...[
+                        const SizedBox(width: AfSpacing.s8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AfSpacing.s8,
+                            vertical: AfSpacing.s2,
                           ),
+                          decoration: BoxDecoration(
+                            color: spectral.secondary.withValues(alpha: 0.3),
+                            borderRadius: AfRadii.borderPill,
+                          ),
+                          child: Text(
+                            '$badgeCount',
+                            style: AfTypography.overline.copyWith(
+                              color: spectral.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const Spacer(),
+                      AnimatedRotation(
+                        turns: isOpen ? 0.5 : 0,
+                        duration: AfDurations.standard,
+                        curve: AfCurves.easeStandard,
+                        child: const Icon(
+                          LucideIcons.chevronDown,
+                          size: 24,
+                          color: AfColors.textTertiary,
                         ),
                       ),
                     ],
-                    const Spacer(),
-                    AnimatedRotation(
-                      turns: isOpen ? 0.5 : 0,
-                      duration: AfDurations.standard,
-                      curve: AfCurves.easeStandard,
-                      child: const Icon(
-                        LucideIcons.chevronDown,
-                        size: 24,
-                        color: AfColors.textTertiary,
-                      ),
-                    ),
-                   ],
-                 ),
-               ),
-             ),
-           ),
-           ),
-           // Content with animated cross-fade
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Content with animated cross-fade
           AnimatedCrossFade(
             firstChild: const SizedBox(width: double.infinity),
             secondChild: Padding(
@@ -709,59 +709,63 @@ class EqBandBar extends ConsumerWidget {
         },
         onVerticalDragEnd: (_) => onChangeEnd(),
         child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Gain value label.
-          Text(
-            gain >= 1.0
-                ? '+${((gain - 1) * 12).toStringAsFixed(0)}'
-                : ((gain - 1) * 12).toStringAsFixed(0),
-            style: AfTypography.overline.copyWith(
-              color: isFlat ? AfColors.textTertiary : spectral.primary,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Gain value label.
+            Text(
+              gain >= 1.0
+                  ? '+${((gain - 1) * 12).toStringAsFixed(0)}'
+                  : ((gain - 1) * 12).toStringAsFixed(0),
+              style: AfTypography.overline.copyWith(
+                color: isFlat ? AfColors.textTertiary : spectral.primary,
+              ),
             ),
-          ),
-          const SizedBox(height: AfSpacing.s2),
-          // Bar container.
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final totalH = constraints.maxHeight;
-                // Fill height: how far from center the bar reaches.
-                final fillFrac = (t - 0.5).abs() * 2;
+            const SizedBox(height: AfSpacing.s2),
+            // Bar container.
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final totalH = constraints.maxHeight;
+                  // Fill height: how far from center the bar reaches.
+                  final fillFrac = (t - 0.5).abs() * 2;
 
-                return AnimatedContainer(
-                  duration: reduced ? Duration.zero : AfDurations.quick,
-                  curve: AfCurves.easeStandard,
-                  decoration: BoxDecoration(
-                    color: isFlat
-                        ? AfColors.surfaceHigh
-                        : spectral.secondary.withValues(alpha: 0.6),
-                    borderRadius: AfRadii.borderXs,
-                  ),
-                  child: Align(
-                    alignment: Alignment(0, 1 - t * 2),
-                    child: Container(
-                      height: totalH * 0.08 + totalH * 0.45 * fillFrac,
-                      decoration: BoxDecoration(
-                        color: isFlat ? AfColors.surfaceHigh : spectral.primary,
-                        borderRadius: AfRadii.borderXs,
+                  return AnimatedContainer(
+                    duration: reduced ? Duration.zero : AfDurations.quick,
+                    curve: AfCurves.easeStandard,
+                    decoration: BoxDecoration(
+                      color: isFlat
+                          ? AfColors.surfaceHigh
+                          : spectral.secondary.withValues(alpha: 0.6),
+                      borderRadius: AfRadii.borderXs,
+                    ),
+                    child: Align(
+                      alignment: Alignment(0, 1 - t * 2),
+                      child: Container(
+                        height: totalH * 0.08 + totalH * 0.45 * fillFrac,
+                        decoration: BoxDecoration(
+                          color: isFlat
+                              ? AfColors.surfaceHigh
+                              : spectral.primary,
+                          borderRadius: AfRadii.borderXs,
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: AfSpacing.s2),
-          // Frequency label.
-          Text(
-            label,
-            style: AfTypography.overline.copyWith(color: AfColors.textTertiary),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
+            const SizedBox(height: AfSpacing.s2),
+            // Frequency label.
+            Text(
+              label,
+              style: AfTypography.overline.copyWith(
+                color: AfColors.textTertiary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

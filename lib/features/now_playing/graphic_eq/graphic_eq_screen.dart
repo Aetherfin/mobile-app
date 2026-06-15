@@ -438,112 +438,117 @@ class _BandSlider extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s4),
             child: Column(
-          children: [
-            // ── dB value ──
-            Text(
-              _formatDb(value),
-              style: AfTypography.overline.copyWith(
-                color: value.abs() < 0.5 ? AfColors.textTertiary : activeColor,
-              ),
-            ),
-            const SizedBox(height: AfSpacing.s2),
+              children: [
+                // ── dB value ──
+                Text(
+                  _formatDb(value),
+                  style: AfTypography.overline.copyWith(
+                    color: value.abs() < 0.5
+                        ? AfColors.textTertiary
+                        : activeColor,
+                  ),
+                ),
+                const SizedBox(height: AfSpacing.s2),
 
-            // ── Slider track ──
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final h = constraints.maxHeight;
-                  final w = constraints.maxWidth;
-                  final t = ((value - _min) / (_max - _min)).clamp(0.0, 1.0);
-                  final thumbY = h * (1 - t);
-                  final centerY = h * 0.5;
+                // ── Slider track ──
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final h = constraints.maxHeight;
+                      final w = constraints.maxWidth;
+                      final t = ((value - _min) / (_max - _min)).clamp(
+                        0.0,
+                        1.0,
+                      );
+                      final thumbY = h * (1 - t);
+                      final centerY = h * 0.5;
 
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // Track background
-                      Positioned(
-                        left: w / 2 - 1.5,
-                        top: 0,
-                        bottom: 0,
-                        child: Container(
-                          width: 3,
-                          decoration: const BoxDecoration(
-                            color: AfColors.surfaceHigh,
-                            borderRadius: AfRadii.borderPill,
-                          ),
-                        ),
-                      ),
-                      // Center marker (0 dB line)
-                      Positioned(
-                        left: w / 2 - 5,
-                        top: centerY - 0.5,
-                        child: Container(
-                          width: 10,
-                          height: 1,
-                          color: AfColors.surfaceMax,
-                        ),
-                      ),
-                      // Fill bar from center to value
-                      if (value.abs() > 0.5)
-                        Positioned(
-                          left: w / 2 - 1.5,
-                          top: thumbY < centerY ? thumbY : centerY,
-                          child: AnimatedContainer(
-                            duration: reduced
-                                ? Duration.zero
-                                : AfDurations.quick,
-                            curve: AfCurves.easeStandard,
-                            width: 3,
-                            height: (thumbY - centerY).abs().clamp(
-                              0.0,
-                              h * 0.5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: activeColor,
-                              borderRadius: AfRadii.borderPill,
-                            ),
-                          ),
-                        ),
-                      // Thumb circle
-                      Positioned(
-                        left: w / 2 - 6,
-                        top: thumbY - 6,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: activeColor,
-                            boxShadow: [
-                              BoxShadow(
-                                color: activeColor.withValues(alpha: 0.4),
-                                blurRadius: 4,
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Track background
+                          Positioned(
+                            left: w / 2 - 1.5,
+                            top: 0,
+                            bottom: 0,
+                            child: Container(
+                              width: 3,
+                              decoration: const BoxDecoration(
+                                color: AfColors.surfaceHigh,
+                                borderRadius: AfRadii.borderPill,
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: AfSpacing.s2),
+                          // Center marker (0 dB line)
+                          Positioned(
+                            left: w / 2 - 5,
+                            top: centerY - 0.5,
+                            child: Container(
+                              width: 10,
+                              height: 1,
+                              color: AfColors.surfaceMax,
+                            ),
+                          ),
+                          // Fill bar from center to value
+                          if (value.abs() > 0.5)
+                            Positioned(
+                              left: w / 2 - 1.5,
+                              top: thumbY < centerY ? thumbY : centerY,
+                              child: AnimatedContainer(
+                                duration: reduced
+                                    ? Duration.zero
+                                    : AfDurations.quick,
+                                curve: AfCurves.easeStandard,
+                                width: 3,
+                                height: (thumbY - centerY).abs().clamp(
+                                  0.0,
+                                  h * 0.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: activeColor,
+                                  borderRadius: AfRadii.borderPill,
+                                ),
+                              ),
+                            ),
+                          // Thumb circle
+                          Positioned(
+                            left: w / 2 - 6,
+                            top: thumbY - 6,
+                            child: Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: activeColor,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: activeColor.withValues(alpha: 0.4),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: AfSpacing.s2),
 
-            // ── Frequency label ──
-            Text(
-              freq,
-              style: AfTypography.overline.copyWith(
-                color: AfColors.textTertiary,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+                // ── Frequency label ──
+                Text(
+                  freq,
+                  style: AfTypography.overline.copyWith(
+                    color: AfColors.textTertiary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
-      ),
       ),
     );
   }

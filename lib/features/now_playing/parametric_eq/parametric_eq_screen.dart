@@ -316,7 +316,8 @@ class _ParametricEqCurveViewState extends State<_ParametricEqCurveView> {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Parametric EQ curve. ${widget.bands.where((b) => b.enabled).length} active bands.',
+      label:
+          'Parametric EQ curve. ${widget.bands.where((b) => b.enabled).length} active bands.',
       child: GestureDetector(
         onPanStart: _handlePanStart,
         onPanUpdate: _handlePanUpdate,
@@ -353,7 +354,8 @@ class _ParametricEqCurveViewState extends State<_ParametricEqCurveView> {
                 );
                 return KeyEventResult.handled;
               } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-                final isCutType = band.type == BandType.lowCut ||
+                final isCutType =
+                    band.type == BandType.lowCut ||
                     band.type == BandType.highCut;
                 if (!isCutType) {
                   final newGain = (band.gain + 1).clamp(-24.0, 12.0);
@@ -370,7 +372,8 @@ class _ParametricEqCurveViewState extends State<_ParametricEqCurveView> {
                 }
                 return KeyEventResult.handled;
               } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                final isCutType = band.type == BandType.lowCut ||
+                final isCutType =
+                    band.type == BandType.lowCut ||
                     band.type == BandType.highCut;
                 if (!isCutType) {
                   final newGain = (band.gain - 1).clamp(-24.0, 12.0);
@@ -987,7 +990,8 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
               // Enable/disable toggle
               Semantics(
                 toggled: selected.enabled,
-                label: 'Band ${_selectedBand + 1}: ${selected.enabled ? "on" : "off"}',
+                label:
+                    'Band ${_selectedBand + 1}: ${selected.enabled ? "on" : "off"}',
                 child: GestureDetector(
                   onTap: () => _onToggleBand(_selectedBand),
                   child: AnimatedContainer(

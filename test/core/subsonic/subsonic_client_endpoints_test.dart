@@ -98,12 +98,7 @@ Map<String, dynamic> _artistMap({
   String name = 'Test Artist',
   int albumCount = 3,
   String? coverArt,
-}) => {
-  'id': id,
-  'name': name,
-  'albumCount': albumCount,
-  'coverArt': ?coverArt,
-};
+}) => {'id': id, 'name': name, 'albumCount': albumCount, 'coverArt': ?coverArt};
 
 Map<String, dynamic> _playlistMap({
   String id = 'pl-1',
