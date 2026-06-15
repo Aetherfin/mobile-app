@@ -30,6 +30,12 @@ class LyricsResolver {
   /// In-memory cache for lyrics: trackId → (raw lyrics, source)
   final Map<String, ({String raw, LyricsSource source})> _cache = {};
 
+  /// Number of tracks currently cached.
+  int get cacheSize => _cache.length;
+
+  /// Whether a given [trackId] is in the cache.
+  bool isCached(String trackId) => _cache.containsKey(trackId);
+
   /// Cache lyrics for a track. Used to pre-populate or update cache.
   void cacheLyrics(String trackId, String raw, LyricsSource source) {
     _cache[trackId] = (raw: raw, source: source);

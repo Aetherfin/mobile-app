@@ -7,6 +7,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart'
 import '../core/audio/af_loop_mode.dart';
 import '../core/audio/jellyfin_playback_reporter.dart';
 import '../core/audio/lastfm_playback_reporter.dart';
+import '../core/lyrics/lyrics_preload_manager.dart';
 import '../core/audio/player_service.dart';
 import '../core/audio/shuffle_mode.dart';
 import '../core/backend/music_backend.dart';
@@ -144,6 +145,7 @@ void _wireQueueSaving(Ref ref, AfPlayerService svc, _WireDisposables d) {
 void _wireServiceCallbacks(Ref ref, AfPlayerService svc) {
   AfTrack? prevTrack;
   bool wasSkip = false;
+  LyricsPreloadManager? preloader;
 
   svc.onTrackSkipped = (oldTrack) {
     wasSkip = true;
@@ -211,6 +213,17 @@ void _wireServiceCallbacks(Ref ref, AfPlayerService svc) {
         : Duration.zero;
     ref.read(abLoopAProvider.notifier).state = null;
     ref.read(abLoopBProvider.notifier).state = null;
+
+    // Preload lyrics for upcoming tracks (fire-and-forget)
+    if (track != null && track.duration > Duration.zero) {
+      final backend = ref.read(musicBackendProvider);
+      if (backend != null) {
+        preloader ??= LyricsPreloadManager(backend: backend);
+        final queue = svc.currentQueue;
+        final currentIdx = svc.currentIndex;
+        preloader!.preloadNext(queue: queue, currentIndex: currentIdx);
+      }
+    }
   };
 
   svc.onArtworkUpdated = (artUri) {
