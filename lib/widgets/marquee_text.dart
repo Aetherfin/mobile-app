@@ -37,6 +37,26 @@ class MarqueeTextState extends State<MarqueeText>
   double _offset = 0.0;
   bool _shouldScroll = false;
 
+  /// Cache text measurement to avoid TextPainter allocation on every build.
+  String _cachedText = '';
+  TextStyle? _cachedStyle;
+  double _cachedTextWidth = 0;
+
+  double _measureTextWidth(String text, TextStyle style) {
+    if (text == _cachedText && style == _cachedStyle) {
+      return _cachedTextWidth;
+    }
+    final tp = TextPainter(
+      text: TextSpan(text: text, style: style),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    _cachedText = text;
+    _cachedStyle = style;
+    _cachedTextWidth = tp.width;
+    return _cachedTextWidth;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +70,7 @@ class MarqueeTextState extends State<MarqueeText>
       _controller.stop();
       _controller.value = 0;
       _shouldScroll = false;
+      _cachedText = '';
     }
   }
 
@@ -64,13 +85,9 @@ class MarqueeTextState extends State<MarqueeText>
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
-        final tp = TextPainter(
-          text: TextSpan(text: widget.text, style: widget.style),
-          maxLines: 1,
-          textDirection: TextDirection.ltr,
-        )..layout();
+        final textWidth = _measureTextWidth(widget.text, widget.style);
 
-        if (tp.width <= maxWidth) {
+        if (textWidth <= maxWidth) {
           if (_shouldScroll) {
             _controller.stop();
             _controller.value = 0;
@@ -81,7 +98,7 @@ class MarqueeTextState extends State<MarqueeText>
 
         if (!_shouldScroll) {
           _shouldScroll = true;
-          _offset = tp.width + 32.0;
+          _offset = textWidth + 32.0;
           final durationMs = (_offset / widget.speedPxPerSec * 1000)
               .round()
               .clamp(widget.minDurationMs, widget.maxDurationMs);
@@ -89,38 +106,42 @@ class MarqueeTextState extends State<MarqueeText>
           _controller.repeat();
         }
 
-        final totalWidth = _offset + tp.width;
-        return ClipRect(
-          child: SizedBox(
-            width: maxWidth,
-            height: tp.height,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, _) {
-                    return Transform.translate(
-                      offset: Offset(-_offset * _controller.value, 0),
-                      child: OverflowBox(
-                        alignment: Alignment.centerLeft,
-                        minWidth: totalWidth,
-                        maxWidth: totalWidth,
-                        minHeight: tp.height,
-                        maxHeight: tp.height,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(widget.text, maxLines: 1, style: widget.style),
-                            const SizedBox(width: 32),
-                            Text(widget.text, maxLines: 1, style: widget.style),
-                          ],
+        final totalWidth = _offset + textWidth;
+        return RepaintBoundary(
+          child: ClipRect(
+            child: SizedBox(
+              width: maxWidth,
+              height: widget.style.fontSize ?? 14,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, _) {
+                      return Transform.translate(
+                        offset: Offset(-_offset * _controller.value, 0),
+                        child: OverflowBox(
+                          alignment: Alignment.centerLeft,
+                          minWidth: totalWidth,
+                          maxWidth: totalWidth,
+                          minHeight: widget.style.fontSize ?? 14,
+                          maxHeight: widget.style.fontSize ?? 14,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(widget.text,
+                                  maxLines: 1, style: widget.style),
+                              const SizedBox(width: 32),
+                              Text(widget.text,
+                                  maxLines: 1, style: widget.style),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );
