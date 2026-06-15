@@ -61,17 +61,12 @@ class _MiniPlayerContentState extends ConsumerState<_MiniPlayerContent>
     with SingleTickerProviderStateMixin {
   late final AnimationController _snapCtrl;
   double _dragOffset = 0;
+  double _dragOffsetY = 0;
   double _snapFrom = 0;
-  double _panStartX = 0;
-  double _panStartY = 0;
-  bool _directionResolved = false;
-  bool _isHorizontalPan = false;
+  double _snapFromY = 0;
 
-  /// Skip threshold in effective pixels after logarithmic sensitivity.
   static const double _skipThreshold = 80;
-
-  /// Minimum axis delta before direction is resolved.
-  static const double _directionSlop = 18;
+  static const double _dismissThreshold = 80;
 
   /// Logarithmic sensitivity: saturates for large drags, dampens small ones.
   static double _logSensitivity(double dx) => dx / (1 + math.exp(-0.05 * dx));
@@ -94,71 +89,46 @@ class _MiniPlayerContentState extends ConsumerState<_MiniPlayerContent>
   void _onSnapTick() {
     setState(() {
       _dragOffset = _snapFrom * (1 - _snapCtrl.value);
+      _dragOffsetY = _snapFromY * (1 - _snapCtrl.value);
     });
   }
 
-  void _onPanStart(DragStartDetails details) {
-    _panStartX = 0;
-    _panStartY = 0;
-    _directionResolved = false;
-    _isHorizontalPan = false;
-  }
-
-  void _onPanUpdate(DragUpdateDetails details) {
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
     if (_snapCtrl.isAnimating) return;
-
-    if (!_directionResolved) {
-      _panStartX += details.delta.dx;
-      _panStartY += details.delta.dy;
-      final total = _panStartX.abs() + _panStartY.abs();
-      if (total > _directionSlop) {
-        _directionResolved = true;
-        _isHorizontalPan = _panStartX.abs() > _panStartY.abs();
-      }
-    }
-
-    if (_isHorizontalPan) {
-      setState(() {
-        _dragOffset += details.delta.dx;
-      });
-    }
+    setState(() {
+      _dragOffset += details.delta.dx;
+    });
   }
 
-  void _onPanEnd(DragEndDetails details) {
-    if (_isHorizontalPan) {
-      final effective = _logSensitivity(_dragOffset);
-      if (effective.abs() > _skipThreshold) {
-        HapticFeedback.lightImpact();
-        final svc = ref.read(playerServiceProvider);
-        if (effective > 0) {
-          svc.skipToNext();
-        } else {
-          svc.skipToPrevious();
-        }
-      }
-      _snapBack();
-    } else if (_directionResolved) {
-      final v = details.primaryVelocity ?? 0;
-      if (v < -200) {
-        context.push('/now-playing');
-      } else if (v > 200) {
-        ref.read(playerServiceProvider).stopAndClear();
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    final effective = _logSensitivity(_dragOffset);
+    if (effective.abs() > _skipThreshold) {
+      HapticFeedback.lightImpact();
+      final svc = ref.read(playerServiceProvider);
+      if (effective > 0) {
+        svc.skipToNext();
+      } else {
+        svc.skipToPrevious();
       }
     }
-    _resetPanState();
-  }
-
-  void _snapBack() {
-    if (_dragOffset == 0) return;
     _snapFrom = _dragOffset;
     _snapCtrl.forward(from: 0);
   }
 
-  void _resetPanState() {
-    _panStartX = 0;
-    _panStartY = 0;
-    _directionResolved = false;
-    _isHorizontalPan = false;
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    if (_snapCtrl.isAnimating) return;
+    setState(() {
+      _dragOffsetY += details.delta.dy;
+    });
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    if (_dragOffsetY.abs() > _dismissThreshold) {
+      ref.read(playerServiceProvider).stopAndClear();
+    } else {
+      _snapFromY = _dragOffsetY;
+      _snapCtrl.forward(from: 0);
+    }
   }
 
   @override
@@ -173,27 +143,29 @@ class _MiniPlayerContentState extends ConsumerState<_MiniPlayerContent>
       ),
     );
 
-    return PressScale(
-      onTap: () => context.push('/now-playing'),
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onPanStart: _onPanStart,
-        onPanUpdate: _onPanUpdate,
-        onPanEnd: _onPanEnd,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s8),
-          child: Container(
-            height: MiniNowPlaying.height,
-            decoration: BoxDecoration(
-              color: spectral.shadow,
-              borderRadius: AfRadii.borderXl,
-              border: Border.all(
-                color: spectral.primary.withValues(alpha: 0.2),
-                width: 0.5,
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragStart: (_) {},
+      onHorizontalDragUpdate: _onHorizontalDragUpdate,
+      onHorizontalDragEnd: _onHorizontalDragEnd,
+      onVerticalDragUpdate: _onVerticalDragUpdate,
+      onVerticalDragEnd: _onVerticalDragEnd,
+      child: PressScale(
+        onTap: () => context.push('/now-playing'),
+        child: Transform.translate(
+          offset: Offset(_dragOffset, _dragOffsetY),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s8),
+            child: Container(
+              height: MiniNowPlaying.height,
+              decoration: BoxDecoration(
+                color: spectral.shadow,
+                borderRadius: AfRadii.borderXl,
+                border: Border.all(
+                  color: spectral.primary.withValues(alpha: 0.2),
+                  width: 0.5,
+                ),
               ),
-            ),
-            child: Transform.translate(
-              offset: Offset(_dragOffset, 0),
               child: Row(
                 children: [
                   const SizedBox(width: AfSpacing.s4),
