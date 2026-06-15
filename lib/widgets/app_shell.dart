@@ -43,16 +43,22 @@ class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.shell});
   final StatefulNavigationShell shell;
 
-  static final _items = [
+  static final _allItems = [
     const AfBottomNavItem(icon: LucideIcons.home, label: 'Home'),
     const AfBottomNavItem(icon: LucideIcons.library, label: 'Library'),
     const AfBottomNavItem(icon: LucideIcons.listMusic, label: 'Playlists'),
     const AfBottomNavItem(icon: LucideIcons.user, label: 'Profile'),
   ];
 
-  void _onSelect(BuildContext context, int index) {
-    shell.goBranch(index, initialLocation: index == shell.currentIndex);
-  }
+  /// YT Music: 3 tabs — Home, Library (was Playlists), Profile.
+  static final _ytItems = [
+    const AfBottomNavItem(icon: LucideIcons.home, label: 'Home'),
+    const AfBottomNavItem(icon: LucideIcons.library, label: 'Library'),
+    const AfBottomNavItem(icon: LucideIcons.user, label: 'Profile'),
+  ];
+
+  // Maps YT Music nav index → shell branch index.
+  static const _ytToBranch = [0, 2, 3];
 
   /// Android system back / gesture handler.
   ///
@@ -96,6 +102,9 @@ class AppShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(appModeProvider);
+    final isYt = mode == AppMode.youtubeMusic;
+
     // Watch spectral for a dynamic accent on the bottom nav pill.
     final spectral = ref.watch(
       currentSpectralProvider.select(
@@ -168,6 +177,7 @@ class AppShell extends ConsumerWidget {
           child: _buildScaffold(
             context,
             ref,
+            isYt: isYt,
             shadow: spectral.shadow,
             energy: spectral.energy,
           ),
@@ -179,6 +189,7 @@ class AppShell extends ConsumerWidget {
   Widget _buildScaffold(
     BuildContext context,
     WidgetRef ref, {
+    required bool isYt,
     required Color shadow,
     required Color energy,
   }) {
@@ -246,9 +257,17 @@ class AppShell extends ConsumerWidget {
         ],
       ),
       bottomNavigationBar: AfBottomNav(
-        currentIndex: shell.currentIndex,
-        onSelect: (i) => _onSelect(context, i),
-        items: _items,
+        currentIndex: isYt
+            ? _ytToBranch.indexOf(shell.currentIndex)
+            : shell.currentIndex,
+        onSelect: (i) {
+          if (isYt) {
+            shell.goBranch(_ytToBranch[i]);
+          } else {
+            shell.goBranch(i);
+          }
+        },
+        items: isYt ? _ytItems : _allItems,
         accentColor: energy,
       ),
     );
