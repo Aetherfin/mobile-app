@@ -5,6 +5,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
+import androidx.glance.action.Action
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -32,6 +34,7 @@ fun CompactLayout(
     isPlaying: Boolean,
     artPath: String?,
     isFavorite: Boolean,
+    onTap: Action? = null,
 ) {
     val bgColor = Color(0xFF1A1A2E)
     val surfaceColor = Color(0xFF2A2A3E)
@@ -44,7 +47,8 @@ fun CompactLayout(
             .fillMaxSize()
             .padding(8.dp)
             .cornerRadius(16.dp)
-            .background(bgColor),
+            .background(bgColor)
+            .then(if (onTap != null) GlanceModifier.clickable(onTap) else GlanceModifier),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Artwork placeholder — will load bitmap from artPath in future iteration

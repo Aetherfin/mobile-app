@@ -193,16 +193,16 @@ class AetherfinMediaSessionService : Service() {
             updateMediaSessionState(playing, buffering, positionMs, durationMs, speed, queueIndex, queueSize, shuffleEnabled, loopMode)
             updateMediaSessionMetadata(title, artist, album, durationMs, artPath, queueIndex)
 
-            // Broadcast state update to the app widget provider
-            val widgetIntent = Intent(this, AetherfinAppWidgetProvider::class.java).apply {
-                action = ACTION_UPDATE_STATE
-                putExtra("title", title)
-                putExtra("artist", artist)
-                putExtra("playing", playing)
-                putExtra("artPath", artPath)
-                putExtra("isFavorite", isFavorite)
+            val widgetManager = android.appwidget.AppWidgetManager.getInstance(this)
+            val widgetComponent = android.content.ComponentName(this, dev.aetherfin.aetherfin.widget.AetherfinGlanceReceiver::class.java)
+            val widgetIds = widgetManager.getAppWidgetIds(widgetComponent)
+            if (widgetIds.isNotEmpty()) {
+                val updateIntent = Intent(this, dev.aetherfin.aetherfin.widget.AetherfinGlanceReceiver::class.java).apply {
+                    action = android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                    putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds)
+                }
+                sendBroadcast(updateIntent)
             }
-            sendBroadcast(widgetIntent)
 
             val notification = buildNotification(
                 title, artist, album, playing, artPath,
