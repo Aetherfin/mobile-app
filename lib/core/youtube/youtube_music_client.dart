@@ -505,24 +505,24 @@ class YouTubeMusicClient implements MusicBackend {
         'manifest OK: audioOnly=${manifest.audioOnly.length} muxed=${manifest.muxed.length}',
       );
 
-      // Prefer muxed (audio+video in one file) — most compatible with mpv.
-      if (manifest.muxed.isNotEmpty) {
-        final best = manifest.muxed.withHighestBitrate();
-        final url = best.url.toString();
-        afLog(
-          'aetherfin:youtube',
-          'Using muxed: ${best.container} bitrate=${best.bitrate} url=${url.substring(0, 80)}',
-        );
-        return url;
-      }
-
-      // Fallback: audio-only adaptive stream.
+      // Prefer audio-only streams to save bandwidth and speed up initial loading.
       if (manifest.audioOnly.isNotEmpty) {
         final best = manifest.audioOnly.withHighestBitrate();
         final url = best.url.toString();
         afLog(
           'aetherfin:youtube',
           'Using audioOnly: ${best.container} bitrate=${best.bitrate} url=${url.substring(0, 80)}',
+        );
+        return url;
+      }
+
+      // Fallback: muxed (audio+video in one file).
+      if (manifest.muxed.isNotEmpty) {
+        final best = manifest.muxed.withHighestBitrate();
+        final url = best.url.toString();
+        afLog(
+          'aetherfin:youtube',
+          'Using muxed: ${best.container} bitrate=${best.bitrate} url=${url.substring(0, 80)}',
         );
         return url;
       }

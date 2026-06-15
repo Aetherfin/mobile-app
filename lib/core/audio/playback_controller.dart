@@ -278,6 +278,13 @@ class PlaybackController {
     _mpvLoadedTrackId = null;
     onMpvLoadedTrackChanged?.call(null);
 
+    _positionTracker.onStop();
+    try {
+      await _player.stop();
+    } on Exception catch (e) {
+      afLog('audio', 'Failed to stop player on playQueue entry', error: e);
+    }
+
     if (streamHeaders.isNotEmpty) {
       _authHeadersManager.setHeaders(streamHeaders);
       _artworkManager.setAuthHeaders(streamHeaders);
