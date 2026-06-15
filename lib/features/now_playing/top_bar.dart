@@ -41,7 +41,7 @@ class _FrostedTopBarState extends ConsumerState<FrostedTopBar>
     super.initState();
     _expandCtrl = AnimationController(
       vsync: this,
-      duration: AfDurations.standard,
+      duration: AfDurations.expressive,
       reverseDuration: AfDurations.quick,
     );
     _expandAnim = CurvedAnimation(
