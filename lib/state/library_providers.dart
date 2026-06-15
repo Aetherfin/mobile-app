@@ -100,6 +100,7 @@ final tracksPaginationProvider =
 final recentlyAddedAlbumsProvider = FutureProvider.autoDispose<List<AfAlbum>>((
   ref,
 ) async {
+  ref.keepAlive();
   final backend = ref.watch(musicBackendProvider);
   if (backend == null) {
     logData('recentlyAddedAlbums', source: 'demo', extra: '(signed out)');
@@ -113,6 +114,7 @@ final recentlyAddedAlbumsProvider = FutureProvider.autoDispose<List<AfAlbum>>((
 final recentlyPlayedTracksProvider = FutureProvider.autoDispose<List<AfTrack>>((
   ref,
 ) async {
+  ref.keepAlive();
   final backend = ref.watch(musicBackendProvider);
   if (backend == null) {
     logData('recentlyPlayedTracks', source: 'demo', extra: '(signed out)');
@@ -126,6 +128,7 @@ final recentlyPlayedTracksProvider = FutureProvider.autoDispose<List<AfTrack>>((
 final allArtistsProvider = FutureProvider.autoDispose<List<AfArtist>>((
   ref,
 ) async {
+  ref.keepAlive();
   final backend = ref.watch(musicBackendProvider);
   if (backend == null) {
     logData('allArtists', source: 'demo', extra: '(signed out)');
@@ -139,6 +142,7 @@ final allArtistsProvider = FutureProvider.autoDispose<List<AfArtist>>((
 final allPlaylistsProvider = FutureProvider.autoDispose<List<AfPlaylist>>((
   ref,
 ) async {
+  ref.keepAlive();
   final backend = ref.watch(musicBackendProvider);
   if (backend == null) {
     logData('allPlaylists', source: 'demo', extra: '(signed out)');
@@ -154,6 +158,7 @@ final savedTrackIdsProvider = StateProvider<Set<String>>((ref) => <String>{});
 final allAlbumsProvider = FutureProvider.autoDispose<List<AfAlbum>>((
   ref,
 ) async {
+  ref.keepAlive();
   final backend = ref.watch(musicBackendProvider);
   if (backend == null) {
     logData('allAlbums', source: 'demo', extra: '(signed out)');
@@ -167,6 +172,7 @@ final allAlbumsProvider = FutureProvider.autoDispose<List<AfAlbum>>((
 final allTracksProvider = FutureProvider.autoDispose<List<AfTrack>>((
   ref,
 ) async {
+  ref.keepAlive();
   final backend = ref.watch(musicBackendProvider);
   if (backend == null) {
     logData('allTracks', source: 'demo', extra: '(signed out)');
@@ -180,6 +186,7 @@ final allTracksProvider = FutureProvider.autoDispose<List<AfTrack>>((
 final favoriteAlbumsProvider = FutureProvider.autoDispose<List<AfAlbum>>((
   ref,
 ) async {
+  ref.keepAlive();
   final backend = ref.watch(musicBackendProvider);
   if (backend == null) {
     logData('favoriteAlbums', source: 'demo', extra: '(signed out)');
@@ -193,6 +200,7 @@ final favoriteAlbumsProvider = FutureProvider.autoDispose<List<AfAlbum>>((
 final favoriteTracksProvider = FutureProvider.autoDispose<List<AfTrack>>((
   ref,
 ) async {
+  ref.keepAlive();
   final backend = ref.watch(musicBackendProvider);
   if (backend == null) {
     logData('favoriteTracks', source: 'demo', extra: '(signed out)');
@@ -260,6 +268,7 @@ final playlistTrackIdsProvider = FutureProvider.autoDispose<Set<String>>((
 final allGenresProvider = FutureProvider.autoDispose<List<AfGenre>>((
   ref,
 ) async {
+  ref.keepAlive();
   final backend = ref.watch(musicBackendProvider);
   if (backend == null) {
     logData('allGenres', source: 'none', extra: '(signed out)');

@@ -20,21 +20,25 @@ final localLibraryProvider = Provider<LocalLibrary>((ref) {
 });
 
 final localAlbumsProvider = FutureProvider.autoDispose<List<AfAlbum>>((ref) {
+  ref.keepAlive();
   final lib = ref.watch(localLibraryProvider);
   return lib.albums();
 });
 
 final localArtistsProvider = FutureProvider.autoDispose<List<AfArtist>>((ref) {
+  ref.keepAlive();
   final lib = ref.watch(localLibraryProvider);
   return lib.artists();
 });
 
 final localTracksProvider = FutureProvider.autoDispose<List<AfTrack>>((ref) {
+  ref.keepAlive();
   final lib = ref.watch(localLibraryProvider);
   return lib.tracks();
 });
 
 final localGenresProvider = FutureProvider.autoDispose<List<AfGenre>>((ref) {
+  ref.keepAlive();
   final lib = ref.watch(localLibraryProvider);
   return lib.genres();
 });

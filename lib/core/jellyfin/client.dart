@@ -634,7 +634,7 @@ class JellyfinClient implements MusicBackend {
   }
 
   @override
-  Future<List<AfAlbum>> allAlbums({int limit = 500, int startIndex = 0}) async {
+  Future<List<AfAlbum>> allAlbums({int limit = 200, int startIndex = 0}) async {
     _urlBuilder.assertUser();
     final res = await _dio.get<Map<String, dynamic>>(
       'Users/$userId/Items',

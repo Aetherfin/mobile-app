@@ -126,8 +126,8 @@ class LocalDb {
   Future<List<AfTrack>> tracksByAlbum(String albumName, String artistName) =>
       tracks.tracksByAlbum(albumName, artistName);
 
-  Future<List<AfTrack>> tracksByArtist(String artistName) =>
-      tracks.tracksByArtist(artistName);
+  Future<List<AfTrack>> tracksByArtist(String artistName, {int? limit}) =>
+      tracks.tracksByArtist(artistName, limit: limit);
 
   Future<Map<String, List<AfTrack>>> tracksByArtists(Set<String> artistNames) =>
       tracks.tracksByArtists(artistNames);
@@ -169,7 +169,8 @@ class LocalDb {
   // ── Artists ─────────────────────────────────────────────────────────────
 
   /// Backward-compatible delegate to [ArtistRepository].
-  Future<List<AfArtist>> allArtists() => _artistRepo.allArtists();
+  Future<List<AfArtist>> allArtists({int limit = 5000}) =>
+      _artistRepo.allArtists(limit: limit);
 
   /// Backward-compatible delegate to [ArtistRepository].
   Future<AfArtist?> artistByName(String name) => _artistRepo.artistByName(name);
@@ -181,7 +182,8 @@ class LocalDb {
   // ── Genres ──────────────────────────────────────────────────────────────
 
   /// Backward-compatible delegate to [GenreRepository].
-  Future<List<AfGenre>> allGenres() => _genreRepo.allGenres();
+  Future<List<AfGenre>> allGenres({int limit = 500}) =>
+      _genreRepo.allGenres(limit: limit);
 
   // ── Favorites ─────────────────────────────────────────────────────────
 

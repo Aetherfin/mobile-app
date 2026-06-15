@@ -35,6 +35,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ScrollController _ytScrollController = ScrollController();
+  DateTime? _lastRefreshAt;
 
   @override
   void initState() {
@@ -83,7 +84,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// Pull-to-refresh handler. Invalidates every provider the Home
   /// screen reads, then awaits each one's next value so the spinner
   /// stays visible until the refetch actually completes.
+  /// Throttled to once per 60 seconds.
   Future<void> _onRefresh() async {
+    final now = DateTime.now();
+    if (_lastRefreshAt != null &&
+        now.difference(_lastRefreshAt!) < const Duration(seconds: 60)) {
+      return;
+    }
+    _lastRefreshAt = now;
     final isLocal = ref.read(appModeProvider) == AppMode.local;
     ref.invalidate(recentlyAddedAlbumsProvider);
     ref.invalidate(lostMemoriesProvider);

@@ -69,10 +69,8 @@ class LocalBackend implements MusicBackend {
   Future<List<AfTrack>> resumeItems({int limit = 20}) async => const [];
 
   @override
-  Future<List<AfArtist>> artists({int limit = 200}) async {
-    final all = await library.artists();
-    return all.take(limit).toList();
-  }
+  Future<List<AfArtist>> artists({int limit = 200}) =>
+      db.allArtists(limit: limit);
 
   @override
   Future<List<AfPlaylist>> playlists({int limit = 200}) =>
@@ -98,10 +96,8 @@ class LocalBackend implements MusicBackend {
   }
 
   @override
-  Future<List<AfGenre>> genres({int limit = 200}) async {
-    final all = await library.genres();
-    return all.take(limit).toList();
-  }
+  Future<List<AfGenre>> genres({int limit = 200}) =>
+      db.allGenres(limit: limit);
 
   @override
   Future<List<AfAlbum>> favoriteAlbums({int limit = 30}) =>

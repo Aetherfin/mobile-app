@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/jellyfin/models/items.dart';
+import '../core/local/local_backend.dart';
 import '../utils/log.dart';
 import 'local_library_providers.dart';
 import 'music_backend_providers.dart';
@@ -102,6 +103,11 @@ final artistAlbumsProvider = FutureProvider.autoDispose
     .family<List<AfAlbum>, String>((ref, artistId) async {
       if (artistId.startsWith('local:artist:')) {
         final name = artistId.substring('local:artist:'.length);
+        final backend = ref.read(musicBackendProvider);
+        if (backend is LocalBackend) {
+          return backend.artistAlbums(artistId);
+        }
+        // Fallback: load all and filter
         final allAlbums = await ref.read(localLibraryProvider).albums();
         return allAlbums.where((a) => a.artistName == name).toList();
       }
@@ -131,8 +137,8 @@ final artistTopTracksProvider = FutureProvider.autoDispose
         final name = artistId.substring('local:artist:'.length);
         final tracks = await ref
             .read(localLibraryProvider)
-            .tracksByArtist(name);
-        return tracks.take(10).toList();
+            .tracksByArtist(name, limit: 10);
+        return tracks;
       }
 
       final backend = ref.watch(musicBackendProvider);

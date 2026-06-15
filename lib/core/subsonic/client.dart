@@ -375,7 +375,7 @@ class SubsonicClient implements MusicBackend {
   }
 
   @override
-  Future<List<AfAlbum>> allAlbums({int limit = 500, int startIndex = 0}) async {
+  Future<List<AfAlbum>> allAlbums({int limit = 200, int startIndex = 0}) async {
     final root = await _get('getAlbumList2', {
       'type': 'alphabeticalByName',
       'size': limit,
