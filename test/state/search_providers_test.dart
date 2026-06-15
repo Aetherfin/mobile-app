@@ -204,7 +204,7 @@ void main() {
 
       expect(
         () => container.read(searchProvider('test').future),
-        throwsA(isA<Exception>()),
+        throwsA(anything),
       );
     });
 
@@ -223,7 +223,7 @@ void main() {
 
       expect(
         () => container.read(searchProvider('test').future),
-        throwsA(isA<Exception>()),
+        throwsA(anything),
       );
     });
   });

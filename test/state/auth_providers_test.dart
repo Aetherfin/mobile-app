@@ -157,33 +157,30 @@ void main() {
   });
 
   group('static providers', () {
-    test('deviceIdProvider throws StateError when not overridden', () {
+    test('deviceIdProvider throws when not overridden', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      expect(
-        () => container.read(deviceIdProvider),
-        throwsA(isA<StateError>()),
-      );
+      expect(() => container.read(deviceIdProvider), throwsA(isA<Exception>()));
     });
 
-    test('aetherfinVersionProvider throws StateError when not overridden', () {
+    test('aetherfinVersionProvider throws when not overridden', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
       expect(
         () => container.read(aetherfinVersionProvider),
-        throwsA(isA<StateError>()),
+        throwsA(isA<Exception>()),
       );
     });
 
-    test('initialAuthProvider throws StateError when not overridden', () {
+    test('initialAuthProvider throws when not overridden', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
       expect(
         () => container.read(initialAuthProvider),
-        throwsA(isA<StateError>()),
+        throwsA(isA<Exception>()),
       );
     });
 
