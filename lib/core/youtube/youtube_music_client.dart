@@ -67,6 +67,7 @@ class YouTubeMusicClient implements MusicBackend {
     id: video.id.value,
     title: video.title,
     artistName: video.author,
+    artistId: video.channelId.value,
     albumName: 'YouTube Music',
     duration: video.duration ?? Duration.zero,
     imageUrl: video.thumbnails.highResUrl,

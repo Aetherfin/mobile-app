@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/jellyfin/models/items.dart';
@@ -8,6 +7,7 @@ import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../widgets/favorite_heart_button.dart';
 import '../../widgets/quality_chip.dart';
+import 'artist_navigation.dart';
 
 class MetadataRow extends ConsumerWidget {
   const MetadataRow({super.key, required this.track});
@@ -29,13 +29,12 @@ class MetadataRow extends ConsumerWidget {
           ),
           const SizedBox(height: AfSpacing.s4),
           GestureDetector(
-            onTap: () {
-              // ignore: avoid_print
-              print('[NP-TAP] artistId=${track.artistId}');
-              if (track.artistId != null) {
-                context.push('/artist/${track.artistId}');
-              }
-            },
+            onTap: () => navigateToArtist(
+              context,
+              ref,
+              artistId: track.artistId,
+              artistName: track.artistName,
+            ),
             child: Text(
               track.artistName,
               style: AfTypography.bodyLarge.copyWith(

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -31,7 +32,12 @@ import 'search_results.dart';
 const _kMinQueryLength = 2;
 
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({super.key, this.initialQuery});
+
+  /// When non-null, the search field is pre-filled and the query is committed
+  /// immediately on build. Used when navigating here from Now Playing as a
+  /// fallback when no artistId is available.
+  final String? initialQuery;
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
@@ -48,6 +54,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   static const _debounce = Duration(milliseconds: 250);
   Timer? _debounceTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill the search field if an initial query was provided (e.g. when
+    // tapping an artist name in Now Playing with no artistId).
+    final q = widget.initialQuery?.trim();
+    if (q != null && q.length >= _kMinQueryLength) {
+      _controller.text = q;
+      _queryNotifier.value = q.toLowerCase();
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          unawaited(ref.read(searchHistoryProvider.notifier).push(q.toLowerCase()));
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {

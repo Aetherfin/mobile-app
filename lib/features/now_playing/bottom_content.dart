@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/jellyfin/models/items.dart';
@@ -11,6 +11,7 @@ import '../../widgets/glass_card.dart';
 import '../../widgets/marquee_text.dart';
 import '../../widgets/press_scale.dart';
 import '../sleep_timer/sleep_timer_screen.dart';
+import 'artist_navigation.dart';
 import 'more_menu.dart';
 import 'reactive_progress.dart';
 import 'transport_widgets.dart';
@@ -254,20 +255,19 @@ class MetadataOverlay extends ConsumerWidget {
               const SizedBox(height: AfSpacing.s4),
               PressScale(
                 ensureHitTarget: false,
-                onTap: track.artistId == null
-                    ? null
-                    : () => context.push('/artist/${track.artistId}'),
+                onTap: () => navigateToArtist(
+                  context,
+                  ref,
+                  artistId: track.artistId,
+                  artistName: track.artistName,
+                ),
                 child: Semantics(
-                  label: track.artistId == null
-                      ? null
-                      : 'Go to artist ${track.artistName}',
-                  button: track.artistId != null,
+                  label: 'Go to artist ${track.artistName}',
+                  button: true,
                   child: Text(
                     track.artistName,
                     style: AfTypography.bodySmall.copyWith(
-                      color: track.artistId == null
-                          ? AfColors.textSecondary
-                          : spectral.link,
+                      color: spectral.link,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
