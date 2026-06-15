@@ -89,11 +89,14 @@ class Artwork extends ConsumerWidget {
       return Semantics(label: semanticLabel, child: placeholder);
     }
 
+    // Upgrade YouTube thumbnails to higher resolution
+    final upgradedUrl = upgradeYtThumbnail(url!);
+
     final dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 2.0;
     int? clampedCachePx(double logicalPx) {
       final physical = (logicalPx * dpr).round();
       if (physical <= 0) return null;
-      return physical > 1024 ? 1024 : physical;
+      return physical > 2048 ? 2048 : physical;
     }
 
     final cacheW = clampedCachePx(layoutW);
@@ -135,8 +138,8 @@ class Artwork extends ConsumerWidget {
         width: isFinite ? w : null,
         height: h.isFinite ? h : null,
         child: CachedNetworkImage(
-          cacheKey: stableImageCacheKey(url!),
-          imageUrl: url!,
+          cacheKey: stableImageCacheKey(upgradedUrl),
+          imageUrl: upgradedUrl,
           httpHeaders: headers,
           fit: fit,
           cacheManager: ArtworkCacheManager(),

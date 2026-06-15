@@ -91,3 +91,26 @@ String stableImageCacheKey(String url) {
   // what callers would write by hand if they were stripping params.
   return parsed.replace(queryParameters: cleaned).toString();
 }
+
+/// Upgrade a YouTube/Google thumbnail URL to request higher resolution.
+///
+/// Google CDN (`googleusercontent.com`/`ggpht.com`): replaces `=wNNN-hNNN`
+/// or `=sNNN` with `=w1024-h1024`.
+/// YT CDN (`i.ytimg.com`): replaces `default.jpg`/`hqdefault.jpg`/etc.
+/// with `hq720.jpg` for sharper display on high-DPI screens.
+String upgradeYtThumbnail(String url) {
+  if (url.contains('googleusercontent.com') || url.contains('ggpht.com')) {
+    return url
+        .replaceAll(RegExp(r'=w\d+-h\d+'), '=w1024-h1024')
+        .replaceAll(RegExp(r'=s\d+(-c)?'), '=s1024-c');
+  }
+  if (url.contains('i.ytimg.com') || url.contains('ytimg.com')) {
+    return url
+        .replaceAll('maxresdefault.jpg', 'hq720.jpg')
+        .replaceAll('sddefault.jpg', 'hq720.jpg')
+        .replaceAll('hqdefault.jpg', 'hq720.jpg')
+        .replaceAll('mqdefault.jpg', 'hq720.jpg')
+        .replaceAll('default.jpg', 'hq720.jpg');
+  }
+  return url;
+}
