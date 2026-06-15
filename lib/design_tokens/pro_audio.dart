@@ -77,7 +77,7 @@ abstract final class ProAudioColors {
     Color(0xFF81D4FA),
     Color(0xFFF48FB1),
     Color(0xFFBCAAA4),
-    Color(0xFF80CBC4),
+    Color(0xFFA1887F),
   ];
 
   // ── Meter Zones ──────────────────────────────────────────────────────────

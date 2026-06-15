@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -10,6 +11,7 @@ import '../../../design_tokens/tokens.dart';
 import '../../../state/providers.dart';
 import '../../../utils/display_error.dart';
 import '../../../utils/log.dart';
+import '../../../widgets/af_dialog.dart';
 import '../parametric_eq_state.dart';
 import '../parametric_presets.dart';
 
@@ -313,17 +315,89 @@ class _ParametricEqCurveViewState extends State<_ParametricEqCurveView> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onPanStart: _handlePanStart,
-      onPanUpdate: _handlePanUpdate,
-      onPanEnd: (_) => setState(() => _draggingBand = null),
-      onTapUp: _handleTap,
-      child: CustomPaint(
-        painter: _ParametricEqPainter(
-          bands: widget.bands,
-          selectedBand: _draggingBand ?? widget.selectedBand,
+    return Semantics(
+      label: 'Parametric EQ curve. ${widget.bands.where((b) => b.enabled).length} active bands.',
+      child: GestureDetector(
+        onPanStart: _handlePanStart,
+        onPanUpdate: _handlePanUpdate,
+        onPanEnd: (_) => setState(() => _draggingBand = null),
+        onTapUp: _handleTap,
+        child: Focus(
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent) {
+              final band = widget.bands[widget.selectedBand ?? 0];
+              if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                final newFreq = (band.frequency * 0.9).clamp(20.0, 20000.0);
+                widget.onBandChanged(
+                  widget.selectedBand ?? 0,
+                  ParametricEqBand(
+                    frequency: newFreq,
+                    gain: band.gain,
+                    q: band.q,
+                    type: band.type,
+                    enabled: band.enabled,
+                  ),
+                );
+                return KeyEventResult.handled;
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                final newFreq = (band.frequency * 1.1).clamp(20.0, 20000.0);
+                widget.onBandChanged(
+                  widget.selectedBand ?? 0,
+                  ParametricEqBand(
+                    frequency: newFreq,
+                    gain: band.gain,
+                    q: band.q,
+                    type: band.type,
+                    enabled: band.enabled,
+                  ),
+                );
+                return KeyEventResult.handled;
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                final isCutType = band.type == BandType.lowCut ||
+                    band.type == BandType.highCut;
+                if (!isCutType) {
+                  final newGain = (band.gain + 1).clamp(-24.0, 12.0);
+                  widget.onBandChanged(
+                    widget.selectedBand ?? 0,
+                    ParametricEqBand(
+                      frequency: band.frequency,
+                      gain: newGain,
+                      q: band.q,
+                      type: band.type,
+                      enabled: band.enabled,
+                    ),
+                  );
+                }
+                return KeyEventResult.handled;
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                final isCutType = band.type == BandType.lowCut ||
+                    band.type == BandType.highCut;
+                if (!isCutType) {
+                  final newGain = (band.gain - 1).clamp(-24.0, 12.0);
+                  widget.onBandChanged(
+                    widget.selectedBand ?? 0,
+                    ParametricEqBand(
+                      frequency: band.frequency,
+                      gain: newGain,
+                      q: band.q,
+                      type: band.type,
+                      enabled: band.enabled,
+                    ),
+                  );
+                }
+                return KeyEventResult.handled;
+              }
+            }
+            return KeyEventResult.ignored;
+          },
+          child: CustomPaint(
+            painter: _ParametricEqPainter(
+              bands: widget.bands,
+              selectedBand: _draggingBand ?? widget.selectedBand,
+            ),
+            size: Size.infinite,
+          ),
         ),
-        size: Size.infinite,
       ),
     );
   }
@@ -620,6 +694,49 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
   }
 
   void _resetAll() {
+    showBlurDialog<void>(
+      context: context,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Reset Parametric EQ?', style: AfTypography.titleMedium),
+          const SizedBox(height: AfSpacing.s12),
+          Text(
+            'This will restore all bands to default frequency and gain settings.',
+            style: AfTypography.bodyMedium,
+          ),
+          const SizedBox(height: AfSpacing.s24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              Focus(
+                autofocus: true,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _performReset();
+                  },
+                  child: Text(
+                    'Reset',
+                    style: AfTypography.bodyMedium.copyWith(
+                      color: AfColors.semanticError,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _performReset() {
     setState(() {
       _eqState = ParametricEqState();
       _selectedBand = 0;
@@ -868,32 +985,36 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
               ),
               const Spacer(),
               // Enable/disable toggle
-              GestureDetector(
-                onTap: () => _onToggleBand(_selectedBand),
-                child: AnimatedContainer(
-                  duration: AfDurations.quick,
-                  curve: AfCurves.easeStandard,
-                  width: 44,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: selected.enabled
-                        ? _bandColor(_selectedBand)
-                        : AfColors.surfaceHigh,
-                    borderRadius: AfRadii.borderPill,
-                  ),
-                  child: AnimatedAlign(
+              Semantics(
+                toggled: selected.enabled,
+                label: 'Band ${_selectedBand + 1}: ${selected.enabled ? "on" : "off"}',
+                child: GestureDetector(
+                  onTap: () => _onToggleBand(_selectedBand),
+                  child: AnimatedContainer(
                     duration: AfDurations.quick,
-                    alignment: selected.enabled
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
                     curve: AfCurves.easeStandard,
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: const BoxDecoration(
-                        color: AfColors.textPrimary,
-                        shape: BoxShape.circle,
+                    width: 48,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: selected.enabled
+                          ? _bandColor(_selectedBand)
+                          : AfColors.surfaceHigh,
+                      borderRadius: AfRadii.borderPill,
+                    ),
+                    child: AnimatedAlign(
+                      duration: AfDurations.quick,
+                      alignment: selected.enabled
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      curve: AfCurves.easeStandard,
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        decoration: const BoxDecoration(
+                          color: AfColors.textPrimary,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
                   ),

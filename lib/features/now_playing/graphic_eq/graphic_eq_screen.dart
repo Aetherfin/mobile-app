@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/audio/player_settings_store.dart';
 import '../../../design_tokens/tokens.dart';
 import '../../../state/providers.dart';
 import '../../../utils/log.dart';
+import '../../../widgets/af_dialog.dart';
 import '../eq_dsp_widgets.dart';
 import '../eq_preset.dart';
 import '../eq_preset_manager.dart';
@@ -135,6 +137,49 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
   }
 
   void _resetAll() {
+    showBlurDialog<void>(
+      context: context,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Reset Graphic EQ?', style: AfTypography.titleMedium),
+          const SizedBox(height: AfSpacing.s12),
+          Text(
+            'This will flatten all 18 bands to 0 dB.',
+            style: AfTypography.bodyMedium,
+          ),
+          const SizedBox(height: AfSpacing.s24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              Focus(
+                autofocus: true,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _performReset();
+                  },
+                  child: Text(
+                    'Reset',
+                    style: AfTypography.bodyMedium.copyWith(
+                      color: AfColors.semanticError,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _performReset() {
     setState(() {
       _state = GraphicEqState(
         levels: List<double>.filled(18, 0.0),
@@ -362,19 +407,37 @@ class _BandSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reduced = MediaQuery.of(context).disableAnimations;
+    final dbLabel = _formatDb(value);
 
-    return GestureDetector(
-      onVerticalDragUpdate: (details) {
-        final box = context.findRenderObject() as RenderBox?;
-        if (box == null) return;
-        final height = box.size.height;
-        final delta = -details.delta.dy / height * (_max - _min);
-        onChanged((value + delta).clamp(_min, _max));
-      },
-      onVerticalDragEnd: (_) => onChangeEnd(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s4),
-        child: Column(
+    return Semantics(
+      label: 'Frequency band $freq, gain $dbLabel',
+      value: value.abs() < 0.5 ? 'flat' : (value > 0 ? 'boost' : 'cut'),
+      child: GestureDetector(
+        onVerticalDragUpdate: (details) {
+          final box = context.findRenderObject() as RenderBox?;
+          if (box == null) return;
+          final height = box.size.height;
+          final delta = -details.delta.dy / height * (_max - _min);
+          onChanged((value + delta).clamp(_min, _max));
+        },
+        onVerticalDragEnd: (_) => onChangeEnd(),
+        child: Focus(
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent) {
+              const step = 1.0;
+              if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                onChanged((value + step).clamp(_min, _max));
+                return KeyEventResult.handled;
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                onChanged((value - step).clamp(_min, _max));
+                return KeyEventResult.handled;
+              }
+            }
+            return KeyEventResult.ignored;
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s4),
+            child: Column(
           children: [
             // ── dB value ──
             Text(
@@ -479,6 +542,8 @@ class _BandSlider extends StatelessWidget {
             ),
           ],
         ),
+      ),
+      ),
       ),
     );
   }
