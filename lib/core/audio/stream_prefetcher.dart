@@ -54,6 +54,9 @@ class StreamPrefetcher {
   /// Maximum number of retry attempts
   static const int _maxRetries = 3;
 
+  /// Shared random instance for jitter calculation
+  static final _random = Random();
+
   Future<void> _init() async {
     try {
       // Timeouts and connection pooling are inherited from SharedDioClient.
@@ -101,7 +104,7 @@ class StreamPrefetcher {
     // Exponential backoff: base * 2^retryCount
     final exponentialDelay = _baseBackoffMs * pow(2, retryCount);
     // Add jitter: random value between 0 and 50% of the delay
-    final jitter = Random().nextDouble() * exponentialDelay * 0.5;
+    final jitter = _random.nextDouble() * exponentialDelay * 0.5;
     final totalDelayMs = exponentialDelay + jitter;
     return Duration(milliseconds: totalDelayMs.toInt());
   }

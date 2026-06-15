@@ -204,7 +204,7 @@ final favoriteTracksProvider = FutureProvider.autoDispose<List<AfTrack>>((
 });
 
 /// Set of track IDs currently favorited, derived from [favoriteTracksProvider].
-final favoriteIdsProvider = Provider.autoDispose<Set<String>>((ref) {
+final favoriteIdsProvider = Provider<Set<String>>((ref) {
   final tracks = ref.watch(favoriteTracksProvider);
   return tracks.whenOrNull(data: (list) => list.map((t) => t.id).toSet()) ??
       <String>{};

@@ -129,7 +129,7 @@ class LastFmPlaybackReporter {
 
     if (track.id == previousTrack?.id) return;
     _lastReportedTrack = track;
-    _scrobbledTrackIds.removeWhere((_) => true);
+    _scrobbledTrackIds.clear();
 
     // Send Now Playing update
     unawaited(

@@ -289,37 +289,39 @@ class TrackRepository {
 
   Future<List<AfTrack>> tracksByAlbum(
     String albumName,
-    String artistName,
-  ) async {
-    final rows =
-        await (db.select(db.tracks)
-              ..where(
-                (t) =>
-                    t.album.equals(albumName) &
-                    (t.artist.equals(artistName) |
-                        t.albumArtist.equals(artistName)),
-              )
-              ..orderBy([
-                (t) => OrderingTerm.asc(t.trackNumber),
-                (t) => OrderingTerm.asc(t.title),
-              ]))
-            .get();
+    String artistName, {
+    int? limit,
+  }) async {
+    final query = db.select(db.tracks)
+      ..where(
+        (t) =>
+            t.album.equals(albumName) &
+            (t.artist.equals(artistName) | t.albumArtist.equals(artistName)),
+      )
+      ..orderBy([
+        (t) => OrderingTerm.asc(t.trackNumber),
+        (t) => OrderingTerm.asc(t.title),
+      ]);
+    if (limit != null) {
+      query.limit(limit);
+    }
+    final rows = await query.get();
     return rows.map(rowToTrack).toList();
   }
 
-  Future<List<AfTrack>> tracksByArtist(String artistName) async {
-    final rows =
-        await (db.select(db.tracks)
-              ..where(
-                (t) =>
-                    t.artist.equals(artistName) |
-                    t.albumArtist.equals(artistName),
-              )
-              ..orderBy([
-                (t) => OrderingTerm.asc(t.album),
-                (t) => OrderingTerm.asc(t.trackNumber),
-              ]))
-            .get();
+  Future<List<AfTrack>> tracksByArtist(String artistName, {int? limit}) async {
+    final query = db.select(db.tracks)
+      ..where(
+        (t) => t.artist.equals(artistName) | t.albumArtist.equals(artistName),
+      )
+      ..orderBy([
+        (t) => OrderingTerm.asc(t.album),
+        (t) => OrderingTerm.asc(t.trackNumber),
+      ]);
+    if (limit != null) {
+      query.limit(limit);
+    }
+    final rows = await query.get();
     return rows.map(rowToTrack).toList();
   }
 

@@ -19,6 +19,8 @@ import 'core/local/app_mode_store.dart';
 import 'core/jellyfin/auth_storage.dart';
 import 'core/jellyfin/models/server.dart';
 import 'core/lastfm/lastfm_storage.dart';
+import 'core/local/app_database.dart';
+import 'core/local/local_db_lastfm.dart';
 import 'state/youtube_music_providers.dart';
 import 'state/providers.dart';
 import 'utils/log.dart';
@@ -131,6 +133,17 @@ Future<void> main() async {
       final localOnboardingCompleted =
           prefs.getBool('af.local_onboarding_completed') ?? false;
       _boot('localOnboardingCompleted=$localOnboardingCompleted');
+
+      // Prune expired Last.fm similar-cache entries on startup.
+      // Runs in background — non-fatal if it fails.
+      unawaited(
+        LastFmCacheRepository(AppDatabase()).pruneExpired().catchError(
+          (Object e, StackTrace stack) {
+            afLog('error', 'Last.fm cache prune failed', error: e, stackTrace: stack);
+            return 0;
+          },
+        ),
+      );
 
       // Load offline cache settings.
       final offlineCacheEnabled =

@@ -203,7 +203,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -232,6 +232,12 @@ class AppDatabase extends _$AppDatabase {
             'ON tracks (artist, title)',
         'CREATE INDEX IF NOT EXISTS idx_tracks_album_artist '
             'ON tracks (album, album_artist)',
+        'CREATE INDEX IF NOT EXISTS idx_track_stats_track_id '
+            'ON track_stats (track_id)',
+        'CREATE INDEX IF NOT EXISTS idx_lastfm_similar_cache_track_id '
+            'ON lastfm_similar_cache (track_id)',
+        'CREATE INDEX IF NOT EXISTS idx_queue_history_created_at '
+            'ON queue_history (created_at)',
       ]) {
         try {
           await db.customStatement(stmt);
@@ -337,6 +343,25 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(tracks, tracks.spectralHue);
         } on Exception {
           // Table may not exist — skip, no data loss.
+        }
+      }
+      if (from < 14) {
+        // Performance indexes for track stats lookups, similar track cache,
+        // and queue history sorting.
+        final db = m.database;
+        for (final stmt in const [
+          'CREATE INDEX IF NOT EXISTS idx_track_stats_track_id '
+              'ON track_stats (track_id)',
+          'CREATE INDEX IF NOT EXISTS idx_lastfm_similar_cache_track_id '
+              'ON lastfm_similar_cache (track_id)',
+          'CREATE INDEX IF NOT EXISTS idx_queue_history_created_at '
+              'ON queue_history (created_at)',
+        ]) {
+          try {
+            await db.customStatement(stmt);
+          } on Exception {
+            // Table may not exist — skip index, no data loss.
+          }
         }
       }
     },
