@@ -43,6 +43,7 @@ class YouTubeSongGrid extends ConsumerWidget {
             id: item.id,
             title: item.title,
             artistName: item.subtitle,
+            artistId: item.artistId,
             albumName: '',
             imageUrl: item.thumbnailUrl,
           );
@@ -143,6 +144,7 @@ class YouTubeHomeTileList extends ConsumerWidget {
                     id: item.id,
                     title: item.title,
                     artistName: item.subtitle,
+                    artistId: item.artistId,
                     albumName: '',
                     imageUrl: item.thumbnailUrl,
                   );
@@ -165,6 +167,7 @@ class YouTubeHomeTileList extends ConsumerWidget {
                   id: item.id,
                   title: item.title,
                   artistName: item.subtitle,
+                  artistId: item.artistId,
                   albumName: '',
                   imageUrl: item.thumbnailUrl,
                 );

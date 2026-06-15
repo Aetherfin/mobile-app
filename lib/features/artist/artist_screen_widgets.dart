@@ -119,6 +119,9 @@ Future<void> startArtistRadio(
 }
 
 /// Top songs slivers for the artist screen.
+/// Strip play counts and subscriber counts from carousel subtitles.
+/// "2Pac · 5.2M subscribers" → "2Pac"
+/// "Album · 975K plays" → "Album"
 List<Widget> buildArtistTopSongsSlivers({
   required List<AfTrack> topTracks,
   required String? activeId,
@@ -127,12 +130,13 @@ List<Widget> buildArtistTopSongsSlivers({
   required void Function(int index) onTap,
   required void Function(AfTrack track) onLongPress,
 }) {
+  if (topTracks.isEmpty) return [];
   return [
     const SliverToBoxAdapter(child: SizedBox(height: AfSpacing.s32)),
     const SliverToBoxAdapter(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: AfSpacing.gutterGenerous),
-        child: SectionHeader(title: 'Top Songs'),
+        child: SectionHeader(title: 'Songs'),
       ),
     ),
     const SliverToBoxAdapter(child: SizedBox(height: AfSpacing.s8)),

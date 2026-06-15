@@ -28,63 +28,23 @@ class MetadataRow extends ConsumerWidget {
             maxLines: 1,
           ),
           const SizedBox(height: AfSpacing.s4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Semantics(
-                  label: 'Go to ${track.artistName}',
-                  button: true,
-                  child: GestureDetector(
-                    onTap: () {
-                      if (track.artistId != null) {
-                        context.push('/artist/${track.artistId}');
-                      } else {
-                        // Fallback: search for artist name
-                        context.push('/search?q=${Uri.encodeComponent(track.artistName)}');
-                      }
-                    },
-                    child: Text(
-                      track.artistName,
-                      style: AfTypography.bodyLarge.copyWith(
-                        color: AfColors.textSecondary,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                    ),
-                  ),
-                ),
+          GestureDetector(
+            onTap: () {
+              // ignore: avoid_print
+              print('[NP-TAP] artistId=${track.artistId}');
+              if (track.artistId != null) {
+                context.push('/artist/${track.artistId}');
+              }
+            },
+            child: Text(
+              track.artistName,
+              style: AfTypography.bodyLarge.copyWith(
+                color: AfColors.textSecondary,
               ),
-              if (track.albumName.isNotEmpty) ...[
-                Text(
-                  ' · ',
-                  style: AfTypography.bodyLarge.copyWith(
-                    color: AfColors.textTertiary,
-                  ),
-                ),
-                Flexible(
-                  child: Semantics(
-                    label: 'Go to ${track.albumName}',
-                    button: true,
-                    child: GestureDetector(
-                      onTap: track.albumId != null
-                          ? () => context.push('/album/${track.albumId}')
-                          : null,
-                      child: Text(
-                        track.albumName,
-                        style: AfTypography.bodyLarge.copyWith(
-                          color: AfColors.textSecondary,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+            ),
           ),
           const SizedBox(height: AfSpacing.s12),
           Row(
