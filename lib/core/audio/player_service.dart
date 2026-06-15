@@ -896,6 +896,12 @@ class AfPlayerService {
       unawaited(_playback.setAfLoopMode(nextMode));
     };
     bridge.onToggleFavorite = () => onToggleFavorite?.call();
+    bridge.onArtworkNeeded = () {
+      final track = _queueManager.currentTrack;
+      if (track != null) {
+        unawaited(_artworkManager.downloadArtworkForNotification(track));
+      }
+    };
     bridge.onDuck = (volume) => unawaited(_player.setVolume(volume * 100));
     bridge.onUnduck = () {
       // Restore to user's volume setting
