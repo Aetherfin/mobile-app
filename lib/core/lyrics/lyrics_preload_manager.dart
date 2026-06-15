@@ -3,6 +3,7 @@ import 'dart:async' show unawaited;
 import '../backend/music_backend.dart';
 import '../jellyfin/models/items.dart';
 import '../../utils/log.dart';
+import 'lrc_parser.dart';
 import 'lyrics_resolver.dart';
 
 /// Pre-fetches lyrics for upcoming tracks in the playback queue.
@@ -18,7 +19,11 @@ class LyricsPreloadManager {
   LyricsPreloadManager({
     required MusicBackend backend,
     LyricsResolver? resolver,
+    this.onCachedResult,
   }) : _resolver = resolver ?? LyricsResolver(backend: backend);
+
+  final Future<void> Function(String trackId, LyricsResult result)?
+  onCachedResult;
 
   final LyricsResolver _resolver;
 
@@ -59,6 +64,7 @@ class LyricsPreloadManager {
       final result = await _resolver.resolve(trackId: track.id, track: track);
       if (result != null) {
         afLog('lyrics', 'Preloaded lyrics for "${track.title}" (${track.id})');
+        await onCachedResult?.call(track.id, result);
       } else {
         afLog('lyrics', 'No lyrics found for "${track.title}" (${track.id})');
       }

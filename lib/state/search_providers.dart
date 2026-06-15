@@ -29,6 +29,11 @@ final lyricsCacheProvider = StateProvider<Map<String, LyricsResult>>(
   (ref) => {},
 );
 
+final sharedLyricsResolverProvider = Provider<LyricsResolver>((ref) {
+  final backend = ref.watch(musicBackendProvider);
+  return LyricsResolver(backend: backend!);
+});
+
 final searchProvider = FutureProvider.autoDispose.family<SearchResults, String>(
   (ref, raw) async {
     final query = raw.trim();
@@ -128,9 +133,9 @@ final lyricsProvider = FutureProvider.autoDispose.family<LyricsResult?, String>(
       return null;
     }
 
-    // Delegate to LyricsResolver — single source of truth for the
+    // Delegate to shared LyricsResolver — single source of truth for the
     // cascading lyrics flow: embedded → NetEase → LRCLib.
-    final resolver = LyricsResolver(backend: backend);
+    final resolver = ref.read(sharedLyricsResolverProvider);
     final result = await resolver.resolve(trackId: trackId, track: track);
 
     // Populate provider-level cache

@@ -89,6 +89,18 @@ void main() {
 
     // Register fallback values for mock method calls
     registerFallbackValue(Duration.zero);
+
+    // Default stubs: all providers return null unless overridden in test.
+    // This prevents mocktail MissingStubError when phase1 calls both
+    // NetEase and LRCLib in parallel.
+    when(
+      () => lrclib.fetchLyrics(
+        trackName: any(named: 'trackName'),
+        artistName: any(named: 'artistName'),
+        albumName: any(named: 'albumName'),
+        duration: any(named: 'duration'),
+      ),
+    ).thenAnswer((_) async => null);
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1115,7 +1127,7 @@ void main() {
       ).called(1);
     });
 
-    test('LRCLib is NOT called when NetEase succeeds', () async {
+    test('LRCLib is called in parallel with NetEase (phase1)', () async {
       when(() => backend.lyrics('t1')).thenAnswer((_) async => null);
       when(
         () => netease.fetchLyrics(
@@ -1125,18 +1137,38 @@ void main() {
           duration: any(named: 'duration'),
         ),
       ).thenAnswer((_) async => _neteaseRomajiResult);
-
-      final track = _track('t1');
-      await resolver.resolve(trackId: 't1', track: track);
-
-      verifyNever(
+      when(
         () => lrclib.fetchLyrics(
           trackName: any(named: 'trackName'),
           artistName: any(named: 'artistName'),
           albumName: any(named: 'albumName'),
           duration: any(named: 'duration'),
         ),
-      );
+      ).thenAnswer((_) async => null);
+
+      final track = _track('t1');
+      final result = await resolver.resolve(trackId: 't1', track: track);
+
+      // Both providers are called in parallel
+      verify(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).called(1);
+      verify(
+        () => lrclib.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).called(1);
+      // NetEase wins because it returns meaningful lyrics
+      expect(result, isNotNull);
+      expect(result!.source, equals(LyricsSource.neteaseRomaji));
     });
   });
 
@@ -1165,7 +1197,7 @@ void main() {
     });
 
     test(
-      'race fetch with enableRaceFetch=false uses sequential cascade',
+      'enableRaceFetch=false does NOT call phase2 providers (KuGou/SimpMusic/Unison)',
       () async {
         when(() => backend.lyrics('t1')).thenAnswer((_) async => null);
         when(
@@ -1570,6 +1602,233 @@ void main() {
           duration: any(named: 'duration'),
         ),
       ).called(1); // Only once from first call
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Phase1/Phase2 cascade
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  group('Phase1 parallel + Phase2 upgrade', () {
+    late MockKuGouClient kugou;
+    late MockSimpMusicClient simpmusic;
+    late MockUnisonClient unison;
+    late LyricsResolver phaseResolver;
+
+    setUp(() {
+      kugou = MockKuGouClient();
+      simpmusic = MockSimpMusicClient();
+      unison = MockUnisonClient();
+      phaseResolver = LyricsResolver(
+        backend: backend,
+        netease: netease,
+        lrclib: lrclib,
+        kugou: kugou,
+        simpmusic: simpmusic,
+        unison: unison,
+      );
+
+      // Default stubs for phase2 providers (return null unless overridden)
+      when(
+        () => kugou.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+      when(
+        () => simpmusic.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+      when(
+        () => unison.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+    });
+
+    test('phase1 short-circuits on first meaningful result', () async {
+      when(() => backend.lyrics('t1')).thenAnswer((_) async => null);
+      when(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer(
+        (_) async => (synced: _englishLrc, plain: null, romaji: null),
+      );
+      when(
+        () => lrclib.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+
+      final track = _track('t1');
+      final result = await phaseResolver.resolve(trackId: 't1', track: track);
+
+      expect(result, isNotNull);
+      expect(result!.source, equals(LyricsSource.netease));
+      expect(result.lrc.lines.length, equals(2));
+
+      // NetEase should be called; LRCLib may be called but phase1 result used
+      verify(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).called(1);
+    });
+
+    test('phase2 fires when phase1 returns plain lyrics', () async {
+      when(() => backend.lyrics('t1')).thenAnswer((_) async => null);
+      // Phase1: NetEase returns plain lyrics (no timestamps → unsynced)
+      when(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer(
+        (_) async =>
+            (synced: null, plain: 'Hello world\nGoodbye world', romaji: null),
+      );
+      when(
+        () => lrclib.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+      // Phase2: KuGou returns synced lyrics
+      when(
+        () => kugou.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => (synced: _englishLrc, plain: null));
+
+      final track = _track('t1');
+      final result = await phaseResolver.resolve(trackId: 't1', track: track);
+
+      expect(result, isNotNull);
+      // Should be upgraded to synced from KuGou
+      expect(result!.source, equals(LyricsSource.kugou));
+      expect(result.lrc.lines[0].start, isNot(Duration.zero));
+    });
+
+    test('phase2 does NOT fire when phase1 returns synced lyrics', () async {
+      when(() => backend.lyrics('t1')).thenAnswer((_) async => null);
+      when(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer(
+        (_) async => (synced: _englishLrc, plain: null, romaji: null),
+      );
+      when(
+        () => lrclib.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+
+      final track = _track('t1');
+      final result = await phaseResolver.resolve(trackId: 't1', track: track);
+
+      expect(result, isNotNull);
+      expect(result!.source, equals(LyricsSource.netease));
+
+      // Phase2 providers should NOT be called
+      verifyNever(
+        () => kugou.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      );
+      verifyNever(
+        () => simpmusic.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      );
+      verifyNever(
+        () => unison.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      );
+    });
+
+    test('phase1 populates cache for subsequent calls', () async {
+      when(() => backend.lyrics('t1')).thenAnswer((_) async => null);
+      when(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer(
+        (_) async => (synced: _englishLrc, plain: null, romaji: null),
+      );
+      when(
+        () => lrclib.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+
+      final track = _track('t1');
+      // First resolve
+      await phaseResolver.resolve(trackId: 't1', track: track);
+
+      // Second resolve should hit cache
+      final result2 = await phaseResolver.resolve(trackId: 't1', track: track);
+
+      expect(result2, isNotNull);
+      expect(result2!.source, equals(LyricsSource.cache));
+
+      // NetEase should only be called once (first resolve)
+      verify(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).called(1);
     });
   });
 }

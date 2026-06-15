@@ -123,8 +123,13 @@ random non-LRC line
 [00:01.00] valid
 ''';
       final lrc = parseLrc(src);
-      expect(lrc.lines.length, 1);
-      expect(lrc.lines.first.text, 'valid');
+      // Untimed lines are included with Duration.zero (plain lyrics support).
+      // Only [xx:xx.xx] is truly unparseable (invalid digits).
+      expect(lrc.lines.length, 3);
+      expect(lrc.lines[0].text, 'random non-LRC line');
+      expect(lrc.lines[1].text, '[xx:xx.xx] also not valid');
+      expect(lrc.lines[2].text, 'valid');
+      expect(lrc.lines[2].start, const Duration(seconds: 1));
     });
 
     test('activeIndex returns the largest line <= position', () {

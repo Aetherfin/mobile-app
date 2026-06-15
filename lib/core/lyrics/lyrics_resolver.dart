@@ -59,16 +59,20 @@ class LyricsResolver {
     _cache[trackId] = (raw: raw, source: source);
   }
 
+  int _resolveGeneration = 0;
+
   /// Resolve lyrics for [trackId].
   ///
-  /// When [enableRaceFetch] is true and embedded lyrics are absent or empty,
-  /// all network providers are raced concurrently and the first meaningful
-  /// result is returned.
+  /// Default mode runs a fast parallel fetch for NetEase + LRCLib first.
+  /// If the first meaningful result is plain text, a background upgrade race
+  /// fires KuGou + SimpMusic + Unison to look for synced lyrics.
   Future<LyricsResult?> resolve({
     required String trackId,
     required AfTrack track,
     bool enableRaceFetch = false,
   }) async {
+    final generation = ++_resolveGeneration;
+
     // ── Step 1: Check cache first ─────────────────────────────────────
     final cached = _cache[trackId];
     if (cached != null) {
@@ -109,7 +113,25 @@ class LyricsResolver {
     if (enableRaceFetch) {
       return await _raceFetch(trackId: trackId, track: track);
     }
-    return await _resolveFromNetwork(trackId: trackId, track: track);
+
+    // Phase 1: fast parallel NetEase + LRCLib.
+    final phase1 = await _resolvePhase1(trackId: trackId, track: track);
+    if (phase1 != null && generation == _resolveGeneration) {
+      if (!isSyncedLyrics(phase1)) {
+        // Phase 2: background quality upgrade.
+        final phase2 = await _resolvePhase2(
+          trackId: trackId,
+          track: track,
+          baseline: phase1,
+        );
+        if (phase2 != null && generation == _resolveGeneration) {
+          return phase2;
+        }
+      }
+      return phase1;
+    }
+    if (generation != _resolveGeneration) return null;
+    return null;
   }
 
   /// Race all network providers concurrently and return the first valid
@@ -149,17 +171,10 @@ class LyricsResolver {
     return null;
   }
 
-  /// Check if parsed lyrics are meaningful (≥2 content lines, not just
-  /// metadata tags).
+  /// Check if parsed lyrics are meaningful (at least 1 content line).
   static bool _isMeaningfulLyrics(LyricsResult result) {
-    if (result.lrc.lines.length < 2) return false;
-    // Ensure at least 2 lines have actual text content
-    int textLines = 0;
     for (final line in result.lrc.lines) {
-      if (line.text.trim().isNotEmpty) {
-        textLines++;
-        if (textLines >= 2) return true;
-      }
+      if (line.text.trim().isNotEmpty) return true;
     }
     return false;
   }
@@ -213,7 +228,7 @@ class LyricsResolver {
       if (raw == null || raw.trim().isEmpty) return null;
 
       if (containsRomanizableText(raw)) {
-        return await _romanizeLrc(raw, trackId, source: LyricsSource.netease);
+        return await _romanizeLrc(raw, trackId, source: LyricsSource.romanize);
       }
       final parsed = parseLrc(raw);
       return LyricsResult(lrc: parsed, source: LyricsSource.netease);
@@ -391,97 +406,6 @@ class LyricsResolver {
     return null;
   }
 
-  /// Fetch lyrics from network sequentially: NetEase → LRCLib.
-  /// Used when [enableRaceFetch] is false.
-  Future<LyricsResult?> _resolveFromNetwork({
-    required String trackId,
-    required AfTrack track,
-  }) async {
-    // ── Try NetEase first ─────────────────────────────────────────────
-    try {
-      final neteaseResult = await _netease.fetchLyrics(
-        trackName: track.title,
-        artistName: track.artistName,
-        albumName: track.albumName,
-        duration: track.duration,
-      );
-
-      if (neteaseResult != null) {
-        // Prefer romaji if available and non-romanizable
-        if (neteaseResult.romaji != null &&
-            neteaseResult.romaji!.trim().isNotEmpty) {
-          final romajiText = neteaseResult.romaji!.trim();
-          if (!containsRomanizableText(romajiText)) {
-            final parsed = parseLrc(romajiText);
-            afLog(
-              'lyrics',
-              'NetEase romaji for $trackId: ${parsed.lines.length} lines',
-            );
-            return LyricsResult(
-              lrc: parsed,
-              source: LyricsSource.neteaseRomaji,
-            );
-          }
-          // Romaji still has romanizable text → romanize it
-          return await _romanizeLrc(
-            romajiText,
-            trackId,
-            source: LyricsSource.neteaseRomaji,
-          );
-        }
-
-        // No romaji → try synced or plain
-        final raw = neteaseResult.synced ?? neteaseResult.plain;
-        if (raw != null && raw.trim().isNotEmpty) {
-          if (containsRomanizableText(raw)) {
-            // Romanizable NetEase lyrics → romanize
-            return await _romanizeLrc(
-              raw,
-              trackId,
-              source: LyricsSource.romanize,
-            );
-          }
-          final parsed = parseLrc(raw);
-          afLog('lyrics', 'NetEase for $trackId: ${parsed.lines.length} lines');
-          return LyricsResult(lrc: parsed, source: LyricsSource.netease);
-        }
-      }
-    } on Exception catch (e) {
-      afLog('lyrics', 'NetEase fetch failed for $trackId', error: e);
-    }
-
-    // ── Try LRCLib as last resort ─────────────────────────────────────
-    try {
-      final lrclibResult = await _lrclib.fetchLyrics(
-        trackName: track.title,
-        artistName: track.artistName,
-        albumName: track.albumName,
-        duration: track.duration,
-      );
-
-      if (lrclibResult != null) {
-        final raw = lrclibResult.synced ?? lrclibResult.plain;
-        if (raw != null && raw.trim().isNotEmpty) {
-          // Romanize LRCLib results if they contain romanizable text
-          if (containsRomanizableText(raw)) {
-            return await _romanizeLrc(
-              raw,
-              trackId,
-              source: LyricsSource.lrclib,
-            );
-          }
-          final parsed = parseLrc(raw);
-          afLog('lyrics', 'LRCLib for $trackId: ${parsed.lines.length} lines');
-          return LyricsResult(lrc: parsed, source: LyricsSource.lrclib);
-        }
-      }
-    } on Exception catch (e) {
-      afLog('lyrics', 'LRCLib fetch failed for $trackId', error: e);
-    }
-
-    return null;
-  }
-
   /// Romanize LRC text locally using the romanize package.
   ///
   /// Supports all languages: Japanese, Korean, Chinese, Cyrillic, Arabic,
@@ -549,5 +473,66 @@ class LyricsResolver {
       'Romanized lyrics for $trackId: ${parsed.lines.length} lines',
     );
     return LyricsResult(lrc: parsed, source: source);
+  }
+
+  // ── Phase orchestration helpers ───────────────────────────────────────
+
+  static bool isSyncedLyrics(LyricsResult result) =>
+      result.lrc.lines.any((line) => line.start > Duration.zero);
+
+  static bool _betterThan(LyricsResult a, LyricsResult b) {
+    final aSynced = isSyncedLyrics(a) ? 1 : 0;
+    final bSynced = isSyncedLyrics(b) ? 1 : 0;
+    if (aSynced != bSynced) return aSynced > bSynced;
+    return a.lrc.lines.length > b.lrc.lines.length;
+  }
+
+  Future<LyricsResult?> _firstMeaningfulRace(
+    List<Future<LyricsResult?>> futures,
+  ) async {
+    final results = await Future.wait(
+      futures.map((f) => f.catchError((_) => null as LyricsResult?)),
+    );
+    for (final result in results) {
+      if (result != null && _isMeaningfulLyrics(result)) return result;
+    }
+    return null;
+  }
+
+  Future<LyricsResult?> _resolvePhase1({
+    required String trackId,
+    required AfTrack track,
+  }) async {
+    final result = await _firstMeaningfulRace([
+      _tryFetchNetease(trackId: trackId, track: track),
+      _tryFetchLrclib(trackId: trackId, track: track),
+    ]);
+    if (result != null) {
+      cacheLyrics(trackId, _rawFromResult(result), result.source);
+    }
+    return result;
+  }
+
+  Future<LyricsResult?> _resolvePhase2({
+    required String trackId,
+    required AfTrack track,
+    required LyricsResult baseline,
+  }) async {
+    final candidate = await _firstMeaningfulRace([
+      _tryFetchKugou(trackId: trackId, track: track),
+      _tryFetchSimpMusic(trackId: trackId, track: track),
+      _tryFetchUnison(trackId: trackId, track: track),
+    ]);
+    if (candidate == null) return baseline;
+    if (_betterThan(candidate, baseline)) {
+      cacheLyrics(trackId, _rawFromResult(candidate), candidate.source);
+      afLog(
+        'lyrics',
+        'Phase2 upgrade for $trackId: ${candidate.source.label} with '
+            '${candidate.lrc.lines.length} lines',
+      );
+      return candidate;
+    }
+    return baseline;
   }
 }

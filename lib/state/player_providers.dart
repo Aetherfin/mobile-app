@@ -21,6 +21,7 @@ import 'music_backend_providers.dart';
 import 'settings_providers.dart';
 import 'favorite_providers.dart';
 import '../utils/log.dart';
+import 'search_providers.dart';
 import 'smart_queue_providers.dart';
 import '../home_widget/home_widget_manager.dart';
 
@@ -287,7 +288,14 @@ void _wireServiceCallbacks(Ref ref, AfPlayerService svc) {
     if (track != null && track.duration > Duration.zero) {
       final backend = ref.read(musicBackendProvider);
       if (backend != null) {
-        preloader ??= LyricsPreloadManager(backend: backend);
+        preloader ??= LyricsPreloadManager(
+          backend: backend,
+          onCachedResult: (trackId, result) async {
+            ref
+                .read(lyricsCacheProvider.notifier)
+                .update((prev) => {...prev, trackId: result});
+          },
+        );
         final queue = svc.currentQueue;
         final currentIdx = svc.currentIndex;
         preloader!.preloadNext(queue: queue, currentIndex: currentIdx);

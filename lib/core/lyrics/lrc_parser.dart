@@ -87,9 +87,16 @@ Lrc parseLrc(String src) {
     }
 
     final tags = tagRegex.allMatches(raw).toList();
-    if (tags.isEmpty) continue;
-
     final text = raw.replaceAll(tagRegex, '').trim();
+
+    if (tags.isEmpty) {
+      // Lines without timestamps (plain/unsynced lyrics) — include with
+      // Duration.zero so they survive _isMeaningfulLyrics checks.
+      if (text.isNotEmpty) {
+        lines.add(LrcLine(Duration.zero, text));
+      }
+      continue;
+    }
     for (final tag in tags) {
       // tryParse keeps a malformed-but-regex-matching LRC (e.g. a tag with
       // a stray non-ASCII digit slipping past the engine's NFD/NFC pass)
