@@ -167,15 +167,30 @@ class TrackRow extends ConsumerWidget {
     final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
 
     Widget leading;
-    if (leadingNumber != null && !isActive) {
+    if (leadingNumber != null) {
       leading = SizedBox(
         width: artSize,
         height: artSize,
         child: Center(
-          child: Text(
-            '${leadingNumber!}.',
-            style: AfTypography.caption.copyWith(color: AfColors.textTertiary),
-          ),
+          child: isActive
+              ? (isBuffering
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: accent,
+                      ),
+                    )
+                  : PlayingEqualizer(
+                      color: accent,
+                      size: 16.0,
+                      isPlaying: isPlaying,
+                    ))
+              : Text(
+                  '${leadingNumber!}.',
+                  style: AfTypography.caption.copyWith(color: AfColors.textTertiary),
+                ),
         ),
       );
     } else {
