@@ -113,7 +113,7 @@ def _send_text(text, reply_markup=None):
         sys.exit(1)
 
 
-def _upload_to_gofile(file_paths):
+def _upload_to_gofile(file_path):
     try:
         server_resp = subprocess.run(
             ["curl", "-s", "https://api.gofile.io/servers"],
@@ -131,37 +131,25 @@ def _upload_to_gofile(file_paths):
             return None
 
         server = servers["data"]["servers"][0]["name"]
-        folder_id = None
-        download_url = None
 
-        for i, fp in enumerate(file_paths):
-            curl_cmd = ["curl", "-s", "-F", f"file=@{fp}"]
-            if folder_id:
-                curl_cmd.extend(["-F", f"folderId={folder_id}"])
-            curl_cmd.append(f"https://{server}.gofile.io/contents/uploadfile")
+        result = subprocess.run(
+            ["curl", "-s", "-F", f"file=@{file_path}", f"https://{server}.gofile.io/contents/uploadfile"],
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
+        if result.returncode != 0:
+            print(f"curl failed: {result.stderr}")
+            return None
 
-            result = subprocess.run(
-                curl_cmd,
-                capture_output=True,
-                text=True,
-                timeout=300
-            )
-            if result.returncode != 0:
-                print(f"curl failed for {os.path.basename(fp)}: {result.stderr}")
-                return None
-
-            resp = json.loads(result.stdout)
-            if resp.get("status") != "ok":
-                print(f"gofile error for {os.path.basename(fp)}: {resp}")
-                return None
-
-            data = resp["data"]
-            if i == 0:
-                folder_id = data.get("parentFolderId") or data.get("folderId")
-                download_url = data.get("downloadPage")
-            print(f"  Uploaded {os.path.basename(fp)}")
-
-        return download_url
+        resp = json.loads(result.stdout)
+        if resp.get("status") == "ok":
+            url = resp["data"]["downloadPage"]
+            print(f"  Uploaded {os.path.basename(file_path)}: {url}")
+            return url
+        else:
+            print(f"gofile error: {resp}")
+            return None
     except subprocess.TimeoutExpired:
         print("Upload to gofile timed out")
         return None
@@ -232,13 +220,13 @@ def success_message():
     timestamp = os.environ.get('TG_TIMESTAMP', '')
 
     apk_files = sorted(glob.glob(os.path.join(apk_dir, "Aetherfin-v*.apk")))
-    uploaded_apks = []  # list of (name, size)
-    download_url = None
-    if apk_files:
-        for apk_path in apk_files:
-            uploaded_apks.append((os.path.basename(apk_path), os.path.getsize(apk_path)))
-        print(f"Uploading {len(apk_files)} APK(s) to gofile...")
-        download_url = _upload_to_gofile(apk_files)
+    uploaded_apks = []  # list of (name, size, download_url)
+    for apk_path in apk_files:
+        name = os.path.basename(apk_path)
+        size = os.path.getsize(apk_path)
+        print(f"Uploading {name} to gofile...")
+        url = _upload_to_gofile(apk_path)
+        uploaded_apks.append((name, size, url))
 
     icon = "\U0001f680" if tag else "\u2705"
     status = "Release Successful!" if tag else "Build Successful!"
@@ -246,7 +234,7 @@ def success_message():
     lines = [f"{icon} <b>Aetherfin {status}</b>", ""]
     if uploaded_apks:
         lines.append(f"<b>APKs:</b>")
-        for name, size in uploaded_apks:
+        for name, size, _ in uploaded_apks:
             size_mb = size / (1024 * 1024)
             lines.append(f"  \u2022 <code>{name}</code> ({size_mb:.1f}MB)")
     lines.append(f"<b>Mode:</b> <code>{mode}</code>")
@@ -265,8 +253,9 @@ def success_message():
     text = "\n".join(lines)
 
     buttons = []
-    if download_url:
-        buttons.append([{"text": "\U0001f4e5 Download APKs", "url": download_url}])
+    for name, _, url in uploaded_apks:
+        if url:
+            buttons.append([{"text": f"\U0001f4e5 {name}", "url": url}])
     if run_url:
         buttons.append([{"text": "\U0001f528 View Run", "url": run_url}])
     if commit_url:
