@@ -219,24 +219,26 @@ def success_message():
     commit = os.environ.get('TG_COMMIT', '')
     timestamp = os.environ.get('TG_TIMESTAMP', '')
 
-    apk_files = sorted(glob.glob(os.path.join(apk_dir, "Aetherfin-v*.apk")))
-    uploaded_apks = []  # list of (name, size, download_url)
-    for apk_path in apk_files:
-        name = os.path.basename(apk_path)
-        size = os.path.getsize(apk_path)
-        print(f"Uploading {name} to gofile...")
-        url = _upload_to_gofile(apk_path)
-        uploaded_apks.append((name, size, url))
+    apk_files = sorted(glob.glob(os.path.join(apk_dir, "Aetherfin-v*arm64*.apk")))
+    apk_name = None
+    apk_size = None
+    download_url = None
+    if apk_files:
+        apk_path = apk_files[0]
+        apk_name = os.path.basename(apk_path)
+        apk_size = os.path.getsize(apk_path)
+        print(f"Uploading {apk_name} to gofile...")
+        download_url = _upload_to_gofile(apk_path)
 
     icon = "\U0001f680" if tag else "\u2705"
     status = "Release Successful!" if tag else "Build Successful!"
 
     lines = [f"{icon} <b>Aetherfin {status}</b>", ""]
-    if uploaded_apks:
-        lines.append(f"<b>APKs:</b>")
-        for name, size, _ in uploaded_apks:
-            size_mb = size / (1024 * 1024)
-            lines.append(f"  \u2022 <code>{name}</code> ({size_mb:.1f}MB)")
+    if apk_name:
+        lines.append(f"<b>App:</b> <code>{apk_name}</code>")
+    if apk_size:
+        size_mb = apk_size / (1024 * 1024)
+        lines.append(f"<b>Size:</b> {size_mb:.1f}MB")
     lines.append(f"<b>Mode:</b> <code>{mode}</code>")
     lines.append("")
     lines.append(f"<b>Branch:</b> <code>{branch}</code>")
@@ -253,9 +255,8 @@ def success_message():
     text = "\n".join(lines)
 
     buttons = []
-    for name, _, url in uploaded_apks:
-        if url:
-            buttons.append([{"text": f"\U0001f4e5 {name}", "url": url}])
+    if download_url:
+        buttons.append([{"text": "\U0001f4e5 Download APK", "url": download_url}])
     if run_url:
         buttons.append([{"text": "\U0001f528 View Run", "url": run_url}])
     if commit_url:
