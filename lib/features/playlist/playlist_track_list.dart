@@ -60,7 +60,7 @@ class PlaylistTrackList extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
       buildDefaultDragHandles: false,
       itemCount: tracks.length,
-      onReorderItem: onReorder,
+      onReorder: onReorder,
       itemBuilder: (context, i) =>
           _buildTrackTile(context, i, dismissible: true),
     );

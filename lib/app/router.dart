@@ -83,6 +83,11 @@ final _router = GoRouter(
       if (auth == null && !inOnboarding) return '/onboarding/discover';
     }
 
+    // YouTube Music mode: stay on home, never go back to welcome screen.
+    if (effectiveMode == AppMode.youtubeMusic) {
+      if (loc == '/') return '/home';
+    }
+
     // Local mode: redirect to home if onboarding is done.
     // Otherwise, redirect to local setup if we are in onboarding.
     if (effectiveMode == AppMode.local) {
