@@ -15,7 +15,6 @@ import 'artist_navigation.dart';
 import 'more_menu.dart';
 import 'reactive_progress.dart';
 import 'transport_widgets.dart';
-import '../../widgets/squiggly_progress_bar.dart';
 
 /// Bottom content zone — metadata, scrubber, transport, expandable queue.
 ///
@@ -89,7 +88,6 @@ class _BottomContentState extends ConsumerState<BottomContent>
   Widget build(BuildContext context) {
     final queue = ref.watch(playerServiceProvider).currentQueue;
     final currentIndex = ref.watch(playerServiceProvider).currentIndex;
-    final barStyle = ref.watch(progressBarStyleProvider);
 
     // Up-next queue: items after the current track (computed once per rebuild)
     final queueLen = queue.length;
@@ -143,11 +141,8 @@ class _BottomContentState extends ConsumerState<BottomContent>
                           child: MetadataOverlay(track: widget.track),
                         ),
                         const SizedBox(height: AfSpacing.s12),
-                        // ── Progress bar (style-dependent) ──
-                        if (barStyle == ProgressBarStyle.squiggly)
-                          SquigglyProgressBar(track: widget.track)
-                        else
-                          ReactiveProgress(track: widget.track),
+                        // ── Progress bar ──
+                        ReactiveProgress(track: widget.track),
                         const SizedBox(height: AfSpacing.s12),
                         // ── Transport controls ──
                         ReactiveTransport(track: widget.track),

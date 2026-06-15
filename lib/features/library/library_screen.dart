@@ -11,7 +11,7 @@ import '../../widgets/section_header.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/tile.dart';
 import '../../widgets/bottom_sheet.dart';
-import '../../widgets/gradient_header.dart';
+
 import 'sections/albums_tab.dart';
 import 'sections/artists_tab.dart';
 import 'sections/genres_tab.dart';
@@ -114,8 +114,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Expanded(
-                                child: GradientHeader(text: 'Library'),
+                              Expanded(
+                                child: ShaderMask(
+                                  shaderCallback: (bounds) =>
+                                      const LinearGradient(
+                                        colors: [
+                                          AfColors.indigo400,
+                                          AfColors.indigo600,
+                                        ],
+                                      ).createShader(bounds),
+                                  child: Text(
+                                    'Library',
+                                    style: AfTypography.display.copyWith(
+                                      color: AfColors.textOnPrimary,
+                                    ),
+                                  ),
+                                ),
                               ),
                               PressScale(
                                 onTap: () => _openSearch(context),

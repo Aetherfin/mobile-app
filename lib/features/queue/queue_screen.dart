@@ -365,9 +365,7 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
       _cachedIds = null;
       _lastQueueIds = _itemIds;
     });
-    ref
-        .read(playerServiceProvider)
-        .reorderQueue(oldIndex, newIndex);
+    ref.read(playerServiceProvider).reorderQueue(oldIndex, newIndex);
   }
 
   void _onDismiss(int i, AfTrack t) {

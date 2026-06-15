@@ -55,8 +55,8 @@ class _AfBottomNavState extends ConsumerState<AfBottomNav>
       duration: AfDurations.standard,
     );
     _springAnim = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.12), weight: 40),
-      TweenSequenceItem(tween: Tween(begin: 1.12, end: 1.0), weight: 60),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.2), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.2, end: 1.0), weight: 60),
     ]).animate(CurvedAnimation(parent: _springCtrl, curve: Curves.easeOut));
   }
 
@@ -103,9 +103,9 @@ class _AfBottomNavState extends ConsumerState<AfBottomNav>
       child: FocusPressScale(
         ensureHitTarget: false,
         onTap: () {
-          HapticFeedback.selectionClick();
-          _springCtrl.forward(from: 0);
           widget.onSelect(index);
+          HapticFeedback.mediumImpact();
+          _springCtrl.forward(from: 0);
         },
         child: Transform.scale(
           scale: active ? _springAnim.value : 1.0,
@@ -136,7 +136,7 @@ class _AfBottomNavState extends ConsumerState<AfBottomNav>
                 ),
                 ClipRect(
                   child: AnimatedAlign(
-                    duration: AfDurations.standard,
+                    duration: AfDurations.quick,
                     curve: AfCurves.easeStandard,
                     alignment: Alignment.centerLeft,
                     widthFactor: active ? 1.0 : 0.0,

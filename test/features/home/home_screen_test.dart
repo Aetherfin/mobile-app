@@ -36,9 +36,8 @@ void main() {
   }
 
   group('HomeScreen', () {
-    // HomeScreen contains MeshGradientBackground which runs a repeating
-    // AnimationController — pumpAndSettle() would time out. Use pump()
-    // to advance a fixed number of frames instead.
+    // Use pump() with fixed duration instead of pumpAndSettle() for
+    // controlled frame advancement.
 
     Future<void> pumpHome(
       WidgetTester tester,

@@ -98,20 +98,6 @@ class SettingsScreen extends ConsumerWidget {
 
                         const SizedBox(height: AfSpacing.s24),
 
-                        // ── Now Playing ─────────────────────────────────────────
-                        const AfCollapsibleSection(
-                          title: 'Now Playing',
-                          child: SettingsGroup(
-                            children: [
-                              PlayerBackgroundStylePicker(),
-                              ProgressBarStyleToggle(),
-                              CanvasEffectPicker(),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: AfSpacing.s24),
-
                         // ── Audio ───────────────────────────────────────────────
                         const AudioSection(),
 

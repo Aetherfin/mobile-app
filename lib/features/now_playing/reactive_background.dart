@@ -52,7 +52,6 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
   Widget build(BuildContext context) {
     final spectral = ref.watch(currentSpectralProvider);
     final energy = spectral.energy;
-    final style = ref.watch(playerBackgroundStyleProvider);
 
     final oklch = srgbToOklch(energy);
     final target = OklchColor(0.35, 0.12, oklch.h).toColor();
@@ -87,33 +86,9 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
       value: overlayStyle,
       child: AnimatedBuilder(
         animation: _colorAnimation,
-        builder: (context, _) => _buildStyleWidget(style, energy),
+        builder: (context, _) =>
+            GlowBackground(energy: energy, child: widget.child),
       ),
     );
-  }
-
-  Widget _buildStyleWidget(PlayerBackgroundStyle style, Color energy) {
-    return switch (style) {
-      PlayerBackgroundStyle.gradient => GradientBackground(
-        energy: energy,
-        child: widget.child,
-      ),
-      PlayerBackgroundStyle.blur => BlurBackground(
-        energy: energy,
-        child: widget.child,
-      ),
-      PlayerBackgroundStyle.glow => GlowBackground(
-        energy: energy,
-        child: widget.child,
-      ),
-      PlayerBackgroundStyle.solid => SolidBackground(
-        energy: energy,
-        child: widget.child,
-      ),
-      PlayerBackgroundStyle.blurGradient => BlurGradientBackground(
-        energy: energy,
-        child: widget.child,
-      ),
-    };
   }
 }
