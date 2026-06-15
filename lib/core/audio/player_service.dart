@@ -52,6 +52,9 @@ class AfPlayerService {
     _authHeadersManager = AuthHeadersManager();
     _queueLock = AfAsyncLock();
 
+    _bridge = NativeMediaSessionBridge();
+    _wireBridgeCallbacks(_bridge);
+
     _playback = PlaybackController(
       player: _player,
       queueManager: _queueManager,
@@ -97,10 +100,6 @@ class AfPlayerService {
         });
 
     _wireMediaSessionCommands();
-
-    final bridge = NativeMediaSessionBridge();
-    _bridge = bridge;
-    _wireBridgeCallbacks(bridge);
 
     Future.microtask(() async {
       try {
@@ -179,6 +178,11 @@ class AfPlayerService {
     _authHeadersManager = AuthHeadersManager();
     _queueLock = AfAsyncLock();
 
+    if (bridge != null) {
+      _bridge = bridge;
+    }
+    _wireBridgeCallbacks(_bridge);
+
     _playback = PlaybackController(
       player: player,
       queueManager: _queueManager,
@@ -195,10 +199,6 @@ class AfPlayerService {
 
     _artworkManager.onArtworkChanged = _playback.updateMediaSession;
 
-    if (bridge != null) {
-      _bridge = bridge;
-    }
-    _wireBridgeCallbacks(_bridge);
     _wireMediaSessionCommands();
 
     _bindStreams();

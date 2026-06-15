@@ -260,8 +260,8 @@ class AfArtworkManager {
       return;
     }
 
-    // Download from remote URL
-    final path = await _diskCache.downloadFromUrl(
+      // Download from remote URL
+      final path = await _diskCache.downloadFromUrl(
       track.id,
       imageUrl,
       _authHeaders,

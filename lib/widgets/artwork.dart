@@ -96,7 +96,7 @@ class Artwork extends ConsumerWidget {
     int? clampedCachePx(double logicalPx) {
       final physical = (logicalPx * dpr).round();
       if (physical <= 0) return null;
-      return physical > 2048 ? 2048 : physical;
+      return physical > 4096 ? 4096 : physical;
     }
 
     final cacheW = clampedCachePx(layoutW);
