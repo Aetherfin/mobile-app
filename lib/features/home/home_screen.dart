@@ -10,6 +10,8 @@ import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../state/youtube_music_providers.dart';
 import '../../widgets/async_error_view.dart';
+import '../../widgets/gradient_header.dart';
+import '../../widgets/mesh_gradient_background.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/skeletons/home_skeleton.dart';
 import 'sections/hero_carousel.dart';
@@ -117,10 +119,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return YouTubeHomeView(scrollController: _ytScrollController);
     }
 
-    return FocusTraversalGroup(
-      child: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
+    return MeshGradientBackground(
+      child: FocusTraversalGroup(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
             return Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(
@@ -148,7 +151,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           child: Row(
                             children: [
-                              const _HomeHeaderGradient(),
+                              const GradientHeader(text: 'Listen'),
                               const Spacer(),
                               _GlassCastButton(
                                 onTap: () => context.push('/cast'),
@@ -203,6 +206,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             );
           },
         ),
+        ),
       ),
     );
   }
@@ -211,30 +215,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 // ---------------------------------------------------------------------------
 // Local helpers
 // ---------------------------------------------------------------------------
-
-/// "Listen" header with spectral gradient text.
-class _HomeHeaderGradient extends ConsumerWidget {
-  const _HomeHeaderGradient();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final spectral = ref.watch(
-      currentSpectralProvider.select(
-        (s) => (primary: s.primary, secondary: s.secondary),
-      ),
-    );
-
-    return ShaderMask(
-      shaderCallback: (bounds) => LinearGradient(
-        colors: [spectral.primary, spectral.secondary],
-      ).createShader(bounds),
-      child: Text(
-        'Listen',
-        style: AfTypography.display.copyWith(color: AfColors.textOnPrimary),
-      ),
-    );
-  }
-}
 
 /// Glass pill button for the cast icon in the header.
 class _GlassCastButton extends StatelessWidget {

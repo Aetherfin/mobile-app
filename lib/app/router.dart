@@ -31,6 +31,7 @@ import '../features/sleep_timer/sleep_timer_screen.dart';
 import '../features/smart_playlist/smart_playlist_detail_screen.dart';
 import '../features/smart_playlist/smart_playlist_edit_screen.dart';
 import '../features/smart_playlist/smart_playlist_list_screen.dart';
+import '../design_tokens/tokens.dart';
 import '../widgets/app_shell.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -218,8 +219,24 @@ final _router = GoRouter(
       name: 'now-playing',
       path: '/now-playing',
       parentNavigatorKey: _rootKey,
-      pageBuilder: (context, state) =>
-          const NoTransitionPage(child: NowPlayingScreen()),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        child: const NowPlayingScreen(),
+        transitionDuration: AfDurations.standard,
+        reverseTransitionDuration: AfDurations.standard,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: AfCurves.easeEmphasized,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.95, end: 1.0).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      ),
     ),
     GoRoute(
       name: 'queue',

@@ -9,6 +9,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../core/jellyfin/models/items.dart';
 import '../design_tokens/tokens.dart';
 import '../state/providers.dart';
+import 'af_loading_indicator.dart';
 import 'artwork.dart';
 import 'press_scale.dart';
 
@@ -368,13 +369,10 @@ class _MiniTransport extends ConsumerWidget {
               height: AfSpacing.minHitTarget,
               child: Center(
                 child: isBuffering
-                    ? const SizedBox(
-                        width: AfSpacing.s20,
-                        height: AfSpacing.s20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AfColors.textSecondary,
-                        ),
+                    ? const AfLoadingIndicator(
+                        size: AfSpacing.s20,
+                        strokeWidth: 2,
+                        color: AfColors.textSecondary,
                       )
                     : Icon(
                         isPlaying ? LucideIcons.pause : LucideIcons.play,

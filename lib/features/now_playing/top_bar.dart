@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
+import '../../widgets/af_loading_indicator.dart';
 import '../../state/providers.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/marquee_text.dart';
@@ -225,7 +226,7 @@ class _FrostedTopBarState extends ConsumerState<FrostedTopBar>
                             ? const Padding(
                                 padding: EdgeInsets.all(AfSpacing.s24),
                                 child: Center(
-                                  child: CircularProgressIndicator(
+                                  child: AfLoadingIndicator(
                                     strokeWidth: 2,
                                     color: AfColors.textTertiary,
                                   ),

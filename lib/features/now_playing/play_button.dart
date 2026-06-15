@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../widgets/af_loading_indicator.dart';
 import '../../widgets/press_scale.dart';
 
 /// Play/pause button with spectral ambient glow and animations.
@@ -107,13 +108,10 @@ class _PlayButtonState extends ConsumerState<PlayButton>
               ),
               child: Center(
                 child: isBuffering
-                    ? SizedBox(
-                        width: AfSpacing.s24,
-                        height: AfSpacing.s24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: _contrastColor(widget.accent),
-                        ),
+                    ? AfLoadingIndicator(
+                        size: AfSpacing.s24,
+                        strokeWidth: 2.5,
+                        color: _contrastColor(widget.accent),
                       )
                     : AnimatedSwitcher(
                         duration: AfDurations.quick,

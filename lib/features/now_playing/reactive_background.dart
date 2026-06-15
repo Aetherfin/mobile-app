@@ -110,6 +110,10 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
         energy: energy,
         child: widget.child,
       ),
+      PlayerBackgroundStyle.blurGradient => BlurGradientBackground(
+        energy: energy,
+        child: widget.child,
+      ),
     };
   }
 }

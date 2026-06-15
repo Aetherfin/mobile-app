@@ -9,6 +9,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../core/youtube/youtube_auth.dart';
 import '../../design_tokens/tokens.dart';
 import '../../utils/log.dart';
+import '../../widgets/af_loading_indicator.dart';
 import '../../state/youtube_music_providers.dart';
 
 /// WebView-based Google login screen for YouTube Music.
@@ -379,14 +380,7 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
           if (_isLoading)
             const Padding(
               padding: EdgeInsets.all(16),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AfColors.textSecondary,
-                ),
-              ),
+              child: AfLoadingIndicator(),
             ),
         ],
       ),
@@ -410,7 +404,7 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
                 WebViewWidget(controller: _controller),
                 if (_isLoading)
                   const Center(
-                    child: CircularProgressIndicator(
+                    child: AfLoadingIndicator(
                       color: AfColors.textSecondary,
                     ),
                   ),

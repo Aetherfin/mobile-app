@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/jellyfin/models/library.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../widgets/af_loading_indicator.dart';
 import '../../utils/log.dart';
 
 /// Library content-type picker during first run.
@@ -76,7 +77,7 @@ class _LibraryScopeScreenState extends ConsumerState<LibraryScopeScreen> {
             horizontal: AfSpacing.gutterGenerous,
           ),
           child: _loading
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(child: AfLoadingIndicator())
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

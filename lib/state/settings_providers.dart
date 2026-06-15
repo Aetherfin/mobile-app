@@ -21,6 +21,30 @@ enum PlayerBackgroundStyle {
 
   /// Single solid color extracted from artwork spectral energy.
   solid,
+
+  /// Combined blur + gradient overlay for depth effect.
+  blurGradient,
+}
+
+/// Visual style for the progress bar on the Now Playing screen.
+enum ProgressBarStyle {
+  /// The default FFT visualizer scrubber bar.
+  visualScrubber,
+
+  /// Animated squiggly line progress bar.
+  squiggly,
+}
+
+/// Canvas overlay effect for the Now Playing artwork.
+enum CanvasEffect {
+  /// No overlay effect.
+  none,
+
+  /// Floating particles that drift upward.
+  particles,
+
+  /// Layered sine waves that drift horizontally.
+  wave,
 }
 
 final discoveredServersProvider = StateProvider<List<JellyfinServer>>(
@@ -106,6 +130,72 @@ class PlayerBackgroundStyleNotifier extends Notifier<PlayerBackgroundStyle> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, style.name);
     state = style;
+  }
+}
+
+/// Persisted Now Playing progress bar style preference.
+final progressBarStyleProvider =
+    NotifierProvider<ProgressBarStyleNotifier, ProgressBarStyle>(
+      ProgressBarStyleNotifier.new,
+    );
+
+class ProgressBarStyleNotifier extends Notifier<ProgressBarStyle> {
+  static const _key = 'af.progress_bar_style';
+
+  @override
+  ProgressBarStyle build() {
+    _load();
+    return ProgressBarStyle.visualScrubber;
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString(_key);
+    if (name != null) {
+      state = ProgressBarStyle.values.firstWhere(
+        (s) => s.name == name,
+        orElse: () => ProgressBarStyle.visualScrubber,
+      );
+    }
+  }
+
+  Future<void> setStyle(ProgressBarStyle style) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, style.name);
+    state = style;
+  }
+}
+
+/// Persisted Now Playing canvas effect preference.
+final canvasEffectProvider =
+    NotifierProvider<CanvasEffectNotifier, CanvasEffect>(
+      CanvasEffectNotifier.new,
+    );
+
+class CanvasEffectNotifier extends Notifier<CanvasEffect> {
+  static const _key = 'af.canvas_effect';
+
+  @override
+  CanvasEffect build() {
+    _load();
+    return CanvasEffect.none;
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString(_key);
+    if (name != null) {
+      state = CanvasEffect.values.firstWhere(
+        (s) => s.name == name,
+        orElse: () => CanvasEffect.none,
+      );
+    }
+  }
+
+  Future<void> setEffect(CanvasEffect effect) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, effect.name);
+    state = effect;
   }
 }
 

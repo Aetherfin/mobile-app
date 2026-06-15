@@ -271,3 +271,86 @@ class SmartQueueToggle extends ConsumerWidget {
     );
   }
 }
+
+class ProgressBarStyleToggle extends ConsumerWidget {
+  const ProgressBarStyleToggle({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final style = ref.watch(progressBarStyleProvider);
+    return SettingsSwitchTile(
+      icon: LucideIcons.music,
+      iconColor: AfColors.textSecondary,
+      title: 'Squiggly progress bar',
+      subtitle: 'Show animated wave instead of FFT scrubber',
+      value: style == ProgressBarStyle.squiggly,
+      onChanged: (v) {
+        ref.read(progressBarStyleProvider.notifier).setStyle(
+          v ? ProgressBarStyle.squiggly : ProgressBarStyle.visualScrubber,
+        );
+      },
+    );
+  }
+}
+
+class CanvasEffectPicker extends ConsumerWidget {
+  const CanvasEffectPicker({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final effect = ref.watch(canvasEffectProvider);
+    return SettingsTile(
+      icon: LucideIcons.sparkles,
+      iconColor: AfColors.textSecondary,
+      title: 'Artwork overlay',
+      subtitle: effect == CanvasEffect.none
+          ? 'Off'
+          : effect == CanvasEffect.particles
+              ? 'Particles'
+              : 'Wave',
+      onTap: () => _showEffectPicker(context, ref, effect),
+    );
+  }
+
+  void _showEffectPicker(
+    BuildContext context,
+    WidgetRef ref,
+    CanvasEffect current,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AfColors.surfaceRaised,
+        title: Text(
+          'Artwork overlay',
+          style: AfTypography.bodyMedium.copyWith(
+            color: AfColors.textPrimary,
+          ),
+        ),
+        content: RadioGroup<CanvasEffect>(
+          groupValue: current,
+          onChanged: (v) {
+            if (v != null) {
+              ref.read(canvasEffectProvider.notifier).setEffect(v);
+            }
+            Navigator.of(ctx).pop();
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: CanvasEffect.values.map((e) {
+              final label = e == CanvasEffect.none
+                  ? 'Off'
+                  : e == CanvasEffect.particles
+                      ? 'Particles'
+                      : 'Wave';
+              return RadioListTile<CanvasEffect>(
+                title: Text(label, style: AfTypography.bodyMedium),
+                value: e,
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+}

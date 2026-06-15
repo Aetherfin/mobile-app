@@ -6,6 +6,7 @@
 library;
 
 export 'blur_background.dart';
+export 'blur_gradient_background.dart';
 export 'gradient_background.dart';
 export 'glow_background.dart';
 export 'solid_background.dart';

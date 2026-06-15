@@ -5,6 +5,7 @@ import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../widgets/artwork.dart';
+import 'canvas_overlay.dart';
 
 /// Card-style artwork for the now-playing screen.
 ///
@@ -66,7 +67,7 @@ class ReactiveArtwork extends ConsumerWidget {
 }
 
 /// The actual artwork card with shadow and spectral glow.
-class _ArtworkCard extends StatelessWidget {
+class _ArtworkCard extends ConsumerWidget {
   const _ArtworkCard({
     required this.track,
     required this.artworkUri,
@@ -86,7 +87,7 @@ class _ArtworkCard extends StatelessWidget {
   final double glowSpread;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.center,
@@ -146,6 +147,13 @@ class _ArtworkCard extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+        ),
+
+        // ── Canvas artwork overlay (e.g. vinyl spin) ──
+        Positioned.fill(
+          child: CanvasArtworkOverlay(
+            effect: ref.watch(canvasEffectProvider),
           ),
         ),
       ],

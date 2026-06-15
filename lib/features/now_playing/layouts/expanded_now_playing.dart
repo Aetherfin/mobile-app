@@ -7,6 +7,7 @@ import '../../../core/jellyfin/models/items.dart';
 import '../../../core/lyrics/lrc_parser.dart';
 import '../../../design_tokens/tokens.dart';
 import '../../../state/providers.dart';
+import '../../../widgets/af_loading_indicator.dart';
 import '../../../widgets/favorite_heart_button.dart';
 import '../../../widgets/glass_card.dart';
 import '../../../widgets/marquee_text.dart';
@@ -317,7 +318,7 @@ class _LyricsPane extends StatelessWidget {
             ? const Padding(
                 padding: EdgeInsets.all(AfSpacing.s24),
                 child: Center(
-                  child: CircularProgressIndicator(
+                  child: AfLoadingIndicator(
                     strokeWidth: 2,
                     color: AfColors.textTertiary,
                   ),

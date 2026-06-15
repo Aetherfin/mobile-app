@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../design_tokens/tokens.dart';
@@ -39,8 +40,31 @@ class AfBottomNav extends ConsumerStatefulWidget {
   ConsumerState<AfBottomNav> createState() => _AfBottomNavState();
 }
 
-class _AfBottomNavState extends ConsumerState<AfBottomNav> {
+class _AfBottomNavState extends ConsumerState<AfBottomNav>
+    with TickerProviderStateMixin {
   static const double _pillAlpha = 0.22;
+
+  late final AnimationController _springCtrl;
+  late final Animation<double> _springAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _springCtrl = AnimationController(
+      vsync: this,
+      duration: AfDurations.standard,
+    );
+    _springAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.12), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.12, end: 1.0), weight: 60),
+    ]).animate(CurvedAnimation(parent: _springCtrl, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _springCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,52 +102,59 @@ class _AfBottomNavState extends ConsumerState<AfBottomNav> {
       label: item.label,
       child: FocusPressScale(
         ensureHitTarget: false,
-        onTap: () => widget.onSelect(index),
-        child: AnimatedContainer(
-          duration: AfDurations.quick,
-          curve: AfCurves.easeStandard,
-          height: 48,
-          padding: EdgeInsets.symmetric(
-            horizontal: active ? AfSpacing.s16 : AfSpacing.s12,
-          ),
-          decoration: BoxDecoration(
-            color: active
-                ? accent.withValues(alpha: _pillAlpha)
-                : Colors.transparent,
-            borderRadius: AfRadii.borderPill,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedSwitcher(
-                duration: AfDurations.instant,
-                child: Icon(
-                  item.icon,
-                  key: ValueKey(active),
-                  size: 24,
-                  color: active ? accent : AfColors.textTertiary,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          _springCtrl.forward(from: 0);
+          widget.onSelect(index);
+        },
+        child: Transform.scale(
+          scale: active ? _springAnim.value : 1.0,
+          child: AnimatedContainer(
+            duration: AfDurations.quick,
+            curve: AfCurves.easeStandard,
+            height: 48,
+            padding: EdgeInsets.symmetric(
+              horizontal: active ? AfSpacing.s16 : AfSpacing.s12,
+            ),
+            decoration: BoxDecoration(
+              color: active
+                  ? accent.withValues(alpha: _pillAlpha)
+                  : Colors.transparent,
+              borderRadius: AfRadii.borderPill,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedSwitcher(
+                  duration: AfDurations.instant,
+                  child: Icon(
+                    item.icon,
+                    key: ValueKey(active),
+                    size: 24,
+                    color: active ? accent : AfColors.textTertiary,
+                  ),
                 ),
-              ),
-              ClipRect(
-                child: AnimatedAlign(
-                  duration: AfDurations.standard,
-                  curve: AfCurves.easeStandard,
-                  alignment: Alignment.centerLeft,
-                  widthFactor: active ? 1.0 : 0.0,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: AfSpacing.s4),
-                    child: Text(
-                      item.label,
-                      maxLines: 1,
-                      style: AfTypography.caption.copyWith(
-                        color: accent,
-                        fontWeight: FontWeight.w600,
+                ClipRect(
+                  child: AnimatedAlign(
+                    duration: AfDurations.standard,
+                    curve: AfCurves.easeStandard,
+                    alignment: Alignment.centerLeft,
+                    widthFactor: active ? 1.0 : 0.0,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: AfSpacing.s4),
+                      child: Text(
+                        item.label,
+                        maxLines: 1,
+                        style: AfTypography.caption.copyWith(
+                          color: accent,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -81,38 +81,35 @@ class _AnimatedSpectralScopeState extends ConsumerState<AnimatedSpectralScope>
 
 /// Linearly interpolates color fields in [Spectral].
 ///
-/// Performance optimization: only the 5 visually critical fields are lerped
-/// every frame (primary, secondary, energy, shadow, surfaceCanvas). The
-/// remaining 14 fields (surfaces, text colors, accents) are held at their
-/// from-value during intermediate frames and snap to the target at t == 1.
-/// This reduces per-frame cost from 19 Color.lerp calls to 5 — the
-/// non-critical fields are barely perceptible during the ~300ms transition.
+/// 12 fields are lerped every frame (primary, secondary, energy, shadow,
+/// surfaceCanvas, glow, muted, surfaceBase, surfaceRaised, textPrimary,
+/// textSecondary, textOnPrimary). The remaining 7 fields (link, warning,
+/// surfaceLow, surfaceHigh, surfaceMax, textTertiary, textDisabled) snap
+/// at endpoints only. ~0.03ms extra per frame over previous 5-field lerp.
 Spectral _lerpSpectral(Spectral a, Spectral b, double t) {
   if (t == 0) return a;
   if (t == 1) return b;
   return Spectral(
-    // ── Lerp every frame (5 visually dominant fields) ──
+    // ── Lerp every frame (12 fields) ──
     primary: Color.lerp(a.primary, b.primary, t)!,
     secondary: Color.lerp(a.secondary, b.secondary, t)!,
     energy: Color.lerp(a.energy, b.energy, t)!,
     shadow: Color.lerp(a.shadow, b.shadow, t)!,
     surfaceCanvas: Color.lerp(a.surfaceCanvas, b.surfaceCanvas, t)!,
-    // ── Snap at endpoints only (14 low-salience fields) ──
-    // These are barely visible during the short transition; holding
-    // the from-value avoids 14 extra Color.lerp calls per frame.
-    glow: a.glow,
-    muted: a.muted,
+    glow: Color.lerp(a.glow, b.glow, t)!,
+    muted: Color.lerp(a.muted, b.muted, t)!,
+    surfaceBase: Color.lerp(a.surfaceBase, b.surfaceBase, t)!,
+    surfaceRaised: Color.lerp(a.surfaceRaised, b.surfaceRaised, t)!,
+    textPrimary: Color.lerp(a.textPrimary, b.textPrimary, t)!,
+    textSecondary: Color.lerp(a.textSecondary, b.textSecondary, t)!,
+    textOnPrimary: Color.lerp(a.textOnPrimary, b.textOnPrimary, t)!,
+    // ── Snap at endpoints (7 fields) ──
     link: a.link,
     warning: a.warning,
     surfaceLow: a.surfaceLow,
-    surfaceBase: a.surfaceBase,
-    surfaceRaised: a.surfaceRaised,
     surfaceHigh: a.surfaceHigh,
     surfaceMax: a.surfaceMax,
-    textPrimary: a.textPrimary,
-    textSecondary: a.textSecondary,
     textTertiary: a.textTertiary,
     textDisabled: a.textDisabled,
-    textOnPrimary: a.textOnPrimary,
   );
 }
