@@ -156,16 +156,24 @@ class _AudioVisualScrubberState extends ConsumerState<AudioVisualScrubber>
 
   @override
   Widget build(BuildContext context) {
-    final position = ref.watch(positionStreamProvider);
-    final duration = ref.watch(durationStreamProvider);
+    // Use ref.read() instead of ref.watch() to avoid rebuilding this
+    // 240-line widget tree on every position tick (~200ms). The parent
+    // ReactiveProgress already watches position and passes `progress`.
+    // These values are only needed for Semantics accessibility strings
+    // and the seekBy callbacks — freshness within ~200ms is acceptable.
+    final position = ref.read(positionStreamProvider);
+    final duration = ref.read(durationStreamProvider);
     final valueStr =
         '${formatTrackDuration(position)} of ${formatTrackDuration(duration)}';
 
     void seekBy(Duration offset) {
-      final newMs = (position + offset).inMilliseconds;
-      final clampedMs = newMs.clamp(0, duration.inMilliseconds);
-      final p = duration.inMilliseconds > 0
-          ? clampedMs / duration.inMilliseconds
+      // Read fresh values at interaction time for accurate seek.
+      final pos = ref.read(positionStreamProvider);
+      final dur = ref.read(durationStreamProvider);
+      final newMs = (pos + offset).inMilliseconds;
+      final clampedMs = newMs.clamp(0, dur.inMilliseconds);
+      final p = dur.inMilliseconds > 0
+          ? clampedMs / dur.inMilliseconds
           : 0.0;
       widget.onScrub?.call(p);
       widget.onScrubEnd?.call(p);

@@ -95,6 +95,11 @@ class AfArtworkManager {
   /// Disk cache (delegates to [ArtworkDiskCache] for persistence).
   final ArtworkDiskCache _diskCache = ArtworkDiskCache();
 
+  /// Cache of file paths confirmed to exist via [File.existsSync].
+  /// Avoids repeated sync disk I/O on the hot path called every 2 seconds
+  /// from [updateMediaSession]. Cleared when artwork changes.
+  final Set<String> _existsCache = {};
+
   /// Update the auth headers used for authenticated artwork downloads.
   void setAuthHeaders(Map<String, String> headers) {
     _authHeaders = headers;
@@ -115,9 +120,11 @@ class AfArtworkManager {
     if (track.imageUrl != null && track.imageUrl!.startsWith('file://')) {
       // Verify the file exists before returning — cover_cache_manager
       // evicts files without nulling cover_path in the DB, so the path
-      // can be stale between scans.
+      // can be stale between scans. Uses _existsCache to avoid repeated
+      // sync disk I/O on the hot path (called every 2 seconds).
       final filePath = track.imageUrl!.substring('file://'.length);
-      if (File(filePath).existsSync()) {
+      if (_existsCache.contains(filePath) || File(filePath).existsSync()) {
+        _existsCache.add(filePath);
         return Uri.parse(track.imageUrl!);
       }
     }
@@ -160,6 +167,7 @@ class AfArtworkManager {
       _coverPath = path;
       _networkCoverPath = null;
       _networkCoverTrackId = null;
+      _existsCache.clear();
       onArtworkChanged?.call();
     } on Exception catch (e, stack) {
       afLog('audio', 'cover art persist failed', error: e, stackTrace: stack);
@@ -291,11 +299,13 @@ class AfArtworkManager {
     _coverPath = null;
     _networkCoverPath = null;
     _networkCoverTrackId = null;
+    _existsCache.clear();
   }
 
   void dispose() {
     _disposed = true;
     _memoryCache.clear();
+    _existsCache.clear();
     _diskCache.resetTracking();
   }
 }

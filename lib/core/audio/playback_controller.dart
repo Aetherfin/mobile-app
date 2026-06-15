@@ -97,6 +97,7 @@ class PlaybackController {
   int _lastMediaSessionUpdateMs = 0;
   int _lastQSPositionPushMs = 0;
   bool _lastEffectivePlaying = false;
+  Uri? _lastPushedArtUri;
 
   /// Stored from [playQueue] so [skipToQueueItem] and the completed handler
   /// can lazily resolve stream URLs when rebuilding the 2-track window.
@@ -505,7 +506,12 @@ class PlaybackController {
         ? artUri.toFilePath()
         : null;
 
-    onArtworkUpdated?.call(artUri);
+    // Only notify artwork change when URI actually changed to avoid
+    // unnecessary provider cascade + HomeWidgetManager.update() every 2s.
+    if (artUri != _lastPushedArtUri) {
+      _lastPushedArtUri = artUri;
+      onArtworkUpdated?.call(artUri);
+    }
 
     final loopModeStr = _queueManager.engine.isForNtimes
         ? 'ntimes'
