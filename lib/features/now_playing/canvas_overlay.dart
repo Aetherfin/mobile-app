@@ -31,8 +31,10 @@ class _CanvasArtworkOverlayState extends State<CanvasArtworkOverlay>
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 3))
-      ..repeat();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
     _lifecycle = AppLifecycleListener(
       onPause: () => _ctrl.stop(),
       onResume: () => _ctrl.repeat(),
@@ -67,10 +69,7 @@ class _CanvasArtworkOverlayState extends State<CanvasArtworkOverlay>
                         progress: _ctrl.value,
                         spectral: spectral,
                       )
-                    : _WavePainter(
-                        progress: _ctrl.value,
-                        spectral: spectral,
-                      ),
+                    : _WavePainter(progress: _ctrl.value, spectral: spectral),
                 size: Size.infinite,
               );
             },
@@ -88,7 +87,7 @@ class _CanvasArtworkOverlayState extends State<CanvasArtworkOverlay>
 /// 25 particles floating upward with soft spectral glow.
 class _ParticlePainter extends CustomPainter {
   _ParticlePainter({required this.progress, required this.spectral})
-      : super(repaint: ValueNotifier<double>(progress));
+    : super(repaint: ValueNotifier<double>(progress));
 
   final double progress;
   final Spectral spectral;
@@ -119,8 +118,7 @@ class _ParticlePainter extends CustomPainter {
 
     for (final p in _particles) {
       // Wrap Y upward: goes from bottom (1.0) to top (0.0), then wraps.
-      final y =
-          ((p.startY - progress * p.speed) % 1.0 + 1.0) % 1.0;
+      final y = ((p.startY - progress * p.speed) % 1.0 + 1.0) % 1.0;
       final screenY = size.height * (1 - y); // bottom-anchored
       final screenX = size.width * p.x;
 
@@ -128,8 +126,8 @@ class _ParticlePainter extends CustomPainter {
       final edgeFade = y < 0.2
           ? y / 0.2
           : y > 0.8
-              ? (1 - y) / 0.2
-              : 1.0;
+          ? (1 - y) / 0.2
+          : 1.0;
       final alpha = (edgeFade * 180).clamp(0, 255).toInt();
 
       final color = _colorForIndex(p.colorIndex).withValues(alpha: alpha / 255);
@@ -190,7 +188,7 @@ class _Particle {
 /// 3 layered sine waves drifting horizontally across the artwork.
 class _WavePainter extends CustomPainter {
   _WavePainter({required this.progress, required this.spectral})
-      : super(repaint: ValueNotifier<double>(progress));
+    : super(repaint: ValueNotifier<double>(progress));
 
   final double progress;
   final Spectral spectral;
@@ -207,8 +205,8 @@ class _WavePainter extends CustomPainter {
       final path = Path();
       path.moveTo(0, yBases[layer]);
       for (var x = 0.0; x <= size.width; x += 1) {
-        final y = yBases[layer] +
-            sin(x * 0.02 + progress * 2 * pi + layer) * 12;
+        final y =
+            yBases[layer] + sin(x * 0.02 + progress * 2 * pi + layer) * 12;
         path.lineTo(x, y);
       }
 

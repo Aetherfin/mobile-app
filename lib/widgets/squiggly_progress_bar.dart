@@ -75,25 +75,26 @@ class _SquigglyProgressBarState extends ConsumerState<SquigglyProgressBar>
     final mpvDuration = ref.watch(durationStreamProvider);
     final loadedTrackId = ref.watch(mpvLoadedTrackIdProvider);
     final isTransitioning = widget.track.id != loadedTrackId;
-    final duration =
-        mpvDuration > Duration.zero ? mpvDuration : widget.track.duration;
+    final duration = mpvDuration > Duration.zero
+        ? mpvDuration
+        : widget.track.duration;
 
     final effectivePosition = isTransitioning ? Duration.zero : position;
 
     final engineFraction = duration.inMilliseconds == 0
         ? 0.0
-        : (effectivePosition.inMilliseconds / duration.inMilliseconds)
-            .clamp(0.0, 1.0);
+        : (effectivePosition.inMilliseconds / duration.inMilliseconds).clamp(
+            0.0,
+            1.0,
+          );
 
     final displayFraction = _isDragging ? _dragFraction : engineFraction;
 
     return Semantics(
       label: 'Progress',
-      value:
-          '${(displayFraction * 100).round()}%',
+      value: '${(displayFraction * 100).round()}%',
       child: GestureDetector(
-        onHorizontalDragStart: (d) =>
-            _onDragStart(d, displayFraction),
+        onHorizontalDragStart: (d) => _onDragStart(d, displayFraction),
         onHorizontalDragUpdate: (d) {
           final box = context.findRenderObject() as RenderBox?;
           if (box != null) _onDragUpdate(d, box.size.width);

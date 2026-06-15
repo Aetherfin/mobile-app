@@ -320,10 +320,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   ElevatedButton(
                     onPressed: _busy ? null : _submit,
                     child: _busy
-                        ? const AfLoadingIndicator(
-                            size: 18,
-                            strokeWidth: 2.5,
-                          )
+                        ? const AfLoadingIndicator(size: 18, strokeWidth: 2.5)
                         : const Text('Sign in'),
                   ),
                   const SizedBox(height: AfSpacing.s24),

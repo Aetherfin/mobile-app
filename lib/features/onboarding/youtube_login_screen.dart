@@ -404,9 +404,7 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
                 WebViewWidget(controller: _controller),
                 if (_isLoading)
                   const Center(
-                    child: AfLoadingIndicator(
-                      color: AfColors.textSecondary,
-                    ),
+                    child: AfLoadingIndicator(color: AfColors.textSecondary),
                   ),
               ],
             ),

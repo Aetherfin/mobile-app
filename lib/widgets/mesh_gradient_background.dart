@@ -14,10 +14,7 @@ import '../state/animated_spectral.dart';
 ///
 /// Lifecycle-aware: pauses animation when app is in background.
 class MeshGradientBackground extends StatefulWidget {
-  const MeshGradientBackground({
-    required this.child,
-    super.key,
-  });
+  const MeshGradientBackground({required this.child, super.key});
 
   final Widget child;
 
@@ -27,37 +24,36 @@ class MeshGradientBackground extends StatefulWidget {
 
 class _MeshGradientBackgroundState extends State<MeshGradientBackground>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-
+  late AnimationController _ctrl;
+  bool _animationStarted = false;
 
   @override
   void initState() {
     super.initState();
-    final mediaQuery = MediaQuery.maybeOf(context);
-    final disableAnimations = mediaQuery?.disableAnimations ?? false;
-
     _ctrl = AnimationController(
       vsync: this,
-      duration: disableAnimations
-          ? const Duration(milliseconds: 100)
-          : const Duration(seconds: 20),
+      duration: const Duration(seconds: 20),
     );
+  }
 
-    if (!disableAnimations) {
-      _ctrl.repeat(reverse: true);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Start animation after first build — MediaQuery is safe here.
+    if (!_animationStarted) {
+      _animationStarted = true;
+      final disableAnimations = MediaQuery.disableAnimationsOf(context);
+      if (!disableAnimations) {
+        _ctrl.repeat(reverse: true);
+      }
     }
-
-    WidgetsBinding.instance.addObserver(_lifecycleListener);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(_lifecycleListener);
     _ctrl.dispose();
     super.dispose();
   }
-
-  final _lifecycleListener = _AppLifecycleListener();
 
   @override
   Widget build(BuildContext context) {
@@ -86,10 +82,7 @@ class _MeshGradientBackgroundState extends State<MeshGradientBackground>
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  AfColors.surfaceCanvas,
-                ],
+                colors: [Colors.transparent, AfColors.surfaceCanvas],
                 stops: [0.4, 1.0],
               ),
             ),
@@ -103,24 +96,12 @@ class _MeshGradientBackgroundState extends State<MeshGradientBackground>
   }
 }
 
-/// Lifecycle observer that pauses/resumes the animation controller.
-class _AppLifecycleListener with WidgetsBindingObserver {
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Animation controller is managed by the State's dispose, so we
-    // don't need to explicitly pause/resume here — the mixin handles it.
-  }
-}
-
 /// Custom painter that renders 5 drifting radial gradients using spectral colors.
 ///
 /// Each gradient position oscillates with `sin`/`cos` based on [animation]
 /// value (0..1 over 20s, repeating). Colors come from [animatedSpectral].
 class _MeshPainter extends CustomPainter {
-  _MeshPainter({
-    required this.animation,
-    required this.spectral,
-  });
+  _MeshPainter({required this.animation, required this.spectral});
 
   final double animation;
   final Spectral spectral;
@@ -170,19 +151,11 @@ class _MeshPainter extends CustomPainter {
     for (var i = 0; i < positions.length; i++) {
       final paint = Paint()
         ..shader = RadialGradient(
-          colors: [
-            colors[i],
-            Colors.transparent,
-          ],
+          colors: [colors[i], Colors.transparent],
           stops: const [0.0, 1.0],
-        ).createShader(
-          Rect.fromCircle(center: positions[i], radius: radius),
-        );
+        ).createShader(Rect.fromCircle(center: positions[i], radius: radius));
 
-      canvas.drawRect(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        paint,
-      );
+      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
     }
   }
 

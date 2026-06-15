@@ -152,9 +152,7 @@ class _ArtworkCard extends ConsumerWidget {
 
         // ── Canvas artwork overlay (e.g. vinyl spin) ──
         Positioned.fill(
-          child: CanvasArtworkOverlay(
-            effect: ref.watch(canvasEffectProvider),
-          ),
+          child: CanvasArtworkOverlay(effect: ref.watch(canvasEffectProvider)),
         ),
       ],
     );

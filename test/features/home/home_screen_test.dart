@@ -36,48 +36,43 @@ void main() {
   }
 
   group('HomeScreen', () {
-    testWidgets('renders without crashing', (tester) async {
-      final container = createHomeContainer();
-      addTearDown(container.dispose);
+    // HomeScreen contains MeshGradientBackground which runs a repeating
+    // AnimationController — pumpAndSettle() would time out. Use pump()
+    // to advance a fixed number of frames instead.
 
+    Future<void> pumpHome(
+      WidgetTester tester,
+      ProviderContainer container,
+    ) async {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
           child: const MaterialApp(home: HomeScreen()),
         ),
       );
-      await tester.pumpAndSettle();
+      // Pump a few frames to let async providers resolve and build.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+    }
 
+    testWidgets('renders without crashing', (tester) async {
+      final container = createHomeContainer();
+      addTearDown(container.dispose);
+      await pumpHome(tester, container);
       expect(find.byType(HomeScreen), findsOneWidget);
     });
 
     testWidgets('displays "Listen" header', (tester) async {
       final container = createHomeContainer();
       addTearDown(container.dispose);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(home: HomeScreen()),
-        ),
-      );
-      await tester.pumpAndSettle();
-
+      await pumpHome(tester, container);
       expect(find.text('Listen'), findsOneWidget);
     });
 
     testWidgets('renders hero carousel section (empty state)', (tester) async {
       final container = createHomeContainer();
       addTearDown(container.dispose);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(home: HomeScreen()),
-        ),
-      );
-      await tester.pumpAndSettle();
-
+      await pumpHome(tester, container);
       // When recentlyAddedAlbumsProvider returns empty data, the carousel
       // renders as a SizedBox.shrink(). The CustomScrollView and its slivers
       // should still be present.
@@ -87,30 +82,14 @@ void main() {
     testWidgets('renders Recently Played section header', (tester) async {
       final container = createHomeContainer();
       addTearDown(container.dispose);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(home: HomeScreen()),
-        ),
-      );
-      await tester.pumpAndSettle();
-
+      await pumpHome(tester, container);
       expect(find.text('Recently played'), findsOneWidget);
     });
 
     testWidgets('renders RefreshIndicator for pull-to-refresh', (tester) async {
       final container = createHomeContainer();
       addTearDown(container.dispose);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(home: HomeScreen()),
-        ),
-      );
-      await tester.pumpAndSettle();
-
+      await pumpHome(tester, container);
       expect(find.byType(RefreshIndicator), findsOneWidget);
     });
   });

@@ -285,9 +285,11 @@ class ProgressBarStyleToggle extends ConsumerWidget {
       subtitle: 'Show animated wave instead of FFT scrubber',
       value: style == ProgressBarStyle.squiggly,
       onChanged: (v) {
-        ref.read(progressBarStyleProvider.notifier).setStyle(
-          v ? ProgressBarStyle.squiggly : ProgressBarStyle.visualScrubber,
-        );
+        ref
+            .read(progressBarStyleProvider.notifier)
+            .setStyle(
+              v ? ProgressBarStyle.squiggly : ProgressBarStyle.visualScrubber,
+            );
       },
     );
   }
@@ -306,8 +308,8 @@ class CanvasEffectPicker extends ConsumerWidget {
       subtitle: effect == CanvasEffect.none
           ? 'Off'
           : effect == CanvasEffect.particles
-              ? 'Particles'
-              : 'Wave',
+          ? 'Particles'
+          : 'Wave',
       onTap: () => _showEffectPicker(context, ref, effect),
     );
   }
@@ -323,9 +325,7 @@ class CanvasEffectPicker extends ConsumerWidget {
         backgroundColor: AfColors.surfaceRaised,
         title: Text(
           'Artwork overlay',
-          style: AfTypography.bodyMedium.copyWith(
-            color: AfColors.textPrimary,
-          ),
+          style: AfTypography.bodyMedium.copyWith(color: AfColors.textPrimary),
         ),
         content: RadioGroup<CanvasEffect>(
           groupValue: current,
@@ -341,8 +341,8 @@ class CanvasEffectPicker extends ConsumerWidget {
               final label = e == CanvasEffect.none
                   ? 'Off'
                   : e == CanvasEffect.particles
-                      ? 'Particles'
-                      : 'Wave';
+                  ? 'Particles'
+                  : 'Wave';
               return RadioListTile<CanvasEffect>(
                 title: Text(label, style: AfTypography.bodyMedium),
                 value: e,

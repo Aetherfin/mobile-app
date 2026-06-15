@@ -152,13 +152,14 @@ void main() {
   });
 
   group('PlayerBackgroundStyle enum', () {
-    test('has all 4 expected values', () {
+    test('has all 5 expected values', () {
       const values = PlayerBackgroundStyle.values;
-      expect(values.length, 4);
+      expect(values.length, 5);
       expect(values, contains(PlayerBackgroundStyle.gradient));
       expect(values, contains(PlayerBackgroundStyle.blur));
       expect(values, contains(PlayerBackgroundStyle.glow));
       expect(values, contains(PlayerBackgroundStyle.solid));
+      expect(values, contains(PlayerBackgroundStyle.blurGradient));
     });
   });
 }

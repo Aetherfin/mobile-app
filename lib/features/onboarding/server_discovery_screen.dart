@@ -284,10 +284,7 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
               ElevatedButton(
                 onPressed: _busy ? null : _useManual,
                 child: _busy
-                    ? const AfLoadingIndicator(
-                        size: 18,
-                        strokeWidth: 2.5,
-                      )
+                    ? const AfLoadingIndicator(size: 18, strokeWidth: 2.5)
                     : const Text('Continue'),
               ),
               const SizedBox(height: AfSpacing.s24),
