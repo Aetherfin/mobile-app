@@ -59,9 +59,10 @@ class QueueListView extends ConsumerWidget {
         final active = currentId == t.id;
         final selected = selectedIndices.contains(i);
         return Semantics(
+          key: ValueKey('q-${t.id}-$i'),
           label: '${i + 1}. ${t.title} by ${t.artistName}',
           child: Dismissible(
-            key: ValueKey('q-${t.id}-$i'),
+            key: ValueKey('d-${t.id}-$i'),
             direction: isSelectionMode || active
                 ? DismissDirection.none
                 : DismissDirection.endToStart,
