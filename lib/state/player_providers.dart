@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart'
     show Loop, MpvPlayerError, FftFrame;
 
+import '../core/audio/active_queue_store.dart';
 import '../core/audio/af_loop_mode.dart';
 import '../core/audio/jellyfin_playback_reporter.dart';
 import '../core/audio/lastfm_playback_reporter.dart';
@@ -27,6 +28,7 @@ import '../home_widget/home_widget_manager.dart';
 /// extracted function can register resources that are torn down together.
 class _WireDisposables {
   Timer? saveQueueDebounce;
+  Timer? activeQueuePeriodicTimer;
   StreamSubscription<List<AfTrack>>? queueSub;
   StreamSubscription<AfTrack?>? trackSub;
   StreamSubscription<MpvPlayerError>? errorSub;
@@ -35,9 +37,11 @@ class _WireDisposables {
   StreamSubscription<bool>? playingSub;
   JellyfinPlaybackReporter? reporter;
   LastFmPlaybackReporter? lastfmReporter;
+  ActiveQueueStore? activeQueueStore;
 
   Future<void> dispose() async {
     saveQueueDebounce?.cancel();
+    activeQueuePeriodicTimer?.cancel();
     await queueSub?.cancel();
     await trackSub?.cancel();
     await errorSub?.cancel();
@@ -68,6 +72,8 @@ Future<void> _wireQueueLoading(Ref ref, AfPlayerService svc) async {
   Future<void> loadSavedQueue() async {
     final backend = ref.read(musicBackendProvider);
     if (backend == null) return;
+
+    // Try backend first (returns full AfTrack objects).
     try {
       final saved = await backend.getPlayQueue();
       if (saved != null && saved.tracks.isNotEmpty) {
@@ -84,11 +90,38 @@ Future<void> _wireQueueLoading(Ref ref, AfPlayerService svc) async {
           await svc.seek(saved.position);
         }
         await svc.pause();
+        return;
       }
     } on Exception catch (e, stack) {
       afLog(
         'audio',
-        'Failed to load saved queue on boot',
+        'Failed to load saved queue from backend',
+        error: e,
+        stackTrace: stack,
+      );
+    }
+
+    // Fallback: try restoring from local ActiveQueueStore.
+    // This provides track IDs only — full object resolution requires
+    // a backend tracksByIds endpoint (out of scope for this batch).
+    try {
+      final store = ActiveQueueStore();
+      final local = await store.restore();
+      if (local != null && local.trackIds.isNotEmpty) {
+        afLog(
+          'audio',
+          'Found saved queue in ActiveQueueStore: '
+              'count=${local.trackIds.length} '
+              'currentIndex=${local.currentIndex} '
+              'shuffle=${local.shuffleEnabled}',
+        );
+        // Track IDs are available in local.trackIds for future
+        // resolution. Cannot play without backend tracksByIds support.
+      }
+    } on Exception catch (e, stack) {
+      afLog(
+        'audio',
+        'Failed to restore active queue from local store',
         error: e,
         stackTrace: stack,
       );
@@ -135,6 +168,42 @@ void _wireQueueSaving(Ref ref, AfPlayerService svc, _WireDisposables d) {
       }
     });
   }
+
+  // Periodic save to ActiveQueueStore every 10 seconds while playing.
+  void startActiveQueuePeriodicTimer() {
+    d.activeQueuePeriodicTimer = Timer.periodic(const Duration(seconds: 10), (
+      _,
+    ) async {
+      if (!svc.isPlaying) return;
+      final tracks = svc.currentQueue;
+      if (tracks.isEmpty) return;
+
+      final store = d.activeQueueStore ?? ActiveQueueStore();
+      d.activeQueueStore = store;
+
+      try {
+        // Save track IDs in display order (shuffled order when shuffle is on).
+        await store.save(
+          trackIds: tracks.map((t) => t.id).toList(),
+          currentIndex: svc.currentIndex >= 0 ? svc.currentIndex : 0,
+          position: svc.position,
+          shuffleEnabled: svc.isShuffleEnabled,
+        );
+      } on Exception catch (e) {
+        afLog('audio', 'Failed to save active queue', error: e);
+      }
+    });
+  }
+
+  // Start/stop the periodic timer based on playback state.
+  d.playingSub = svc.playingStream.listen((playing) {
+    if (playing) {
+      startActiveQueuePeriodicTimer();
+    } else {
+      d.activeQueuePeriodicTimer?.cancel();
+      d.activeQueuePeriodicTimer = null;
+    }
+  });
 
   d.queueSub = svc.queueStream.listen((_) => triggerSaveQueue());
   d.trackSub = svc.currentTrackStream.listen((_) => triggerSaveQueue());

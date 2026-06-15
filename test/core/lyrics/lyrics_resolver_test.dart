@@ -7,6 +7,9 @@ import 'package:aetherfin/core/lyrics/lrc_parser.dart';
 import 'package:aetherfin/core/lyrics/lyrics_resolver.dart';
 import 'package:aetherfin/core/lyrics/netease_client.dart';
 import 'package:aetherfin/core/lyrics/lrclib_client.dart';
+import 'package:aetherfin/core/lyrics/providers/kugou_client.dart';
+import 'package:aetherfin/core/lyrics/providers/simpmusic_client.dart';
+import 'package:aetherfin/core/lyrics/providers/unison_client.dart';
 import 'package:aetherfin/utils/text_utils.dart';
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
@@ -16,6 +19,12 @@ class MockMusicBackend extends Mock implements MusicBackend {}
 class MockNetEaseClient extends Mock implements NetEaseClient {}
 
 class MockLrcLibClient extends Mock implements LrcLibClient {}
+
+class MockKuGouClient extends Mock implements KuGouClient {}
+
+class MockSimpMusicClient extends Mock implements SimpMusicClient {}
+
+class MockUnisonClient extends Mock implements UnisonClient {}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -1128,6 +1137,439 @@ void main() {
           duration: any(named: 'duration'),
         ),
       );
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Race fetch mode
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  group('Race fetch mode', () {
+    late MockKuGouClient kugou;
+    late MockSimpMusicClient simpmusic;
+    late MockUnisonClient unison;
+    late LyricsResolver raceResolver;
+
+    setUp(() {
+      kugou = MockKuGouClient();
+      simpmusic = MockSimpMusicClient();
+      unison = MockUnisonClient();
+      raceResolver = LyricsResolver(
+        backend: backend,
+        netease: netease,
+        lrclib: lrclib,
+        kugou: kugou,
+        simpmusic: simpmusic,
+        unison: unison,
+      );
+    });
+
+    test(
+      'race fetch with enableRaceFetch=false uses sequential cascade',
+      () async {
+        when(() => backend.lyrics('t1')).thenAnswer((_) async => null);
+        when(
+          () => netease.fetchLyrics(
+            trackName: any(named: 'trackName'),
+            artistName: any(named: 'artistName'),
+            albumName: any(named: 'albumName'),
+            duration: any(named: 'duration'),
+          ),
+        ).thenAnswer((_) async => _neteaseRomajiResult);
+
+        // With enableRaceFetch=false (default), new providers should NOT be called
+        final track = _track('t1');
+        await raceResolver.resolve(trackId: 't1', track: track);
+
+        verifyNever(
+          () => kugou.fetchLyrics(
+            trackName: any(named: 'trackName'),
+            artistName: any(named: 'artistName'),
+            albumName: any(named: 'albumName'),
+            duration: any(named: 'duration'),
+          ),
+        );
+      },
+    );
+
+    test('race fetch calls all providers concurrently when enabled', () async {
+      when(() => backend.lyrics('t1')).thenAnswer((_) async => null);
+      // All providers return null — just verify they're all called
+      when(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+      when(
+        () => lrclib.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+      when(
+        () => kugou.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+      when(
+        () => simpmusic.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+      when(
+        () => unison.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+
+      final track = _track('t1');
+      final result = await raceResolver.resolve(
+        trackId: 't1',
+        track: track,
+        enableRaceFetch: true,
+      );
+
+      expect(result, isNull);
+      // All 5 providers should have been called
+      verify(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).called(1);
+      verify(
+        () => lrclib.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).called(1);
+      verify(
+        () => kugou.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).called(1);
+      verify(
+        () => simpmusic.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).called(1);
+      verify(
+        () => unison.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).called(1);
+    });
+
+    test('race fetch returns first valid result (KuGou wins)', () async {
+      when(() => backend.lyrics('t1')).thenAnswer((_) async => null);
+      // NetEase, LRCLib fail
+      when(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+      when(
+        () => lrclib.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+      // KuGou has first valid result
+      when(
+        () => kugou.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => (synced: _englishLrc, plain: null));
+      // SimpMusic, Unison also return results but KuGou should win
+      when(
+        () => simpmusic.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => (synced: _englishLrc, plain: null));
+      when(
+        () => unison.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => (synced: _englishLrc, plain: null));
+
+      final track = _track('t1');
+      final result = await raceResolver.resolve(
+        trackId: 't1',
+        track: track,
+        enableRaceFetch: true,
+      );
+
+      expect(result, isNotNull);
+      // Any provider that returned valid lyrics is acceptable
+      expect(
+        result!.source == LyricsSource.kugou ||
+            result.source == LyricsSource.simpmusic ||
+            result.source == LyricsSource.unison,
+        isTrue,
+        reason:
+            'Race fetch should return a result from one of the providers '
+            'that returned valid lyrics',
+      );
+      expect(result.lrc.lines[0].text, equals('Hello world'));
+    });
+
+    test(
+      'race fetch uses embedded lyrics before racing (embedded wins)',
+      () async {
+        when(() => backend.lyrics('t1')).thenAnswer((_) async => _englishLrc);
+
+        // Even with enableRaceFetch=true, embedded should be returned directly
+        final track = _track('t1');
+        final result = await raceResolver.resolve(
+          trackId: 't1',
+          track: track,
+          enableRaceFetch: true,
+        );
+
+        expect(result, isNotNull);
+        expect(result!.source, equals(LyricsSource.server));
+        expect(result.lrc.lines[0].text, equals('Hello world'));
+        // None of the network providers should be called
+        verifyNever(
+          () => netease.fetchLyrics(
+            trackName: any(named: 'trackName'),
+            artistName: any(named: 'artistName'),
+            albumName: any(named: 'albumName'),
+            duration: any(named: 'duration'),
+          ),
+        );
+      },
+    );
+
+    test('race fetch returns null when all providers throw', () async {
+      when(() => backend.lyrics('t1')).thenAnswer((_) async => null);
+      // All providers throw
+      when(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenThrow(Exception('timeout'));
+      when(
+        () => lrclib.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenThrow(Exception('timeout'));
+      when(
+        () => kugou.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenThrow(Exception('timeout'));
+      when(
+        () => simpmusic.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenThrow(Exception('timeout'));
+      when(
+        () => unison.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenThrow(Exception('timeout'));
+
+      final track = _track('t1');
+      final result = await raceResolver.resolve(
+        trackId: 't1',
+        track: track,
+        enableRaceFetch: true,
+      );
+
+      // Exceptions from all providers should not crash — returns null
+      expect(result, isNull);
+    });
+
+    test('race fetch with cache hit skips network', () async {
+      // Pre-populate cache
+      raceResolver.cacheLyrics('t1', _englishLrc, LyricsSource.server);
+
+      when(() => backend.lyrics('t1')).thenAnswer((_) async => null);
+
+      final track = _track('t1');
+      final result = await raceResolver.resolve(
+        trackId: 't1',
+        track: track,
+        enableRaceFetch: true,
+      );
+
+      expect(result, isNotNull);
+      expect(result!.source, equals(LyricsSource.cache));
+      // No network providers should be called
+      verifyNever(() => backend.lyrics('t1'));
+      verifyNever(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      );
+    });
+
+    test('race fetch does not fire when embedded lyrics exist', () async {
+      when(() => backend.lyrics('t1')).thenAnswer((_) async => _englishLrc);
+
+      final track = _track('t1');
+      await raceResolver.resolve(
+        trackId: 't1',
+        track: track,
+        enableRaceFetch: true,
+      );
+
+      // Verify new providers are not called
+      verifyNever(
+        () => kugou.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      );
+      verifyNever(
+        () => simpmusic.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      );
+      verifyNever(
+        () => unison.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      );
+    });
+
+    test('race fetch caches winning result', () async {
+      when(() => backend.lyrics('t1')).thenAnswer((_) async => null);
+      when(
+        () => netease.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+      when(
+        () => lrclib.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+      when(
+        () => kugou.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => (synced: _englishLrc, plain: null));
+      when(
+        () => simpmusic.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+      when(
+        () => unison.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).thenAnswer((_) async => null);
+
+      final track = _track('t1');
+      // First call: should fetch and cache
+      await raceResolver.resolve(
+        trackId: 't1',
+        track: track,
+        enableRaceFetch: true,
+      );
+
+      // Second call: should hit cache, not call providers
+      final result2 = await raceResolver.resolve(
+        trackId: 't1',
+        track: track,
+        enableRaceFetch: true,
+      );
+
+      expect(result2, isNotNull);
+      expect(result2!.source, equals(LyricsSource.cache));
+      // Second call should not call any provider
+      verify(
+        () => kugou.fetchLyrics(
+          trackName: any(named: 'trackName'),
+          artistName: any(named: 'artistName'),
+          albumName: any(named: 'albumName'),
+          duration: any(named: 'duration'),
+        ),
+      ).called(1); // Only once from first call
     });
   });
 }

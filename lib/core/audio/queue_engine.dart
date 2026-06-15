@@ -57,6 +57,7 @@ class AfQueueEngine {
   int get currentIndex => _logicalIndex;
 
   bool get isShuffleEnabled => _shuffleOrder != null;
+  List<int>? get shuffleOrder => _shuffleOrder;
   bool get playbackEnded => _playbackEnded;
   bool get isForNtimes => _isForNtimes;
   int get remainingRepeats => _remainingRepeats;

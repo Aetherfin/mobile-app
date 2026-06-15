@@ -5,27 +5,45 @@ import '../jellyfin/models/items.dart';
 import 'lrc_parser.dart';
 import 'netease_client.dart';
 import 'lrclib_client.dart';
+import 'providers/kugou_client.dart';
+import 'providers/simpmusic_client.dart';
+import 'providers/unison_client.dart';
 import '../../utils/text_utils.dart';
 import '../../utils/log.dart';
 
 /// Encapsulates the lyrics resolution flow.
 ///
-/// Flow:
+/// Normal flow (sequential):
 /// 1. Check cache first → if contains romanizable text → romanize
-/// 2. If embedded lyrics: check language → if Japanese, try NetEase romaji → if still romanizable, romanize → if non-Japanese romanizable, romanize directly → if no romanizable text, use as-is
+/// 2. If embedded lyrics: check language → if Japanese, try NetEase romaji →
+///    if still romanizable, romanize → if non-Japanese romanizable, romanize
+///    directly → if no romanizable text, use as-is
 /// 3. If no embedded: NetEase → romanize if needed → LRCLib → romanize if needed
+///
+/// Race fetch mode ([enableRaceFetch]):
+/// After embedded check, races all 5 network providers concurrently:
+/// NetEase, LRCLib, KuGou, SimpMusic, Unison. First valid result wins.
 class LyricsResolver {
   LyricsResolver({
     required MusicBackend backend,
     NetEaseClient? netease,
     LrcLibClient? lrclib,
+    KuGouClient? kugou,
+    SimpMusicClient? simpmusic,
+    UnisonClient? unison,
   }) : _backend = backend,
        _netease = netease ?? NetEaseClient(),
-       _lrclib = lrclib ?? LrcLibClient();
+       _lrclib = lrclib ?? LrcLibClient(),
+       _kugou = kugou ?? KuGouClient(),
+       _simpmusic = simpmusic ?? SimpMusicClient(),
+       _unison = unison ?? UnisonClient();
 
   final MusicBackend _backend;
   final NetEaseClient _netease;
   final LrcLibClient _lrclib;
+  final KuGouClient _kugou;
+  final SimpMusicClient _simpmusic;
+  final UnisonClient _unison;
 
   /// In-memory cache for lyrics: trackId → (raw lyrics, source)
   final Map<String, ({String raw, LyricsSource source})> _cache = {};
@@ -41,14 +59,15 @@ class LyricsResolver {
     _cache[trackId] = (raw: raw, source: source);
   }
 
-  /// Resolve lyrics for [trackId] using the cascading flow.
+  /// Resolve lyrics for [trackId].
   ///
-  /// 1. Check cache first → if contains romanizable text, romanize
-  /// 2. If embedded lyrics: check language → romanize if needed
-  /// 3. If no embedded: NetEase → romanize if needed → LRCLib → romanize if needed
+  /// When [enableRaceFetch] is true and embedded lyrics are absent or empty,
+  /// all network providers are raced concurrently and the first meaningful
+  /// result is returned.
   Future<LyricsResult?> resolve({
     required String trackId,
     required AfTrack track,
+    bool enableRaceFetch = false,
   }) async {
     // ── Step 1: Check cache first ─────────────────────────────────────
     final cached = _cache[trackId];
@@ -86,9 +105,233 @@ class LyricsResolver {
       );
     }
 
-    // ── Step 3: No embedded → NetEase → LRCLib ───────────────────────
+    // ── Step 3: No embedded → network ─────────────────────────────────
+    if (enableRaceFetch) {
+      return await _raceFetch(trackId: trackId, track: track);
+    }
     return await _resolveFromNetwork(trackId: trackId, track: track);
   }
+
+  /// Race all network providers concurrently and return the first valid
+  /// result. All 5 providers (NetEase, LRCLib, KuGou, SimpMusic, Unison)
+  /// are launched simultaneously via [Future.wait].
+  Future<LyricsResult?> _raceFetch({
+    required String trackId,
+    required AfTrack track,
+  }) async {
+    try {
+      // Launch all 5 providers concurrently
+      final futures = <Future<LyricsResult?>>[
+        _tryFetchNetease(trackId: trackId, track: track),
+        _tryFetchLrclib(trackId: trackId, track: track),
+        _tryFetchKugou(trackId: trackId, track: track),
+        _tryFetchSimpMusic(trackId: trackId, track: track),
+        _tryFetchUnison(trackId: trackId, track: track),
+      ];
+
+      // Wait for all to complete, then filter and pick first valid
+      final results = await Future.wait(futures);
+      for (final result in results) {
+        if (result != null && _isMeaningfulLyrics(result)) {
+          // Cache the winning result
+          cacheLyrics(trackId, _rawFromResult(result), result.source);
+          afLog(
+            'lyrics',
+            'Race fetch: ${result.source.label} won for $trackId — '
+                '${result.lrc.lines.length} lines',
+          );
+          return result;
+        }
+      }
+    } on Exception catch (e) {
+      afLog('lyrics', 'Race fetch failed for $trackId', error: e);
+    }
+    return null;
+  }
+
+  /// Check if parsed lyrics are meaningful (≥2 content lines, not just
+  /// metadata tags).
+  static bool _isMeaningfulLyrics(LyricsResult result) {
+    if (result.lrc.lines.length < 2) return false;
+    // Ensure at least 2 lines have actual text content
+    int textLines = 0;
+    for (final line in result.lrc.lines) {
+      if (line.text.trim().isNotEmpty) {
+        textLines++;
+        if (textLines >= 2) return true;
+      }
+    }
+    return false;
+  }
+
+  /// Reconstruct raw LRC string from a [LyricsResult] for caching.
+  static String _rawFromResult(LyricsResult result) {
+    final buffer = StringBuffer();
+    for (final line in result.lrc.lines) {
+      final mm = line.start.inMinutes.remainder(60);
+      final ss = line.start.inSeconds.remainder(60);
+      final ms = line.start.inMilliseconds.remainder(1000);
+      buffer.writeln(
+        '[${mm.toString().padLeft(2, '0')}:${ss.toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}]${line.text}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  // ── Individual provider wrappers for race fetch ──────────────────────
+
+  Future<LyricsResult?> _tryFetchNetease({
+    required String trackId,
+    required AfTrack track,
+  }) async {
+    try {
+      final result = await _netease.fetchLyrics(
+        trackName: track.title,
+        artistName: track.artistName,
+        albumName: track.albumName,
+        duration: track.duration,
+      );
+      if (result == null) return null;
+
+      // Prefer romaji if available and non-romanizable
+      if (result.romaji != null && result.romaji!.trim().isNotEmpty) {
+        final romajiText = result.romaji!.trim();
+        if (!containsRomanizableText(romajiText)) {
+          final parsed = parseLrc(romajiText);
+          return LyricsResult(lrc: parsed, source: LyricsSource.neteaseRomaji);
+        }
+        // Romaji still has romanizable text → romanize
+        return await _romanizeLrc(
+          romajiText,
+          trackId,
+          source: LyricsSource.neteaseRomaji,
+        );
+      }
+
+      // No romaji → try synced or plain
+      final raw = result.synced ?? result.plain;
+      if (raw == null || raw.trim().isEmpty) return null;
+
+      if (containsRomanizableText(raw)) {
+        return await _romanizeLrc(raw, trackId, source: LyricsSource.netease);
+      }
+      final parsed = parseLrc(raw);
+      return LyricsResult(lrc: parsed, source: LyricsSource.netease);
+    } on Exception catch (e) {
+      afLog('lyrics', 'Race NetEase failed for $trackId', error: e);
+    }
+    return null;
+  }
+
+  Future<LyricsResult?> _tryFetchLrclib({
+    required String trackId,
+    required AfTrack track,
+  }) async {
+    try {
+      final result = await _lrclib.fetchLyrics(
+        trackName: track.title,
+        artistName: track.artistName,
+        albumName: track.albumName,
+        duration: track.duration,
+      );
+      if (result == null) return null;
+
+      final raw = result.synced ?? result.plain;
+      if (raw == null || raw.trim().isEmpty) return null;
+
+      if (containsRomanizableText(raw)) {
+        return await _romanizeLrc(raw, trackId, source: LyricsSource.lrclib);
+      }
+      final parsed = parseLrc(raw);
+      return LyricsResult(lrc: parsed, source: LyricsSource.lrclib);
+    } on Exception catch (e) {
+      afLog('lyrics', 'Race LRCLib failed for $trackId', error: e);
+    }
+    return null;
+  }
+
+  Future<LyricsResult?> _tryFetchKugou({
+    required String trackId,
+    required AfTrack track,
+  }) async {
+    try {
+      final result = await _kugou.fetchLyrics(
+        trackName: track.title,
+        artistName: track.artistName,
+        albumName: track.albumName,
+        duration: track.duration,
+      );
+      if (result == null) return null;
+
+      final raw = result.synced ?? result.plain;
+      if (raw == null || raw.trim().isEmpty) return null;
+
+      if (containsRomanizableText(raw)) {
+        return await _romanizeLrc(raw, trackId, source: LyricsSource.kugou);
+      }
+      final parsed = parseLrc(raw);
+      return LyricsResult(lrc: parsed, source: LyricsSource.kugou);
+    } on Exception catch (e) {
+      afLog('lyrics', 'Race KuGou failed for $trackId', error: e);
+    }
+    return null;
+  }
+
+  Future<LyricsResult?> _tryFetchSimpMusic({
+    required String trackId,
+    required AfTrack track,
+  }) async {
+    try {
+      final result = await _simpmusic.fetchLyrics(
+        trackName: track.title,
+        artistName: track.artistName,
+        albumName: track.albumName,
+        duration: track.duration,
+      );
+      if (result == null) return null;
+
+      final raw = result.synced ?? result.plain;
+      if (raw == null || raw.trim().isEmpty) return null;
+
+      if (containsRomanizableText(raw)) {
+        return await _romanizeLrc(raw, trackId, source: LyricsSource.simpmusic);
+      }
+      final parsed = parseLrc(raw);
+      return LyricsResult(lrc: parsed, source: LyricsSource.simpmusic);
+    } on Exception catch (e) {
+      afLog('lyrics', 'Race SimpMusic failed for $trackId', error: e);
+    }
+    return null;
+  }
+
+  Future<LyricsResult?> _tryFetchUnison({
+    required String trackId,
+    required AfTrack track,
+  }) async {
+    try {
+      final result = await _unison.fetchLyrics(
+        trackName: track.title,
+        artistName: track.artistName,
+        albumName: track.albumName,
+        duration: track.duration,
+      );
+      if (result == null) return null;
+
+      final raw = result.synced ?? result.plain;
+      if (raw == null || raw.trim().isEmpty) return null;
+
+      if (containsRomanizableText(raw)) {
+        return await _romanizeLrc(raw, trackId, source: LyricsSource.unison);
+      }
+      final parsed = parseLrc(raw);
+      return LyricsResult(lrc: parsed, source: LyricsSource.unison);
+    } on Exception catch (e) {
+      afLog('lyrics', 'Race Unison failed for $trackId', error: e);
+    }
+    return null;
+  }
+
+  // ── Existing methods ─────────────────────────────────────────────────
 
   /// Handle embedded lyrics: check language, try NetEase romaji, romanize.
   Future<LyricsResult?> _resolveEmbedded({
@@ -148,7 +391,8 @@ class LyricsResolver {
     return null;
   }
 
-  /// Fetch lyrics from network: NetEase → LRCLib.
+  /// Fetch lyrics from network sequentially: NetEase → LRCLib.
+  /// Used when [enableRaceFetch] is false.
   Future<LyricsResult?> _resolveFromNetwork({
     required String trackId,
     required AfTrack track,

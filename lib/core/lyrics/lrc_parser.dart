@@ -49,6 +49,9 @@ enum LyricsSource {
   lrclib('Lyric provided by LRCLib'),
   netease('Lyric provided by NetEase'),
   neteaseRomaji('Lyric provided by NetEase Romaji'),
+  kugou('Lyric provided by KuGou'),
+  simpmusic('Lyric provided by SimpMusic'),
+  unison('Lyric provided by Unison'),
   romanize('Lyric provided by Romanize');
 
   const LyricsSource(this.label);
