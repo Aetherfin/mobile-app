@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -500,7 +501,7 @@ class PlaybackController {
         : (s.playing || _shouldAdvancePosition());
 
     final playingChanged = effectivePlaying != _lastEffectivePlaying;
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final nowMs = clock.now().millisecondsSinceEpoch;
     if (!playingChanged && nowMs - _lastMediaSessionUpdateMs < 100) return;
     _lastMediaSessionUpdateMs = nowMs;
     _lastEffectivePlaying = effectivePlaying;
@@ -584,7 +585,7 @@ class PlaybackController {
       }
     }
     if (pos > Duration.zero) {
-      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final nowMs = clock.now().millisecondsSinceEpoch;
       if (nowMs - _lastQSPositionPushMs > 2000) {
         _lastQSPositionPushMs = nowMs;
         updateMediaSession();
