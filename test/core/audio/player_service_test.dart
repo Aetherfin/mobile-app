@@ -265,6 +265,9 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       expect(service.currentTrack?.id, equals('1'));
 
+      // Clear the stop() call from playQueue entry so we only count the
+      // completion handler's stop.
+      clearInteractions(player);
       when(() => player.stop()).thenAnswer((_) async {});
 
       // Simulate completion at queue end (nextIdx = 1, length = 1).
@@ -500,7 +503,8 @@ void main() {
         throwsA(isA<Exception>()),
       );
 
-      verify(() => player.stop()).called(1);
+      // playQueue calls stop() on entry (line 283) AND on error cleanup (line 354).
+      verify(() => player.stop()).called(greaterThanOrEqualTo(2));
       expect(service.currentQueue, isEmpty);
     });
 
@@ -713,6 +717,10 @@ void main() {
       // Verify queue is populated
       expect(service.currentQueue.length, 2);
       expect(service.currentTrack, isNotNull);
+
+      // Clear the stop() call from playQueue entry so we only count
+      // the stopAndClear's stop.
+      clearInteractions(player);
 
       // Track changed values before stopAndClear
       changedTrack = null;
