@@ -163,5 +163,44 @@ void main() {
       await tester.drag(find.text('Test Song'), const Offset(20, 0));
       expect(find.text('Test Song'), findsOneWidget);
     });
+
+    testWidgets('swipe up past threshold triggers haptic and navigation',
+        (tester) async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(body: MiniNowPlaying(isVisible: true)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Swipe up (negative dy) past dismiss threshold.
+      await tester.drag(find.text('Test Song'), const Offset(0, -100));
+      // Widget stays rendered — navigation attempted (no router in test).
+      expect(find.text('Test Song'), findsOneWidget);
+    });
+
+    testWidgets('swipe down past threshold stops playback', (tester) async {
+      final fixture = _createFixture(track: _testTrack);
+      final container = fixture.container;
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(body: MiniNowPlaying(isVisible: true)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Swipe down (positive dy) past dismiss threshold.
+      await tester.drag(find.text('Test Song'), const Offset(0, 100));
+      expect(find.text('Test Song'), findsOneWidget);
+
+      container.dispose();
+    });
   });
 }

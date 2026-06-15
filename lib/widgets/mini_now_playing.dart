@@ -125,11 +125,17 @@ class _MiniPlayerContentState extends ConsumerState<_MiniPlayerContent>
 
   void _onVerticalDragEnd(DragEndDetails details) {
     if (_dragOffsetY.abs() > _dismissThreshold) {
-      ref.read(playerServiceProvider).stopAndClear();
-    } else {
-      _snapFromY = _dragOffsetY;
-      _snapCtrl.forward(from: 0);
+      if (_dragOffsetY < 0) {
+        // Swipe up → open now playing
+        HapticFeedback.lightImpact();
+        context.push('/now-playing');
+      } else {
+        // Swipe down → stop playback
+        ref.read(playerServiceProvider).stopAndClear();
+      }
     }
+    _snapFromY = _dragOffsetY;
+    _snapCtrl.forward(from: 0);
   }
 
   @override
