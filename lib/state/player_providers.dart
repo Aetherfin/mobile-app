@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited, Timer, StreamSubscription;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart'
     show Loop, MpvPlayerError, FftFrame;
 
@@ -708,7 +709,7 @@ final fftFrameProvider = StreamProvider.autoDispose<FftFrame?>((ref) {
 /// Sub-bass energy derived from the first 7 post-DC FFT bands.
 /// Used by the artwork pulse for kick-drum transient detection.
 final bassEnergyProvider = Provider.autoDispose<double>((ref) {
-  final frame = ref.watch(fftFrameProvider).valueOrNull;
+  final frame = ref.watch(fftFrameProvider).value;
   if (frame == null || frame.bands.isEmpty) return 0.0;
   final int hi = frame.bands.length < 7 ? frame.bands.length : 7;
   double max = 0.0;

@@ -94,7 +94,7 @@ class CompactTrackRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
+    final isPlaying = ref.watch(playingStreamProvider).value ?? false;
 
     return Semantics(
       button: true,

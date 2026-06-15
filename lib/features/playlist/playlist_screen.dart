@@ -68,7 +68,7 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
               icon: const Icon(LucideIcons.ellipsisVertical),
               tooltip: 'More options',
               onSelected: (action) =>
-                  _handleAction(context, action, detailAsync.valueOrNull),
+                  _handleAction(context, action, detailAsync.value),
               itemBuilder: (context) => [
                 const PopupMenuItem(
                   value: _PlaylistAction.rename,

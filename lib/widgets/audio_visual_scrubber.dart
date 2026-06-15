@@ -82,7 +82,7 @@ class _AudioVisualScrubberState extends ConsumerState<AudioVisualScrubber>
       final reduced = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
       ref.listenManual(fftFrameProvider, (prev, next) {
         if (!_shouldRender) return;
-        final frame = next.valueOrNull;
+        final frame = next.value;
         if (frame == null) return;
         _fftNotifier.ingest(frame.bands);
         if (reduced) {

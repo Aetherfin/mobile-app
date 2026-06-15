@@ -49,7 +49,7 @@ ProviderContainer _createContainer({
   MusicBackend? backend,
   LocalLibrary? localLibrary,
 }) {
-  final overrides = <Override>[
+  final overrides = [
     appModeProvider.overrideWith((ref) => appMode),
     musicBackendProvider.overrideWithValue(backend),
   ];

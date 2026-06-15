@@ -230,7 +230,7 @@ class _HeroArtistCard extends ConsumerWidget {
   Future<void> _playArtist(WidgetRef ref, {required bool shuffle}) async {
     await HapticFeedback.mediumImpact();
     final topTracks = ref.read(artistTopTracksProvider(artist.id));
-    final tracks = topTracks.valueOrNull;
+    final tracks = topTracks.value;
     if (tracks == null || tracks.isEmpty) return;
 
     final playActions = ref.read(playActionsProvider);

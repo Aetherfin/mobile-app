@@ -57,7 +57,7 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen> {
       currentSpectralProvider.select((s) => s.primary),
     );
 
-    final detail = detailAsync.valueOrNull;
+    final detail = detailAsync.value;
     final wikiAsync = detail != null
         ? ref.watch(
             albumWikiProvider((

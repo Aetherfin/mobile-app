@@ -65,7 +65,7 @@ createNowPlayingFixture({AfTrack? track}) {
   final bridge = NativeMediaSessionBridge(channel: channel);
   final service = AfPlayerService.test(player: player, bridge: bridge);
 
-  final overrides = <Override>[
+  final overrides = [
     playerServiceProvider.overrideWithValue(service),
     currentSpectralProvider.overrideWithValue(Spectral.fallback),
   ];

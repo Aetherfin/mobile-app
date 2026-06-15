@@ -29,7 +29,7 @@ class YouTubeSongGrid extends ConsumerWidget {
         rowHeight * rows + (rows > 1 ? (rows - 1) * 8.0 : 0.0);
 
     final currentTrack = ref.watch(currentTrackProvider);
-    final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
+    final isPlaying = ref.watch(playingStreamProvider).value ?? false;
     final isBuffering = ref.watch(isBufferingProvider);
     final activeAccent = ref.watch(
       currentSpectralProvider.select((s) => s.energy),
@@ -241,7 +241,7 @@ class YouTubeHomeTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTrack = ref.watch(currentTrackProvider);
-    final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
+    final isPlaying = ref.watch(playingStreamProvider).value ?? false;
     final isBuffering = ref.watch(isBufferingProvider);
     final activeAccent = ref.watch(
       currentSpectralProvider.select((s) => s.energy),

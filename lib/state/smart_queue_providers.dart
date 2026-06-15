@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../core/audio/smart_queue_manager.dart';
 import '../core/jellyfin/models/items.dart';

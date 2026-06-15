@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../core/youtube/youtube_auth.dart';
 import '../core/youtube/youtube_home_content.dart';
@@ -52,7 +53,7 @@ final youtubeSelectedChipProvider = StateProvider.autoDispose<InnerTubeChip?>(
 );
 
 /// YouTube Music home page content (trending, popular, etc.).
-class YouTubeHomeNotifier extends AutoDisposeAsyncNotifier<YouTubeHomeContent> {
+class YouTubeHomeNotifier extends AsyncNotifier<YouTubeHomeContent> {
   bool _isLoadingMore = false;
 
   @override
@@ -75,7 +76,7 @@ class YouTubeHomeNotifier extends AutoDisposeAsyncNotifier<YouTubeHomeContent> {
 
   Future<void> loadMore() async {
     if (_isLoadingMore) return;
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null || current.continuation == null) {
       return;
     }

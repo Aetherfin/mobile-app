@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../core/backend/music_backend.dart';
 import '../core/jellyfin/models/items.dart';
@@ -38,7 +39,7 @@ class PaginationState<T> {
 }
 
 /// Manages paginated track loading via [MusicBackend.allTracks()].
-class TracksNotifier extends AutoDisposeNotifier<PaginationState<AfTrack>> {
+class TracksNotifier extends Notifier<PaginationState<AfTrack>> {
   static const _pageSize = 100;
 
   @override

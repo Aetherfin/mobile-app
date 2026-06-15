@@ -95,7 +95,7 @@ class _LostMemoryTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTrack = ref.watch(currentTrackProvider);
     final isActive = track.id == currentTrack?.id;
-    final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
+    final isPlaying = ref.watch(playingStreamProvider).value ?? false;
     final isBuffering = ref.watch(isBufferingProvider);
     final energyColor = ref.watch(
       currentSpectralProvider.select((s) => s.energy),

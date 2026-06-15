@@ -75,8 +75,8 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
               return const Center(child: Text('Artist not found'));
             }
 
-            final topTracks = topTracksAsync.valueOrNull ?? [];
-            final albums = albumsAsync.valueOrNull ?? [];
+            final topTracks = topTracksAsync.value ?? [];
+            final albums = albumsAsync.value ?? [];
 
             // YouTube Music: get dynamic sections from the client
             final backend = ref.watch(musicBackendProvider);

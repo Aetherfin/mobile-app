@@ -167,7 +167,7 @@ class TrackRow extends ConsumerWidget {
     );
 
     final isPlaying = isActive
-        ? (ref.watch(playingStreamProvider).valueOrNull ?? false)
+        ? (ref.watch(playingStreamProvider).value ?? false)
         : false;
 
     Widget leading;

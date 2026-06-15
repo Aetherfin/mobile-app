@@ -40,7 +40,7 @@ ProviderContainer _createContainer({
   MusicBackend? backend,
   Set<String> favoriteIds = const {},
 }) {
-  final overrides = <Override>[
+  final overrides = [
     musicBackendProvider.overrideWithValue(backend),
     lastfmApiKeyProvider.overrideWith((ref) => ''),
     lastfmSessionKeyProvider.overrideWith((ref) => ''),

@@ -61,7 +61,7 @@ final spectralFromUrlProvider = FutureProvider.autoDispose
         final track = ref.read(currentTrackProvider);
         if (track != null) {
           final dbHue = ref.watch(spectralHueFromDbProvider(track.id));
-          final hue = dbHue.valueOrNull;
+          final hue = dbHue.value;
           if (hue != null) {
             // Reconstruct Spectral from pre-computed hue
             return _buildSpectralFromHue(hue);

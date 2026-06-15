@@ -47,10 +47,10 @@ Widget _buildScrubber({
   Color unplayedColor = Colors.grey,
   void Function(double)? onScrub,
   void Function(double)? onScrubEnd,
-  List<Override> overrides = const [],
+  List<dynamic>? overrides,
 }) {
   return ProviderScope(
-    overrides: overrides,
+    overrides: overrides?.cast() ?? [],
     child: MaterialApp(
       home: Scaffold(
         body: AudioVisualScrubber(
