@@ -367,7 +367,7 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
     });
     ref
         .read(playerServiceProvider)
-        .reorderQueue(oldIndex, oldIndex < newIndex ? newIndex + 1 : newIndex);
+        .reorderQueue(oldIndex, newIndex);
   }
 
   void _onDismiss(int i, AfTrack t) {

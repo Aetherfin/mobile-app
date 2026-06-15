@@ -299,9 +299,9 @@ class InnerTubeClient {
         final completer = Completer<String>();
         final bytes = <int>[];
         response.listen(
-          (chunk) => bytes.addAll(chunk),
+          bytes.addAll,
           onDone: () => completer.complete(utf8.decode(bytes)),
-          onError: (Object e) => completer.completeError(e),
+          onError: completer.completeError,
         );
         final responseBody = await completer.future.timeout(
           const Duration(seconds: 10),

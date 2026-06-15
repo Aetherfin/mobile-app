@@ -170,7 +170,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: MaterialApp(
+          child: const MaterialApp(
             home: Scaffold(body: MiniNowPlaying(isVisible: true)),
           ),
         ),
@@ -190,7 +190,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: MaterialApp(
+          child: const MaterialApp(
             home: Scaffold(body: MiniNowPlaying(isVisible: true)),
           ),
         ),
