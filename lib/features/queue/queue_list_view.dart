@@ -53,10 +53,7 @@ class QueueListView extends ConsumerWidget {
       ),
       itemCount: items.length,
       buildDefaultDragHandles: false,
-      onReorderItem: (item, newIndex) {
-        final oldIndex = items.indexOf(item as AfTrack);
-        onReorder(oldIndex, newIndex);
-      },
+      onReorder: onReorder,
       itemBuilder: (context, i) {
         final t = items[i];
         final active = currentId == t.id;
