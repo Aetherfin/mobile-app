@@ -433,16 +433,9 @@ class AetherfinMediaSessionService : Service() {
         }
 
         if (!artPath.isNullOrEmpty()) {
-            try {
-                val file = File(artPath)
-                if (file.exists()) {
-                    val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-                    if (bitmap != null) {
-                        metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, bitmap)
-                    }
-                }
-            } catch (e: Exception) {
-                // Ignore
+            val bitmap = loadScaledBitmap(artPath, 1024)
+            if (bitmap != null) {
+                metadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, bitmap)
             }
         }
 
@@ -472,16 +465,9 @@ class AetherfinMediaSessionService : Service() {
             .setShowWhen(false)
 
         if (!artPath.isNullOrEmpty()) {
-            try {
-                val file = File(artPath)
-                if (file.exists()) {
-                    val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-                    if (bitmap != null) {
-                        builder.setLargeIcon(bitmap)
-                    }
-                }
-            } catch (e: Exception) {
-                // Ignore
+            val bitmap = loadScaledBitmap(artPath, 1024)
+            if (bitmap != null) {
+                builder.setLargeIcon(bitmap)
             }
         }
 
@@ -608,6 +594,51 @@ class AetherfinMediaSessionService : Service() {
         super.onTaskRemoved(rootIntent)
         sendCommandToFlutter("stop")
         stopSelf()
+    }
+
+    private fun loadScaledBitmap(filePath: String, maxDim: Int): Bitmap? {
+        try {
+            val file = File(filePath)
+            if (!file.exists()) return null
+
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            BitmapFactory.decodeFile(file.absolutePath, options)
+
+            var inSampleSize = 1
+            if (options.outHeight > maxDim || options.outWidth > maxDim) {
+                val halfHeight = options.outHeight / 2
+                val halfWidth = options.outWidth / 2
+                while (halfHeight / inSampleSize >= maxDim && halfWidth / inSampleSize >= maxDim) {
+                    inSampleSize *= 2
+                }
+            }
+
+            options.inJustDecodeBounds = false
+            options.inSampleSize = inSampleSize
+            val decoded = BitmapFactory.decodeFile(file.absolutePath, options) ?: return null
+
+            if (decoded.width > maxDim || decoded.height > maxDim) {
+                val width: Int
+                val height: Int
+                if (decoded.width > decoded.height) {
+                    width = maxDim
+                    height = (decoded.height * (maxDim.toDouble() / decoded.width)).toInt()
+                } else {
+                    height = maxDim
+                    width = (decoded.width * (maxDim.toDouble() / decoded.height)).toInt()
+                }
+                val scaled = Bitmap.createScaledBitmap(decoded, width, height, true)
+                if (scaled != decoded) {
+                    decoded.recycle()
+                }
+                return scaled
+            }
+            return decoded
+        } catch (e: Exception) {
+            return null
+        }
     }
 
     override fun onDestroy() {

@@ -25,6 +25,7 @@ Widget _wrapWithProviders(Widget child) => ProviderScope(
     currentSpectralProvider.overrideWith((_) => Spectral.fallback),
     musicBackendProvider.overrideWithValue(null),
     trackFavoriteOverridesProvider.overrideWith((_) => {}),
+    playingStreamProvider.overrideWith((ref) => Stream.value(false)),
   ],
   child: MaterialApp(home: Scaffold(body: child)),
 );

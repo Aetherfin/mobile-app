@@ -304,4 +304,31 @@ random non-LRC line
       expect(displayError(StateError('nope')), 'Bad state: nope');
     });
   });
+
+  group('upgradeYtThumbnail', () {
+    test('upgrades googleusercontent.com and ggpht.com URLs to 1024 size', () {
+      expect(
+        upgradeYtThumbnail('https://lh3.googleusercontent.com/abc=w120-h120'),
+        'https://lh3.googleusercontent.com/abc=w1024-h1024',
+      );
+      expect(
+        upgradeYtThumbnail('https://yt3.ggpht.com/xyz=s90-c'),
+        'https://yt3.ggpht.com/xyz=s1024-c',
+      );
+    });
+
+    test('upgrades i.ytimg.com and ytimg.com URLs to maxresdefault', () {
+      expect(
+        upgradeYtThumbnail('https://i.ytimg.com/vi/123/hqdefault.jpg'),
+        'https://i.ytimg.com/vi/123/maxresdefault.jpg',
+      );
+    });
+
+    test('leaves other URLs untouched', () {
+      expect(
+        upgradeYtThumbnail('https://example.com/cover.jpg'),
+        'https://example.com/cover.jpg',
+      );
+    });
+  });
 }

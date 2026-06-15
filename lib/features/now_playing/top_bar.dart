@@ -150,13 +150,17 @@ class _FrostedTopBarState extends ConsumerState<FrostedTopBar>
                                 child: Column(
                                   children: [
                                     Text(
-                                      'PLAYING FROM ALBUM',
+                                      track.albumName.isNotEmpty
+                                          ? 'PLAYING FROM ALBUM'
+                                          : 'NOW PLAYING',
                                       style: AfTypography.overline.copyWith(
                                         color: AfColors.textSecondary,
                                       ),
                                     ),
                                     MarqueeText(
-                                      text: track.albumName,
+                                      text: track.albumName.isNotEmpty
+                                          ? track.albumName
+                                          : 'Aetherfin',
                                       style: AfTypography.titleSmall,
                                     ),
                                   ],

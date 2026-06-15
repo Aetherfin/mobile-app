@@ -96,17 +96,23 @@ String stableImageCacheKey(String url) {
 String upgradeYtThumbnail(String url) {
   if (url.contains('googleusercontent.com') || url.contains('ggpht.com')) {
     return url
-        .replaceAll(RegExp(r'=w\d+-h\d+'), '=w2048-h2048')
-        .replaceAll(RegExp(r'=s\d+(-c)?'), '=s2048-c');
+        .replaceAll(RegExp(r'=w\d+-h\d+'), '=w1024-h1024')
+        .replaceAll(RegExp(r'=s\d+(-c)?'), '=s1024-c');
   }
   if (url.contains('i.ytimg.com') || url.contains('ytimg.com')) {
-    // maxresdefault is the highest — keep it.
-    // Only upgrade lower-quality thumbnails.
-    return url
-        .replaceAll('sddefault.jpg', 'maxresdefault.jpg')
-        .replaceAll('hqdefault.jpg', 'maxresdefault.jpg')
-        .replaceAll('mqdefault.jpg', 'maxresdefault.jpg')
-        .replaceAll('default.jpg', 'maxresdefault.jpg');
+    if (url.contains('maxresdefault.jpg')) return url;
+    if (url.contains('sddefault.jpg')) {
+      return url.replaceFirst('sddefault.jpg', 'maxresdefault.jpg');
+    }
+    if (url.contains('hqdefault.jpg')) {
+      return url.replaceFirst('hqdefault.jpg', 'maxresdefault.jpg');
+    }
+    if (url.contains('mqdefault.jpg')) {
+      return url.replaceFirst('mqdefault.jpg', 'maxresdefault.jpg');
+    }
+    if (url.contains('default.jpg')) {
+      return url.replaceFirst('default.jpg', 'maxresdefault.jpg');
+    }
   }
   return url;
 }

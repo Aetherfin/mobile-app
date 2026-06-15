@@ -35,6 +35,7 @@ class ReactiveArtwork extends ConsumerWidget {
     final spectral = ref.watch(
       currentSpectralProvider.select((s) => (energy: s.energy, glow: s.glow)),
     );
+    final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -56,6 +57,7 @@ class ReactiveArtwork extends ConsumerWidget {
                 cardRadius: _cardRadius,
                 glowBlur: _glowBlur,
                 glowSpread: _glowSpread,
+                isPlaying: isPlaying,
               ),
             ),
           ),
@@ -75,6 +77,7 @@ class _ArtworkCard extends StatelessWidget {
     required this.cardRadius,
     required this.glowBlur,
     required this.glowSpread,
+    required this.isPlaying,
   });
 
   final AfTrack track;
@@ -84,9 +87,14 @@ class _ArtworkCard extends StatelessWidget {
   final double cardRadius;
   final double glowBlur;
   final double glowSpread;
+  final bool isPlaying;
 
   @override
   Widget build(BuildContext context) {
+    final scale = isPlaying ? 1.0 : 0.90;
+    final glowOpacity = isPlaying ? 1.0 : 0.0;
+    final glowScale = isPlaying ? 1.0 : 0.85;
+
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.center,
@@ -94,55 +102,70 @@ class _ArtworkCard extends StatelessWidget {
         // ── Spectral glow beneath the card ──
         Positioned(
           top: AfSpacing.s12,
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.6,
-            height: MediaQuery.of(context).size.width * 0.6,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: spectralEnergy.withValues(alpha: 0.30),
-                  blurRadius: glowBlur,
-                  spreadRadius: glowSpread,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOut,
+            opacity: glowOpacity,
+            child: AnimatedScale(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutCubic,
+              scale: glowScale,
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.6,
+                height: MediaQuery.of(context).size.width * 0.6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: spectralEnergy.withValues(alpha: 0.30),
+                      blurRadius: glowBlur,
+                      spreadRadius: glowSpread,
+                    ),
+                    BoxShadow(
+                      color: spectralGlow.withValues(alpha: 0.12),
+                      blurRadius: glowBlur * 1.5,
+                      spreadRadius: glowSpread * 1.5,
+                    ),
+                  ],
                 ),
-                BoxShadow(
-                  color: spectralGlow.withValues(alpha: 0.12),
-                  blurRadius: glowBlur * 1.5,
-                  spreadRadius: glowSpread * 1.5,
-                ),
-              ],
+              ),
             ),
           ),
         ),
 
         // ── Artwork card ──
-        Hero(
-          tag: 'now-playing-artwork',
-          child: Semantics(
-            image: true,
-            label: '${track.title} by ${track.artistName}',
-            child: ClipRRect(
-              borderRadius: AfRadii.borderXl,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: AfRadii.borderXl,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AfColors.surfaceCanvas.withValues(alpha: 0.4),
-                      blurRadius: 32,
-                      offset: const Offset(0, AfSpacing.s12),
-                    ),
-                    BoxShadow(
-                      color: AfColors.surfaceCanvas.withValues(alpha: 0.2),
-                      blurRadius: AfSpacing.s8,
-                      offset: const Offset(0, AfSpacing.s4),
-                    ),
-                  ],
-                ),
-                child: Artwork(
-                  url: artworkUri?.toString() ?? track.imageUrl,
-                  size: double.infinity,
-                  radius: AfRadii.borderXl,
+        AnimatedScale(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutCubic,
+          scale: scale,
+          child: Hero(
+            tag: 'now-playing-artwork',
+            child: Semantics(
+              image: true,
+              label: '${track.title} by ${track.artistName}',
+              child: ClipRRect(
+                borderRadius: AfRadii.borderXl,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: AfRadii.borderXl,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AfColors.surfaceCanvas.withValues(alpha: 0.4),
+                        blurRadius: 32,
+                        offset: const Offset(0, AfSpacing.s12),
+                      ),
+                      BoxShadow(
+                        color: AfColors.surfaceCanvas.withValues(alpha: 0.2),
+                        blurRadius: AfSpacing.s8,
+                        offset: const Offset(0, AfSpacing.s4),
+                      ),
+                    ],
+                  ),
+                  child: Artwork(
+                    url: artworkUri?.toString() ?? track.imageUrl,
+                    size: double.infinity,
+                    radius: AfRadii.borderXl,
+                  ),
                 ),
               ),
             ),

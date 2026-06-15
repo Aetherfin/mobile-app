@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../utils/log.dart';
+import '../../utils/url.dart';
 import '../jellyfin/models/items.dart';
 import 'artwork_disk_cache.dart';
 
@@ -227,8 +228,11 @@ class AfArtworkManager {
     if (_disposed) return;
     await _diskCache.init();
 
-    final imageUrl = track.imageUrl;
+    var imageUrl = track.imageUrl;
     if (imageUrl == null || imageUrl.isEmpty) return;
+
+    // Upgrade YouTube/Google usercontent thumbnails to high quality (2048x2048).
+    imageUrl = upgradeYtThumbnail(imageUrl);
 
     // Check memory cache first
     if (_memoryCache.containsKey(track.id)) {

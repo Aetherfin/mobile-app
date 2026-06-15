@@ -102,6 +102,7 @@ class PlaybackController {
   /// Stored from [playQueue] so [skipToQueueItem] and the completed handler
   /// can lazily resolve stream URLs when rebuilding the 2-track window.
   FutureOr<String> Function(AfTrack)? _resolveStreamUrl;
+  final Set<String> _preResolvingTrackIds = {};
 
   // ── Callbacks ───────────────────────────────────────────────────
 

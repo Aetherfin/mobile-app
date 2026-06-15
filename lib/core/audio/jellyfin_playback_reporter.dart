@@ -279,59 +279,63 @@ class JellyfinPlaybackReporter {
     final track = _lastReportedTrack;
     if (track == null) return;
     if (!_shouldStopOnDispose) return;
-    final client = _clientGetter();
-    if (client == null) return;
-    final position = _player.position;
-    final listened = _player.listenedDuration;
-    final duration = track.duration;
-    final isScrobble =
-        duration > Duration.zero && listened >= duration * 0.75 ||
-        listened >= const Duration(minutes: 4);
-
-    if (isScrobble) {
-      unawaited(
-        _db
-            .into(_db.playbackHistory)
-            .insert(
-              PlaybackHistoryCompanion.insert(
-                trackId: track.id,
-                playedAt: DateTime.now().millisecondsSinceEpoch,
-                title: Value(track.title),
-                artist: Value(track.artistName),
-                album: Value(track.albumName),
-                durationMs: Value(track.duration.inMilliseconds),
-                imageUrl: Value(track.imageUrl),
-                skipped: const Value(false),
-              ),
-            )
-            .catchError((Object e) {
-              afLog(
-                'playback-reporter',
-                'Failed to insert playback history (dispose)',
-                error: e,
-              );
-              return 0;
-            }),
-      );
-      afLog('data', 'Logged play history (dispose) track=${track.id}');
-    }
-
     try {
-      await client
-          .reportPlaybackStop(track.id, position, submission: isScrobble)
-          .timeout(const Duration(seconds: 5));
-      afLog(
-        'data',
-        'playbackStop source=live track=${track.id} '
-            'positionMs=${position.inMilliseconds} listenedMs=${listened.inMilliseconds} scrobble=$isScrobble (reporter disposed)',
-      );
-    } on Exception catch (e, stack) {
-      afLog(
-        'error',
-        'reportPlaybackStop (dispose) failed',
-        error: e,
-        stackTrace: stack,
-      );
+      final client = _clientGetter();
+      if (client == null) return;
+      final position = _player.position;
+      final listened = _player.listenedDuration;
+      final duration = track.duration;
+      final isScrobble =
+          duration > Duration.zero && listened >= duration * 0.75 ||
+          listened >= const Duration(minutes: 4);
+
+      if (isScrobble) {
+        unawaited(
+          _db
+              .into(_db.playbackHistory)
+              .insert(
+                PlaybackHistoryCompanion.insert(
+                  trackId: track.id,
+                  playedAt: DateTime.now().millisecondsSinceEpoch,
+                  title: Value(track.title),
+                  artist: Value(track.artistName),
+                  album: Value(track.albumName),
+                  durationMs: Value(track.duration.inMilliseconds),
+                  imageUrl: Value(track.imageUrl),
+                  skipped: const Value(false),
+                ),
+              )
+              .catchError((Object e) {
+                afLog(
+                  'playback-reporter',
+                  'Failed to insert playback history (dispose)',
+                  error: e,
+                );
+                return 0;
+              }),
+        );
+        afLog('data', 'Logged play history (dispose) track=${track.id}');
+      }
+
+      try {
+        await client
+            .reportPlaybackStop(track.id, position, submission: isScrobble)
+            .timeout(const Duration(seconds: 5));
+        afLog(
+          'data',
+          'playbackStop source=live track=${track.id} '
+              'positionMs=${position.inMilliseconds} listenedMs=${listened.inMilliseconds} scrobble=$isScrobble (reporter disposed)',
+        );
+      } on Exception catch (e, stack) {
+        afLog(
+          'error',
+          'reportPlaybackStop (dispose) failed',
+          error: e,
+          stackTrace: stack,
+        );
+      }
+    } catch (_) {
+      // Ignored: container is likely already disposed.
     }
   }
 

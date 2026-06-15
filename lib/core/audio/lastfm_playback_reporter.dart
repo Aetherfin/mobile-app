@@ -150,32 +150,36 @@ class LastFmPlaybackReporter {
 
     // Try scrobbling the final track upon disposal
     final track = _lastReportedTrack;
-    final client = _clientGetter();
-    final enabled = _enabledGetter();
+    try {
+      final client = _clientGetter();
+      final enabled = _enabledGetter();
 
-    if (track != null &&
-        client != null &&
-        enabled &&
-        !_scrobbledTrackIds.contains(track.id)) {
-      final listened = _player.listenedDuration;
-      if (_isThresholdMet(listened, track.duration)) {
-        try {
-          await client.scrobble(
-            artist: track.artistName,
-            track: track.title,
-            album: track.albumName,
-            duration: track.duration,
-            timestamp: _scrobbleTimestamp(listened),
-          );
-        } on Exception catch (e, stack) {
-          afLog(
-            'error',
-            'Last.fm final scrobble on dispose failed',
-            error: e,
-            stackTrace: stack,
-          );
+      if (track != null &&
+          client != null &&
+          enabled &&
+          !_scrobbledTrackIds.contains(track.id)) {
+        final listened = _player.listenedDuration;
+        if (_isThresholdMet(listened, track.duration)) {
+          try {
+            await client.scrobble(
+              artist: track.artistName,
+              track: track.title,
+              album: track.albumName,
+              duration: track.duration,
+              timestamp: _scrobbleTimestamp(listened),
+            );
+          } on Exception catch (e, stack) {
+            afLog(
+              'error',
+              'Last.fm final scrobble on dispose failed',
+              error: e,
+              stackTrace: stack,
+            );
+          }
         }
       }
+    } catch (_) {
+      // Ignored: container is likely already disposed.
     }
   }
 }

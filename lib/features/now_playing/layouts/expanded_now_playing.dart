@@ -118,6 +118,23 @@ class _ExpandedNowPlayingState extends ConsumerState<ExpandedNowPlaying> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  if (track.albumName.isNotEmpty) ...[
+                    const SizedBox(height: AfSpacing.s4),
+                    PressScale(
+                      ensureHitTarget: false,
+                      onTap: track.albumId == null
+                          ? null
+                          : () => context.push('/album/${track.albumId}'),
+                      child: Text(
+                        track.albumName,
+                        style: AfTypography.bodySmall.copyWith(
+                          color: AfColors.textTertiary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: AfSpacing.s24),
 
                   // Scrubber

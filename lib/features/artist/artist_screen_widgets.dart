@@ -129,31 +129,38 @@ List<Widget> buildArtistTopSongsSlivers({
   required Color activeAccent,
   required void Function(int index) onTap,
   required void Function(AfTrack track) onLongPress,
+  VoidCallback? onMoreTap,
 }) {
   if (topTracks.isEmpty) return [];
+  final displayedTracks = topTracks.take(5).toList();
   return [
     const SliverToBoxAdapter(child: SizedBox(height: AfSpacing.s32)),
-    const SliverToBoxAdapter(
+    SliverToBoxAdapter(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: AfSpacing.gutterGenerous),
-        child: SectionHeader(title: 'Songs'),
+        padding: const EdgeInsets.symmetric(horizontal: AfSpacing.gutterGenerous),
+        child: SectionHeader(
+          title: 'Top Songs',
+          actionLabel: onMoreTap != null ? 'More' : null,
+          onActionTap: onMoreTap,
+          spectralPrimary: activeAccent,
+        ),
       ),
     ),
     const SliverToBoxAdapter(child: SizedBox(height: AfSpacing.s8)),
     SliverToBoxAdapter(
       child: StaggerReveal(
         children: [
-          for (var i = 0; i < topTracks.length; i++)
+          for (var i = 0; i < displayedTracks.length; i++)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
               child: TrackRow(
-                track: topTracks[i],
+                track: displayedTracks[i],
                 leadingNumber: i + 1,
-                isActive: topTracks[i].id == activeId,
-                isBuffering: topTracks[i].id == activeId && isBuffering,
+                isActive: displayedTracks[i].id == activeId,
+                isBuffering: displayedTracks[i].id == activeId && isBuffering,
                 activeAccent: activeAccent,
                 onTap: () => onTap(i),
-                onLongPress: () => onLongPress(topTracks[i]),
+                onLongPress: () => onLongPress(displayedTracks[i]),
               ),
             ),
         ],
@@ -163,14 +170,24 @@ List<Widget> buildArtistTopSongsSlivers({
 }
 
 /// Discography slivers for the artist screen.
-List<Widget> buildArtistDiscographySlivers(List<AfAlbum> albums) {
+List<Widget> buildArtistDiscographySlivers(
+  List<AfAlbum> albums, {
+  VoidCallback? onMoreTap,
+  Color? activeAccent,
+}) {
   if (albums.isEmpty) return const [];
+  final displayedAlbums = albums.take(5).toList();
   return [
     const SliverToBoxAdapter(child: SizedBox(height: AfSpacing.s24)),
-    const SliverToBoxAdapter(
+    SliverToBoxAdapter(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: AfSpacing.gutterGenerous),
-        child: SectionHeader(title: 'Discography'),
+        padding: const EdgeInsets.symmetric(horizontal: AfSpacing.gutterGenerous),
+        child: SectionHeader(
+          title: 'Discography',
+          actionLabel: onMoreTap != null && albums.length > 5 ? 'More' : null,
+          onActionTap: onMoreTap,
+          spectralPrimary: activeAccent,
+        ),
       ),
     ),
     const SliverToBoxAdapter(child: SizedBox(height: AfSpacing.s8)),
@@ -182,10 +199,10 @@ List<Widget> buildArtistDiscographySlivers(List<AfAlbum> albums) {
           padding: const EdgeInsets.symmetric(
             horizontal: AfSpacing.gutterGenerous,
           ),
-          itemCount: albums.length,
-          separatorBuilder: (_, _) => const SizedBox(width: AfSpacing.s12),
+          itemCount: displayedAlbums.length,
+          separatorBuilder: (_, __) => const SizedBox(width: AfSpacing.s12),
           itemBuilder: (context, i) {
-            final a = albums[i];
+            final a = displayedAlbums[i];
             return PressScale(
               onTap: () => context.push('/album/${a.id}'),
               child: SizedBox(

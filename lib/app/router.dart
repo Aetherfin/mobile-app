@@ -279,6 +279,20 @@ final _router = GoRouter(
           ArtistScreen(artistId: state.pathParameters['id']!),
     ),
     GoRoute(
+      name: 'artist-songs',
+      path: '/artist/:id/songs',
+      parentNavigatorKey: _rootKey,
+      builder: (_, state) =>
+          ArtistAllSongsScreen(artistId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      name: 'artist-albums',
+      path: '/artist/:id/albums',
+      parentNavigatorKey: _rootKey,
+      builder: (_, state) =>
+          ArtistAllAlbumsScreen(artistId: state.pathParameters['id']!),
+    ),
+    GoRoute(
       name: 'genre',
       path: '/genre/:name',
       parentNavigatorKey: _rootKey,

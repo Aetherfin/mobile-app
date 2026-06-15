@@ -14,6 +14,7 @@ import '../../../widgets/section_header.dart';
 import '../../../widgets/stagger_reveal.dart';
 import '../../../widgets/skeletons/home_skeleton.dart';
 import '../../../widgets/track_context_menu.dart';
+import '../../../widgets/track_row.dart';
 
 /// Recently played tracks — compact rows with spectral accent on active track.
 class RecentTracksSection extends ConsumerWidget {
@@ -74,7 +75,7 @@ class RecentTracksSection extends ConsumerWidget {
 }
 
 /// Compact track row — translucent background, spectral accent on active track.
-class CompactTrackRow extends StatelessWidget {
+class CompactTrackRow extends ConsumerWidget {
   const CompactTrackRow({
     super.key,
     required this.track,
@@ -92,7 +93,9 @@ class CompactTrackRow extends StatelessWidget {
   final bool isBuffering;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
+
     return Semantics(
       button: true,
       label: '${track.title} by ${track.artistName}',
@@ -127,23 +130,29 @@ class CompactTrackRow extends StatelessWidget {
                     size: 48,
                     radius: AfRadii.borderSm,
                   ),
-                  if (isActive && isBuffering)
+                  if (isActive)
                     Container(
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: AfColors.surfaceCanvas.withValues(alpha: 0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         borderRadius: AfRadii.borderSm,
                       ),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AfColors.textPrimary,
-                          ),
-                        ),
+                      child: Center(
+                        child: isBuffering
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : PlayingEqualizer(
+                                color: Colors.white,
+                                size: 16.0,
+                                isPlaying: isPlaying,
+                              ),
                       ),
                     ),
                 ],

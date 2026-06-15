@@ -1,11 +1,107 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/jellyfin/models/items.dart';
 import '../design_tokens/tokens.dart';
+import '../state/player_providers.dart';
 import 'artwork.dart';
 import 'favorite_heart_button.dart';
 import 'press_scale.dart';
 import 'quality_chip.dart';
+
+/// Animated audio visualizer bars, bounciness based on player playing state.
+class PlayingEqualizer extends StatefulWidget {
+  const PlayingEqualizer({
+    super.key,
+    this.color,
+    this.size = 16.0,
+    this.isPlaying = true,
+  });
+  final Color? color;
+  final double size;
+  final bool isPlaying;
+
+  @override
+  State<PlayingEqualizer> createState() => _PlayingEqualizerState();
+}
+
+class _PlayingEqualizerState extends State<PlayingEqualizer> with TickerProviderStateMixin {
+  late List<AnimationController> _controllers;
+  late List<Animation<double>> _animations;
+
+  @override
+  void initState() {
+    super.initState();
+    final durations = [600, 800, 700, 900];
+    _controllers = List.generate(durations.length, (i) {
+      final c = AnimationController(
+        vsync: this,
+        duration: Duration(milliseconds: durations[i]),
+      );
+      if (widget.isPlaying) {
+        c.repeat(reverse: true);
+      }
+      return c;
+    });
+
+    _animations = _controllers.map((controller) {
+      return Tween<double>(begin: 0.15, end: 1.0).animate(
+        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
+      );
+    }).toList();
+  }
+
+  @override
+  void didUpdateWidget(covariant PlayingEqualizer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isPlaying != oldWidget.isPlaying) {
+      for (final c in _controllers) {
+        if (widget.isPlaying) {
+          c.repeat(reverse: true);
+        } else {
+          c.stop();
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.color ?? AfColors.accentPrimary;
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: List.generate(_animations.length, (i) {
+          return AnimatedBuilder(
+            animation: _animations[i],
+            builder: (context, child) {
+              final val = widget.isPlaying ? _animations[i].value : 0.15;
+              return Container(
+                width: widget.size / (_animations.length * 1.8),
+                height: widget.size * val,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(1.0),
+                ),
+              );
+            },
+          );
+        }),
+      ),
+    );
+  }
+}
 
 /// Track row density.
 ///
@@ -22,7 +118,7 @@ enum TrackRowDensity { compact, comfortable, generous }
 ///
 /// Active rows render a 2dp left bar in `accentPrimary` and tint the
 /// background to `surfaceBase`.
-class TrackRow extends StatelessWidget {
+class TrackRow extends ConsumerWidget {
   const TrackRow({
     super.key,
     required this.track,
@@ -51,7 +147,7 @@ class TrackRow extends StatelessWidget {
   final bool isBuffering;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final (height, artSize) = switch (density) {
       TrackRowDensity.compact => (44.0, 36.0),
       TrackRowDensity.comfortable => (64.0, 44.0),
@@ -67,6 +163,8 @@ class TrackRow extends StatelessWidget {
     final subtitleStyle = AfTypography.bodySmall.copyWith(
       color: AfColors.textSecondary,
     );
+
+    final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
 
     Widget leading;
     if (leadingNumber != null && !isActive) {
@@ -85,23 +183,29 @@ class TrackRow extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           Artwork(url: track.imageUrl, size: artSize, radius: AfRadii.borderSm),
-          if (isActive && isBuffering)
+          if (isActive)
             Container(
               width: artSize,
               height: artSize,
               decoration: BoxDecoration(
-                color: AfColors.surfaceCanvas.withValues(alpha: 0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 borderRadius: AfRadii.borderSm,
               ),
-              child: const Center(
-                child: SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AfColors.textPrimary,
-                  ),
-                ),
+              child: Center(
+                child: isBuffering
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : PlayingEqualizer(
+                        color: Colors.white,
+                        size: 16.0,
+                        isPlaying: isPlaying,
+                      ),
               ),
             ),
         ],
@@ -168,7 +272,7 @@ class TrackRow extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: AfSpacing.s2),
                         child: Text(
-                          track.subtitle(),
+                           track.subtitle(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: subtitleStyle,
@@ -195,3 +299,4 @@ class TrackRow extends StatelessWidget {
     );
   }
 }
+
