@@ -38,15 +38,20 @@ class YouTubeMusicClient implements MusicBackend {
 
   /// Returns the cached artist page sections with titles and "more" browse IDs.
   /// Each entry is (title, items, moreBrowseId). Only valid after artist() is called.
-  List<({String title, List<InnerTubeItem> items, String? moreId})> get artistSections {
+  List<({String title, List<InnerTubeItem> items, String? moreId})>
+  get artistSections {
     if (_cachedSections == null || _cachedSectionTitles == null) return [];
-    return List.generate(_cachedSections!.length, (i) => (
-      title: _cachedSectionTitles![i],
-      items: _cachedSections![i],
-      moreId: _cachedSectionMoreIds != null && i < _cachedSectionMoreIds!.length
-          ? _cachedSectionMoreIds![i]
-          : null,
-    ));
+    return List.generate(
+      _cachedSections!.length,
+      (i) => (
+        title: _cachedSectionTitles![i],
+        items: _cachedSections![i],
+        moreId:
+            _cachedSectionMoreIds != null && i < _cachedSectionMoreIds!.length
+            ? _cachedSectionMoreIds![i]
+            : null,
+      ),
+    );
   }
 
   @override
@@ -61,12 +66,6 @@ class YouTubeMusicClient implements MusicBackend {
     albumName: 'YouTube Music',
     duration: video.duration ?? Duration.zero,
     imageUrl: video.thumbnails.highResUrl,
-  );
-
-  AfArtist _channelToArtist(Channel channel) => AfArtist(
-    id: channel.id.value,
-    name: channel.title,
-    imageUrl: channel.logoUrl,
   );
 
   // ── Library browsing ─────────────────────────────────────────────────
@@ -177,21 +176,26 @@ class YouTubeMusicClient implements MusicBackend {
   Future<({AfAlbum album, List<AfTrack> tracks})?> album(String id) async {
     try {
       var browseId = id.startsWith('VL') ? id.substring(2) : id;
-      if (!browseId.startsWith('MPRE') && !browseId.startsWith('OL') && !browseId.startsWith('PL') && !browseId.startsWith('RD')) {
+      if (!browseId.startsWith('MPRE') &&
+          !browseId.startsWith('OL') &&
+          !browseId.startsWith('PL') &&
+          !browseId.startsWith('RD')) {
         browseId = 'VL$browseId';
       }
       final result = await _innertube.browsePlaylistWithMetadata(browseId);
       if (result == null || result.tracks.isEmpty) return null;
 
       final tracks = result.tracks
-          .map((item) => AfTrack(
-                id: item.videoId ?? item.id,
-                title: item.title,
-                artistName: item.subtitle,
-                artistId: item.artistId,
-                albumName: result.albumTitle ?? 'YouTube Music',
-                imageUrl: item.thumbnailUrl,
-              ))
+          .map(
+            (item) => AfTrack(
+              id: item.videoId ?? item.id,
+              title: item.title,
+              artistName: item.subtitle,
+              artistId: item.artistId,
+              albumName: result.albumTitle ?? 'YouTube Music',
+              imageUrl: item.thumbnailUrl,
+            ),
+          )
           .toList();
 
       final album = AfAlbum(
@@ -199,7 +203,9 @@ class YouTubeMusicClient implements MusicBackend {
         name: result.albumTitle ?? 'Album',
         artistName: result.albumArtist ?? '',
         trackCount: tracks.length,
-        imageUrl: result.albumArtUrl ?? (tracks.isNotEmpty ? tracks.first.imageUrl : ''),
+        imageUrl:
+            result.albumArtUrl ??
+            (tracks.isNotEmpty ? tracks.first.imageUrl : ''),
       );
       return (album: album, tracks: tracks);
     } on Exception catch (e) {
@@ -212,7 +218,10 @@ class YouTubeMusicClient implements MusicBackend {
     if (_cachedArtistId == artistId && _cachedArtistName != null) return true;
     _cachedArtistId = artistId;
     final page = await _innertube.browseArtistPage(artistId);
-    if (page == null) { _cachedArtistName = null; return false; }
+    if (page == null) {
+      _cachedArtistName = null;
+      return false;
+    }
     _cachedArtistName = page.name;
     _cachedArtistThumb = page.thumbUrl;
     _cachedSongs = page.songs;
@@ -227,7 +236,11 @@ class YouTubeMusicClient implements MusicBackend {
   Future<AfArtist?> artist(String id) async {
     try {
       if (!await _fetchArtistPage(id)) return null;
-      return AfArtist(id: id, name: _cachedArtistName!, imageUrl: _cachedArtistThumb ?? '');
+      return AfArtist(
+        id: id,
+        name: _cachedArtistName!,
+        imageUrl: _cachedArtistThumb ?? '',
+      );
     } on Exception catch (e) {
       afLog('youtube', 'Failed to get artist', error: e);
       return null;
@@ -235,26 +248,51 @@ class YouTubeMusicClient implements MusicBackend {
   }
 
   @override
-  Future<List<AfTrack>> artistTopTracks(String artistId, {int limit = 100}) async {
+  Future<List<AfTrack>> artistTopTracks(
+    String artistId, {
+    int limit = 100,
+  }) async {
     try {
       if (!await _fetchArtistPage(artistId)) return [];
-      return _cachedSongs!.take(limit).map((item) => AfTrack(
-        id: item.videoId ?? item.id, title: item.title,
-        artistName: item.subtitle, artistId: item.artistId,
-        albumName: 'YouTube Music', imageUrl: item.thumbnailUrl,
-      )).toList();
-    } on Exception catch (e) { afLog('youtube', 'artistTopTracks failed', error: e); return []; }
+      return _cachedSongs!
+          .take(limit)
+          .map(
+            (item) => AfTrack(
+              id: item.videoId ?? item.id,
+              title: item.title,
+              artistName: item.subtitle,
+              artistId: item.artistId,
+              albumName: 'YouTube Music',
+              imageUrl: item.thumbnailUrl,
+            ),
+          )
+          .toList();
+    } on Exception catch (e) {
+      afLog('youtube', 'artistTopTracks failed', error: e);
+      return [];
+    }
   }
 
   @override
   Future<List<AfAlbum>> artistAlbums(String artistId, {int limit = 100}) async {
     try {
       if (!await _fetchArtistPage(artistId)) return [];
-      return _cachedCarousel!.take(limit).map((item) => AfAlbum(
-        id: item.id, name: item.title, artistName: item.subtitle,
-        trackCount: 0, imageUrl: item.thumbnailUrl,
-      )).toList();
-    } on Exception catch (e) { afLog('youtube', 'artistAlbums failed', error: e); return []; }
+      return _cachedCarousel!
+          .take(limit)
+          .map(
+            (item) => AfAlbum(
+              id: item.id,
+              name: item.title,
+              artistName: item.subtitle,
+              trackCount: 0,
+              imageUrl: item.thumbnailUrl,
+            ),
+          )
+          .toList();
+    } on Exception catch (e) {
+      afLog('youtube', 'artistAlbums failed', error: e);
+      return [];
+    }
   }
 
   @override
@@ -282,14 +320,16 @@ class YouTubeMusicClient implements MusicBackend {
       if (innerTubeItems.isEmpty) return null;
 
       final tracks = innerTubeItems
-          .map((item) => AfTrack(
-                id: item.videoId ?? item.id,
-                title: item.title,
-                artistName: item.subtitle,
-                artistId: item.artistId,
-                albumName: 'YouTube Music',
-                imageUrl: item.thumbnailUrl,
-              ))
+          .map(
+            (item) => AfTrack(
+              id: item.videoId ?? item.id,
+              title: item.title,
+              artistName: item.subtitle,
+              artistId: item.artistId,
+              albumName: 'YouTube Music',
+              imageUrl: item.thumbnailUrl,
+            ),
+          )
           .toList();
 
       final playlist = AfPlaylist(
