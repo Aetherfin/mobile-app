@@ -164,7 +164,9 @@ class TrackRow extends ConsumerWidget {
       color: AfColors.textSecondary,
     );
 
-    final isPlaying = ref.watch(playingStreamProvider).valueOrNull ?? false;
+    final isPlaying = isActive
+        ? (ref.watch(playingStreamProvider).valueOrNull ?? false)
+        : false;
 
     Widget leading;
     if (leadingNumber != null) {

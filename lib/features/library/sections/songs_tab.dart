@@ -96,19 +96,21 @@ class SongsTab extends ConsumerWidget {
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate((context, i) {
           final t = tracks[i];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: AfSpacing.s4),
-            child: Semantics(
-              button: true,
-              label: '${t.title} by ${t.artistName}',
-              child: TrackRow(
-                track: t,
-                isActive: t.id == activeId,
-                isBuffering: t.id == activeId && isBuffering,
-                activeAccent: accent,
-                onTap: () =>
-                    ref.read(playActionsProvider).playSmartQueue(t, tracks),
-                onLongPress: () => showTrackContextMenu(context, ref, t),
+          return RepaintBoundary(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: AfSpacing.s4),
+              child: Semantics(
+                button: true,
+                label: '${t.title} by ${t.artistName}',
+                child: TrackRow(
+                  track: t,
+                  isActive: t.id == activeId,
+                  isBuffering: t.id == activeId && isBuffering,
+                  activeAccent: accent,
+                  onTap: () =>
+                      ref.read(playActionsProvider).playSmartQueue(t, tracks),
+                  onLongPress: () => showTrackContextMenu(context, ref, t),
+                ),
               ),
             ),
           );
