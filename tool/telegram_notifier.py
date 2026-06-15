@@ -157,7 +157,7 @@ def _upload_to_gofile(file_paths):
 
             data = resp["data"]
             if i == 0:
-                folder_id = data.get("folderId")
+                folder_id = data.get("parentFolderId") or data.get("folderId")
                 download_url = data.get("downloadPage")
             print(f"  Uploaded {os.path.basename(fp)}")
 
