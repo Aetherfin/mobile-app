@@ -295,6 +295,70 @@ class ProgressBarStyleToggle extends ConsumerWidget {
   }
 }
 
+class PlayerBackgroundStylePicker extends ConsumerWidget {
+  const PlayerBackgroundStylePicker({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final style = ref.watch(playerBackgroundStyleProvider);
+    return SettingsTile(
+      icon: LucideIcons.paintbrush,
+      iconColor: AfColors.textSecondary,
+      title: 'Player background',
+      subtitle: switch (style) {
+        PlayerBackgroundStyle.gradient => 'Gradient',
+        PlayerBackgroundStyle.blur => 'Blur',
+        PlayerBackgroundStyle.glow => 'Glow',
+        PlayerBackgroundStyle.solid => 'Solid',
+        PlayerBackgroundStyle.blurGradient => 'Blur + Gradient',
+      },
+      onTap: () => _showStylePicker(context, ref, style),
+    );
+  }
+
+  void _showStylePicker(
+    BuildContext context,
+    WidgetRef ref,
+    PlayerBackgroundStyle current,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AfColors.surfaceRaised,
+        title: Text(
+          'Player background',
+          style: AfTypography.bodyMedium.copyWith(color: AfColors.textPrimary),
+        ),
+        content: RadioGroup<PlayerBackgroundStyle>(
+          groupValue: current,
+          onChanged: (v) {
+            if (v != null) {
+              ref.read(playerBackgroundStyleProvider.notifier).setStyle(v);
+            }
+            Navigator.of(ctx).pop();
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: PlayerBackgroundStyle.values.map((s) {
+              final label = switch (s) {
+                PlayerBackgroundStyle.gradient => 'Gradient',
+                PlayerBackgroundStyle.blur => 'Blur',
+                PlayerBackgroundStyle.glow => 'Glow',
+                PlayerBackgroundStyle.solid => 'Solid',
+                PlayerBackgroundStyle.blurGradient => 'Blur + Gradient',
+              };
+              return RadioListTile<PlayerBackgroundStyle>(
+                title: Text(label, style: AfTypography.bodyMedium),
+                value: s,
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class CanvasEffectPicker extends ConsumerWidget {
   const CanvasEffectPicker({super.key});
 
