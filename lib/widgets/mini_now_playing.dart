@@ -347,6 +347,7 @@ class _MiniTransport extends ConsumerWidget {
           button: true,
           child: PressScale(
             ensureHitTarget: false,
+            behavior: HitTestBehavior.deferToChild,
             onTap: () => ref.read(playerServiceProvider).skipToPrevious(),
             child: const SizedBox(
               width: AfSpacing.minHitTarget,
@@ -366,6 +367,7 @@ class _MiniTransport extends ConsumerWidget {
           button: true,
           child: PressScale(
             ensureHitTarget: false,
+            behavior: HitTestBehavior.deferToChild,
             onTap: () {
               final svc = ref.read(playerServiceProvider);
               isPlaying ? svc.pause() : svc.play();
@@ -394,6 +396,7 @@ class _MiniTransport extends ConsumerWidget {
           button: true,
           child: PressScale(
             ensureHitTarget: false,
+            behavior: HitTestBehavior.deferToChild,
             onTap: () => ref.read(playerServiceProvider).skipToNext(),
             child: const SizedBox(
               width: AfSpacing.minHitTarget,
