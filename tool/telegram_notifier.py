@@ -131,30 +131,37 @@ def _upload_to_gofile(file_paths):
             return None
 
         server = servers["data"]["servers"][0]["name"]
+        folder_id = None
+        download_url = None
 
-        curl_cmd = ["curl", "-s"]
-        for fp in file_paths:
-            curl_cmd.extend(["-F", f"file=@{fp}"])
-        curl_cmd.append(f"https://{server}.gofile.io/contents/uploadfile")
+        for i, fp in enumerate(file_paths):
+            curl_cmd = ["curl", "-s", "-F", f"file=@{fp}"]
+            if folder_id:
+                curl_cmd.extend(["-F", f"folderId={folder_id}"])
+            curl_cmd.append(f"https://{server}.gofile.io/contents/uploadfile")
 
-        result = subprocess.run(
-            curl_cmd,
-            capture_output=True,
-            text=True,
-            timeout=300
-        )
-        if result.returncode == 0:
-            resp = json.loads(result.stdout)
-            if resp.get("status") == "ok":
-                url = resp["data"]["downloadPage"]
-                print(f"Uploaded to gofile: {url}")
-                return url
-            else:
-                print(f"Unexpected gofile response: {resp}")
+            result = subprocess.run(
+                curl_cmd,
+                capture_output=True,
+                text=True,
+                timeout=300
+            )
+            if result.returncode != 0:
+                print(f"curl failed for {os.path.basename(fp)}: {result.stderr}")
                 return None
-        else:
-            print(f"curl failed: {result.stderr}")
-            return None
+
+            resp = json.loads(result.stdout)
+            if resp.get("status") != "ok":
+                print(f"gofile error for {os.path.basename(fp)}: {resp}")
+                return None
+
+            data = resp["data"]
+            if i == 0:
+                folder_id = data.get("folderId")
+                download_url = data.get("downloadPage")
+            print(f"  Uploaded {os.path.basename(fp)}")
+
+        return download_url
     except subprocess.TimeoutExpired:
         print("Upload to gofile timed out")
         return None
