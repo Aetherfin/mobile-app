@@ -101,6 +101,63 @@ Future<void> saveQueueAsPlaylist(
   }
 }
 
+/// Resolves which selected indices should be removed, mapping local list
+/// indices to actual player-queue indices.
+///
+/// Skips the currently playing track (identified by [currentId]). Returns a
+/// list of `(actualIndex, track)` pairs sorted descending by actualIndex so
+/// that removals don't shift earlier indices.
+///
+/// This is used by the multi-select batch-remove flow in [QueueScreen].
+List<(int actualIndex, AfTrack track)> resolveBatchRemoveTargets({
+  required List<AfTrack> items,
+  required Set<int> selectedIndices,
+  required String? currentId,
+  required List<AfTrack> playerQueue,
+}) {
+  if (selectedIndices.isEmpty) return const [];
+
+  // Collect pairs of (local index, track) for valid selections.
+  final pairs = <(int localIdx, AfTrack track)>[];
+  for (final idx in selectedIndices) {
+    if (idx < 0 || idx >= items.length) continue;
+    final track = items[idx];
+    if (track.id == currentId) continue; // skip playing track
+    pairs.add((idx, track));
+  }
+
+  // Map local indices to actual player-queue indices.
+  final targets = <(int actualIndex, AfTrack track)>[];
+  for (final (_, track) in pairs) {
+    final actualIndex = playerQueue.indexWhere((q) => q.id == track.id);
+    if (actualIndex < 0) continue;
+    targets.add((actualIndex, track));
+  }
+
+  // Sort descending by actualIndex so higher removals don't shift lower ones.
+  targets.sort((a, b) => b.$1.compareTo(a.$1));
+  return targets;
+}
+
+/// Returns the local-list indices to remove, excluding the currently
+/// playing track. Indices are sorted descending for safe removal.
+///
+/// Used by [QueueScreen._batchRemoveSelected] to compute which items
+/// to strip from the local list before calling the player service.
+Set<int> localIndicesToRemove({
+  required List<AfTrack> items,
+  required Set<int> selectedIndices,
+  required String? currentId,
+}) {
+  final result = <int>{};
+  for (final idx in selectedIndices) {
+    if (idx < 0 || idx >= items.length) continue;
+    if (items[idx].id == currentId) continue; // skip playing track
+    result.add(idx);
+  }
+  return result;
+}
+
 /// Resolve a stream URL for the track — used by undo-reinsert logic.
 ///
 /// Handles local content URIs, YouTube Music, offline cache, and

@@ -19,10 +19,10 @@ import 'core/local/app_mode_store.dart';
 import 'core/jellyfin/auth_storage.dart';
 import 'core/jellyfin/models/server.dart';
 import 'core/lastfm/lastfm_storage.dart';
-import 'design_tokens/tokens.dart';
 import 'state/youtube_music_providers.dart';
 import 'state/providers.dart';
 import 'utils/log.dart';
+import 'widgets/debug_error_widget.dart';
 
 /// Plain-prefs key for the fallback device ID used when the encrypted
 /// secure-storage keystore can't be reached. Persisting the fallback
@@ -70,7 +70,7 @@ Future<void> main() async {
         );
         return true;
       };
-      ErrorWidget.builder = (details) => _RootErrorWidget(details: details);
+      ErrorWidget.builder = (details) => DebugErrorWidget(details: details);
       _boot('error handlers installed');
 
       // ── Phase 1: Storage / auth hydration ────────────────────────────────
@@ -418,69 +418,6 @@ Future<String> _loadOrCreateFallbackDeviceId() async {
     );
     // shared_preferences itself is unavailable — per-launch ID as last resort.
     return 'aetherfin-fallback-${const Uuid().v4()}';
-  }
-}
-
-/// Last-line-of-defense error widget so the user always sees *something*
-/// instead of a gray rectangle when a build throws.
-///
-/// In release builds: shows a generic message — exception strings may
-/// contain server URLs, tokens, or internal state that shouldn't appear
-/// on screen (shoulder-surfing, screenshots shared in bug reports).
-/// In debug builds: shows the full exception for developer diagnosis.
-class _RootErrorWidget extends StatelessWidget {
-  const _RootErrorWidget({required this.details});
-  final FlutterErrorDetails details;
-
-  @override
-  Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: ColoredBox(
-        color: AfColors.surfaceCanvas,
-        child: Padding(
-          padding: const EdgeInsets.all(AfSpacing.s24),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Aetherfin hit a snag',
-                  style: AfTypography.titleMediumLarge.copyWith(
-                    color: AfColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: AfSpacing.s12),
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: Text(
-                      // Release: generic message — no PII/tokens on screen.
-                      // Debug: full exception for developer diagnosis.
-                      kReleaseMode
-                          ? 'An unexpected error occurred. Please restart the app.'
-                          : details.exceptionAsString(),
-                      style: AfTypography.mono.copyWith(
-                        color: AfColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AfSpacing.s16),
-                Text(
-                  kReleaseMode
-                      ? 'Tap Restart on Android to retry.'
-                      : 'Hot reload to retry.',
-                  style: AfTypography.bodySmall.copyWith(
-                    color: AfColors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -43,12 +44,125 @@ class MiniNowPlaying extends ConsumerWidget {
 }
 
 /// The actual mini player content — only builds when track is non-null.
-class _MiniPlayerContent extends ConsumerWidget {
+///
+/// Supports horizontal swipe-to-skip (left → previous, right → next)
+/// with logarithmic drag sensitivity and animated snap-back.
+/// Uses a single pan recognizer with direction detection to avoid
+/// gesture arena conflicts between vertical and horizontal drags.
+class _MiniPlayerContent extends ConsumerStatefulWidget {
   const _MiniPlayerContent({required this.track});
   final AfTrack track;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_MiniPlayerContent> createState() => _MiniPlayerContentState();
+}
+
+class _MiniPlayerContentState extends ConsumerState<_MiniPlayerContent>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _snapCtrl;
+  double _dragOffset = 0;
+  double _snapFrom = 0;
+  double _panStartX = 0;
+  double _panStartY = 0;
+  bool _directionResolved = false;
+  bool _isHorizontalPan = false;
+
+  /// Skip threshold in effective pixels after logarithmic sensitivity.
+  static const double _skipThreshold = 80;
+
+  /// Minimum axis delta before direction is resolved.
+  static const double _directionSlop = 18;
+
+  /// Logarithmic sensitivity: saturates for large drags, dampens small ones.
+  static double _logSensitivity(double dx) => dx / (1 + math.exp(-0.05 * dx));
+
+  @override
+  void initState() {
+    super.initState();
+    _snapCtrl = AnimationController(vsync: this, duration: AfDurations.quick)
+      ..addListener(_onSnapTick);
+  }
+
+  @override
+  void dispose() {
+    _snapCtrl
+      ..removeListener(_onSnapTick)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onSnapTick() {
+    setState(() {
+      _dragOffset = _snapFrom * (1 - _snapCtrl.value);
+    });
+  }
+
+  void _onPanStart(DragStartDetails details) {
+    _panStartX = 0;
+    _panStartY = 0;
+    _directionResolved = false;
+    _isHorizontalPan = false;
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    if (_snapCtrl.isAnimating) return;
+
+    if (!_directionResolved) {
+      _panStartX += details.delta.dx;
+      _panStartY += details.delta.dy;
+      final total = _panStartX.abs() + _panStartY.abs();
+      if (total > _directionSlop) {
+        _directionResolved = true;
+        _isHorizontalPan = _panStartX.abs() > _panStartY.abs();
+      }
+    }
+
+    if (_isHorizontalPan) {
+      setState(() {
+        _dragOffset += details.delta.dx;
+      });
+    }
+  }
+
+  void _onPanEnd(DragEndDetails details) {
+    if (_isHorizontalPan) {
+      final effective = _logSensitivity(_dragOffset);
+      if (effective.abs() > _skipThreshold) {
+        HapticFeedback.lightImpact();
+        final svc = ref.read(playerServiceProvider);
+        if (effective > 0) {
+          svc.skipToNext();
+        } else {
+          svc.skipToPrevious();
+        }
+      }
+      _snapBack();
+    } else if (_directionResolved) {
+      final v = details.primaryVelocity ?? 0;
+      if (v < -200) {
+        context.push('/now-playing');
+      } else if (v > 200) {
+        ref.read(playerServiceProvider).stopAndClear();
+      }
+    }
+    _resetPanState();
+  }
+
+  void _snapBack() {
+    if (_dragOffset == 0) return;
+    _snapFrom = _dragOffset;
+    _snapCtrl.forward(from: 0);
+  }
+
+  void _resetPanState() {
+    _panStartX = 0;
+    _panStartY = 0;
+    _directionResolved = false;
+    _isHorizontalPan = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isPlaying = ref
         .watch(playingStreamProvider)
         .maybeWhen(data: (v) => v, orElse: () => false);
@@ -62,14 +176,10 @@ class _MiniPlayerContent extends ConsumerWidget {
     return PressScale(
       onTap: () => context.push('/now-playing'),
       child: GestureDetector(
-        onVerticalDragEnd: (details) {
-          final v = details.primaryVelocity ?? 0;
-          if (v < -200) {
-            context.push('/now-playing');
-          } else if (v > 200) {
-            ref.read(playerServiceProvider).stopAndClear();
-          }
-        },
+        behavior: HitTestBehavior.translucent,
+        onPanStart: _onPanStart,
+        onPanUpdate: _onPanUpdate,
+        onPanEnd: _onPanEnd,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s8),
           child: Container(
@@ -82,42 +192,45 @@ class _MiniPlayerContent extends ConsumerWidget {
                 width: 0.5,
               ),
             ),
-            child: Row(
-              children: [
-                const SizedBox(width: AfSpacing.s4),
-                _ArtworkRing(track: track, accent: spectral.primary),
-                const SizedBox(width: AfSpacing.s8),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        track.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AfTypography.bodyMedium.copyWith(
-                          color: AfColors.textPrimary,
+            child: Transform.translate(
+              offset: Offset(_dragOffset, 0),
+              child: Row(
+                children: [
+                  const SizedBox(width: AfSpacing.s4),
+                  _ArtworkRing(track: widget.track, accent: spectral.primary),
+                  const SizedBox(width: AfSpacing.s8),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.track.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AfTypography.bodyMedium.copyWith(
+                            color: AfColors.textPrimary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: AfSpacing.s2),
-                      Text(
-                        track.artistName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AfTypography.bodySmall.copyWith(
-                          color: AfColors.textSecondary,
+                        const SizedBox(height: AfSpacing.s2),
+                        Text(
+                          widget.track.artistName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AfTypography.bodySmall.copyWith(
+                            color: AfColors.textSecondary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                _MiniTransport(
-                  isPlaying: isPlaying,
-                  isBuffering: isBuffering,
-                  accent: spectral.primary,
-                ),
-              ],
+                  _MiniTransport(
+                    isPlaying: isPlaying,
+                    isBuffering: isBuffering,
+                    accent: spectral.primary,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -152,9 +265,7 @@ class _ArtworkRing extends StatelessWidget {
             child: Artwork(
               url: track.imageUrl,
               size: _artworkSize,
-              radius: BorderRadius.circular(
-                AfSpacing.s24,
-              ), // 24dp — no exact AfRadii match
+              radius: BorderRadius.circular(AfSpacing.s24),
             ),
           ),
           Positioned.fill(

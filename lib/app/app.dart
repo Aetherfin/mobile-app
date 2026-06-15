@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../core/network/connectivity_observer.dart';
 import '../design_tokens/colors.dart';
+import '../design_tokens/spacing.dart';
 import '../state/animated_spectral.dart';
 import '../utils/log.dart';
 import 'router.dart';
@@ -59,11 +65,86 @@ class _AetherfinRouter extends StatelessWidget {
             );
             return MediaQuery(
               data: mq.copyWith(textScaler: clamped),
-              child: child ?? const SizedBox.shrink(),
+              child: _ConnectivityBanner(
+                child: child ?? const SizedBox.shrink(),
+              ),
             );
           },
         );
       },
     );
   }
+}
+
+/// Monitors network connectivity and shows a top SnackBar when offline.
+///
+/// Auto-dismisses on reconnection. Skips display during onboarding routes.
+class _ConnectivityBanner extends StatefulWidget {
+  const _ConnectivityBanner({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_ConnectivityBanner> createState() => _ConnectivityBannerState();
+}
+
+class _ConnectivityBannerState extends State<_ConnectivityBanner> {
+  ConnectivityObserver? _observer;
+  StreamSubscription<bool>? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    _observer = ConnectivityObserver();
+    _sub = _observer!.stream.listen(_onConnectivityChanged);
+  }
+
+  void _onConnectivityChanged(bool online) {
+    if (!mounted) return;
+
+    final loc = GoRouterState.of(context).matchedLocation;
+    // Skip during onboarding
+    if (loc == '/' || loc.startsWith('/onboarding')) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    if (online) {
+      messenger.hideCurrentSnackBar();
+    } else {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(_offlineSnackBar());
+    }
+  }
+
+  SnackBar _offlineSnackBar() {
+    return SnackBar(
+      content: const Row(
+        children: [
+          Icon(LucideIcons.wifiOff, color: Colors.white, size: 20),
+          SizedBox(width: AfSpacing.s8),
+          Expanded(child: Text('No internet connection')),
+        ],
+      ),
+      backgroundColor: AfColors.semanticOffline,
+      behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.only(
+        left: AfSpacing.s16,
+        right: AfSpacing.s16,
+        top: MediaQuery.of(context).padding.top + AfSpacing.s8,
+      ),
+      // Position banner at the top
+      dismissDirection: DismissDirection.up,
+      duration: const Duration(seconds: 5),
+    );
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    _observer?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

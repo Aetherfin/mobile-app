@@ -67,6 +67,9 @@ dependencies:
   # Japanese romanization (kanji → romaji via kuromoji)
   romanize: ^0.0.3
 
+  # Network connectivity monitoring
+  connectivity_plus: ^6.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

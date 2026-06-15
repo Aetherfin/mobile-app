@@ -20,18 +20,26 @@ class QueueListView extends ConsumerWidget {
     required this.currentId,
     required this.isBuffering,
     required this.scrollController,
+    this.isSelectionMode = false,
+    this.selectedIndices = const {},
     required this.onReorder,
     required this.onDismiss,
     required this.onTap,
+    this.onLongPress,
+    this.onSelectToggle,
   });
 
   final List<AfTrack> items;
   final String? currentId;
   final bool isBuffering;
   final ScrollController scrollController;
+  final bool isSelectionMode;
+  final Set<int> selectedIndices;
   final void Function(int oldIndex, int newIndex) onReorder;
   final void Function(int index, AfTrack track) onDismiss;
   final void Function(int index) onTap;
+  final void Function(int index)? onLongPress;
+  final void Function(int index)? onSelectToggle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -49,11 +57,12 @@ class QueueListView extends ConsumerWidget {
       itemBuilder: (context, i) {
         final t = items[i];
         final active = currentId == t.id;
+        final selected = selectedIndices.contains(i);
         return Semantics(
           label: '${i + 1}. ${t.title} by ${t.artistName}',
           child: Dismissible(
             key: ValueKey('q-${t.id}-$i'),
-            direction: active
+            direction: isSelectionMode || active
                 ? DismissDirection.none
                 : DismissDirection.endToStart,
             background: Container(
@@ -92,6 +101,24 @@ class QueueListView extends ConsumerWidget {
                     : null,
                 child: Row(
                   children: [
+                    if (isSelectionMode)
+                      GestureDetector(
+                        onTap: () => onSelectToggle?.call(i),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AfSpacing.s12,
+                          ),
+                          child: Icon(
+                            selected
+                                ? LucideIcons.circleCheck
+                                : LucideIcons.circle,
+                            size: 22,
+                            color: selected
+                                ? AfColors.accentPrimary
+                                : AfColors.textTertiary,
+                          ),
+                        ),
+                      ),
                     Expanded(
                       child: TrackRow(
                         track: t,
@@ -100,20 +127,24 @@ class QueueListView extends ConsumerWidget {
                         isBuffering: active && isBuffering,
                         showHeart: false,
                         onTap: () => onTap(i),
-                        onLongPress: () =>
-                            showTrackContextMenu(context, ref, t),
+                        onLongPress: onLongPress != null
+                            ? () => onLongPress!(i)
+                            : () => showTrackContextMenu(context, ref, t),
                       ),
                     ),
-                    ReorderableDragStartListener(
-                      index: i,
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: AfSpacing.s8),
-                        child: Icon(
-                          LucideIcons.gripVertical,
-                          color: AfColors.textTertiary,
+                    if (!isSelectionMode)
+                      ReorderableDragStartListener(
+                        index: i,
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AfSpacing.s8,
+                          ),
+                          child: Icon(
+                            LucideIcons.gripVertical,
+                            color: AfColors.textTertiary,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),

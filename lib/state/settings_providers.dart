@@ -8,6 +8,21 @@ import '../core/lastfm/lastfm_client.dart';
 import '../utils/log.dart';
 import 'local_library_providers.dart';
 
+/// Visual style for the Now Playing screen background.
+enum PlayerBackgroundStyle {
+  /// Vertical gradient from dark surface to spectral shadow color.
+  gradient,
+
+  /// Frosted glass blur effect with spectral tint.
+  blur,
+
+  /// Dark surface with animated radial glow from spectral colors.
+  glow,
+
+  /// Single solid color extracted from artwork spectral energy.
+  solid,
+}
+
 final discoveredServersProvider = StateProvider<List<JellyfinServer>>(
   (ref) => const <JellyfinServer>[],
 );
@@ -60,6 +75,39 @@ final lastFmClientProvider = Provider<LastFmClient?>((ref) {
     onStatus: (msg) => ref.read(lastfmStatusProvider.notifier).state = msg,
   );
 });
+
+/// Persisted Now Playing background style preference.
+final playerBackgroundStyleProvider =
+    NotifierProvider<PlayerBackgroundStyleNotifier, PlayerBackgroundStyle>(
+      PlayerBackgroundStyleNotifier.new,
+    );
+
+class PlayerBackgroundStyleNotifier extends Notifier<PlayerBackgroundStyle> {
+  static const _key = 'af.player_background_style';
+
+  @override
+  PlayerBackgroundStyle build() {
+    _load();
+    return PlayerBackgroundStyle.gradient;
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString(_key);
+    if (name != null) {
+      state = PlayerBackgroundStyle.values.firstWhere(
+        (s) => s.name == name,
+        orElse: () => PlayerBackgroundStyle.gradient,
+      );
+    }
+  }
+
+  Future<void> setStyle(PlayerBackgroundStyle style) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, style.name);
+    state = style;
+  }
+}
 
 final appIconProvider = NotifierProvider<AppIconNotifier, String>(
   AppIconNotifier.new,

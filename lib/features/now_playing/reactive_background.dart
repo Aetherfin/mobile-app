@@ -5,14 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../utils/oklch.dart';
+import 'backgrounds/backgrounds.dart';
 
 /// Animated background that transitions between spectral-derived colors.
 ///
-/// Watches [currentSpectralProvider] and smoothly animates the background
-/// fill color when the artwork's dominant color changes.
+/// Watches [currentSpectralProvider] and [playerBackgroundStyleProvider]
+/// to render the appropriate background style. Uses [AnimatedSwitcher]
+/// for smooth crossfade transitions when the style changes.
 ///
-/// Uses an explicit [ColorTween] so the transition from old → new color is
-/// guaranteed to animate, even across rebuilds.
+/// The spectral energy color is animated independently so artwork transitions
+/// feel smooth regardless of which background style is active.
 class ReactiveBackground extends ConsumerStatefulWidget {
   const ReactiveBackground({super.key, required this.child});
   final Widget child;
@@ -48,14 +50,15 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
 
   @override
   Widget build(BuildContext context) {
-    final energy = ref.watch(currentSpectralProvider.select((s) => s.energy));
+    final spectral = ref.watch(currentSpectralProvider);
+    final energy = spectral.energy;
+    final style = ref.watch(playerBackgroundStyleProvider);
+
     final oklch = srgbToOklch(energy);
     final target = OklchColor(0.35, 0.12, oklch.h).toColor();
 
     if (target != _target) {
       _target = target;
-      // Start the new tween from wherever the animation currently is,
-      // not the previous target — avoids a jump if color changes mid-transition.
       _current = _colorAnimation.value ?? _current;
       _colorAnimation = ColorTween(begin: _current, end: target).animate(
         CurvedAnimation(parent: _controller, curve: AfCurves.easeStandard),
@@ -79,14 +82,34 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
           : Brightness.light,
       systemNavigationBarDividerColor: Colors.transparent,
     );
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlayStyle,
       child: AnimatedBuilder(
         animation: _colorAnimation,
-        builder: (context, child) =>
-            Container(color: _colorAnimation.value, child: child),
-        child: widget.child,
+        builder: (context, _) => _buildStyleWidget(style, energy),
       ),
     );
+  }
+
+  Widget _buildStyleWidget(PlayerBackgroundStyle style, Color energy) {
+    return switch (style) {
+      PlayerBackgroundStyle.gradient => GradientBackground(
+        energy: energy,
+        child: widget.child,
+      ),
+      PlayerBackgroundStyle.blur => BlurBackground(
+        energy: energy,
+        child: widget.child,
+      ),
+      PlayerBackgroundStyle.glow => GlowBackground(
+        energy: energy,
+        child: widget.child,
+      ),
+      PlayerBackgroundStyle.solid => SolidBackground(
+        energy: energy,
+        child: widget.child,
+      ),
+    };
   }
 }
