@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import '../../state/state_holder.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../design_tokens/tokens.dart';
@@ -15,11 +15,16 @@ import '../../widgets/press_scale.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// The DateTime at which the player should pause. Null = no timer active.
-final sleepTimerProvider = StateProvider<DateTime?>((ref) => null);
+final sleepTimerProvider = NotifierProvider<StateHolder<DateTime?>, DateTime?>(
+  () => StateHolder<DateTime?>((ref) => null),
+);
 
 /// Remaining duration until the timer fires. Null when no timer is active.
 /// Recomputed every second by [_SleepTimerScreenState].
-final sleepTimerRemainingProvider = StateProvider<Duration?>((ref) => null);
+final sleepTimerRemainingProvider =
+    NotifierProvider<StateHolder<Duration?>, Duration?>(
+      () => StateHolder<Duration?>((ref) => null),
+    );
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen

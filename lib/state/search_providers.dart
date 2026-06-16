@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'state_holder.dart';
 
 import '../core/jellyfin/models/items.dart';
 import '../core/lyrics/lyrics_resolver.dart';
@@ -26,9 +26,11 @@ typedef SearchResults = ({
 /// In-memory cache for resolved lyrics: trackId → LyricsResult.
 /// This provider persists across rebuilds (not autoDispose) so that
 /// lyrics resolved for one track are available when navigating back.
-final lyricsCacheProvider = StateProvider<Map<String, LyricsResult>>(
-  (ref) => {},
-);
+final lyricsCacheProvider =
+    NotifierProvider<
+      StateHolder<Map<String, LyricsResult>>,
+      Map<String, LyricsResult>
+    >(() => StateHolder<Map<String, LyricsResult>>((ref) => {}));
 
 final sharedLyricsResolverProvider = Provider<LyricsResolver>((ref) {
   final backend = ref.watch(musicBackendProvider);

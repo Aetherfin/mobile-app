@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+
+import 'state_holder.dart';
 
 import '../core/jellyfin/models/items.dart';
 import '../utils/log.dart';
@@ -20,18 +21,20 @@ void _logData(String feature, {required String source, String? extra}) {
 /// The `.family` variant below is kept for granular access from providers
 /// that need to watch a single track's override without rebuilding on
 /// other tracks' toggles.
-final trackFavoriteOverridesProvider = StateProvider<Map<String, bool>>(
-  (ref) => const {},
-);
+final trackFavoriteOverridesProvider =
+    NotifierProvider<StateHolder<Map<String, bool>>, Map<String, bool>>(
+      () => StateHolder<Map<String, bool>>((ref) => const {}),
+    );
 
 /// Per-track favorite override for optimistic UI updates.
 ///
 /// Each track gets its own state (null = no override, true/false = override).
 /// Using `.family` means only the specific track's watchers rebuild on toggle,
 /// instead of every track in the library.
-final trackFavoriteOverrideProvider = StateProvider.family<bool?, String>(
-  (ref, trackId) => null,
-);
+final trackFavoriteOverrideProvider =
+    NotifierProvider.family<FamilyStateHolder<bool?, String>, bool?, String>(
+      (arg) => FamilyStateHolder<bool?, String>((_) => null, arg),
+    );
 
 /// Derives the favorite state for a specific track by merging per-track
 /// overrides (from optimistic UI) with the server/library favorite IDs.

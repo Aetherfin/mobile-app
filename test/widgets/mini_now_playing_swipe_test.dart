@@ -11,6 +11,7 @@ import 'package:aetherfin/core/audio/player_service.dart';
 import 'package:aetherfin/core/jellyfin/models/items.dart';
 import 'package:aetherfin/design_tokens/tokens.dart';
 import 'package:aetherfin/state/providers.dart';
+import 'package:aetherfin/state/state_holder.dart';
 import 'package:aetherfin/widgets/mini_now_playing.dart';
 
 import '../helpers/fake_player.dart';
@@ -37,7 +38,9 @@ _createFixture({required AfTrack track}) {
   final container = ProviderContainer(
     overrides: [
       playerServiceProvider.overrideWithValue(service),
-      currentTrackProvider.overrideWith((ref) => track),
+      currentTrackProvider.overrideWith(
+        () => StateHolder<AfTrack?>((ref) => track),
+      ),
       currentSpectralProvider.overrideWithValue(Spectral.fallback),
       playingStreamProvider.overrideWith((ref) => const Stream<bool>.empty()),
       isBufferingProvider.overrideWith((ref) => false),

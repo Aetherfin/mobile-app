@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+
+import 'state_holder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/audio/offline_cache_service.dart';
@@ -15,9 +16,11 @@ enum PlayerBackgroundStyle {
   glow,
 }
 
-final discoveredServersProvider = StateProvider<List<JellyfinServer>>(
-  (ref) => const <JellyfinServer>[],
-);
+final discoveredServersProvider =
+    NotifierProvider<StateHolder<List<JellyfinServer>>, List<JellyfinServer>>(
+      () =>
+          StateHolder<List<JellyfinServer>>((ref) => const <JellyfinServer>[]),
+    );
 
 /// Shared [OfflineCacheService] instance.
 final offlineCacheServiceProvider = Provider<OfflineCacheService>((ref) {
@@ -26,33 +29,51 @@ final offlineCacheServiceProvider = Provider<OfflineCacheService>((ref) {
 });
 
 /// Whether offline track caching is enabled.
-final offlineCacheEnabledProvider = StateProvider<bool>((ref) => false);
+final offlineCacheEnabledProvider = NotifierProvider<StateHolder<bool>, bool>(
+  () => StateHolder<bool>((ref) => false),
+);
 
 /// Max cache size in bytes. Default 1 GB.
-final offlineCacheMaxSizeProvider = StateProvider<int>((ref) {
-  return 1024 * 1024 * 1024;
-});
+final offlineCacheMaxSizeProvider = NotifierProvider<StateHolder<int>, int>(
+  () => StateHolder<int>((ref) {
+    return 1024 * 1024 * 1024;
+  }),
+);
 
 /// Max streaming bitrate in kbps. 0 means Original / Lossless.
-final maxBitrateProvider = StateProvider<int>((ref) => 0);
+final maxBitrateProvider = NotifierProvider<StateHolder<int>, int>(
+  () => StateHolder<int>((ref) => 0),
+);
 
 /// Last.fm API key for enriching smart queue candidates.
-final lastfmApiKeyProvider = StateProvider<String>((ref) => '');
+final lastfmApiKeyProvider = NotifierProvider<StateHolder<String>, String>(
+  () => StateHolder<String>((ref) => ''),
+);
 
 /// Last.fm API secret for signing scrobbles.
-final lastfmApiSecretProvider = StateProvider<String>((ref) => '');
+final lastfmApiSecretProvider = NotifierProvider<StateHolder<String>, String>(
+  () => StateHolder<String>((ref) => ''),
+);
 
 /// Last.fm session key for scrobbling.
-final lastfmSessionKeyProvider = StateProvider<String>((ref) => '');
+final lastfmSessionKeyProvider = NotifierProvider<StateHolder<String>, String>(
+  () => StateHolder<String>((ref) => ''),
+);
 
 /// Last.fm username for scrobbling.
-final lastfmUsernameProvider = StateProvider<String>((ref) => '');
+final lastfmUsernameProvider = NotifierProvider<StateHolder<String>, String>(
+  () => StateHolder<String>((ref) => ''),
+);
 
 /// Whether Last.fm scrobbling is enabled.
-final lastfmScrobbleEnabledProvider = StateProvider<bool>((ref) => true);
+final lastfmScrobbleEnabledProvider = NotifierProvider<StateHolder<bool>, bool>(
+  () => StateHolder<bool>((ref) => true),
+);
 
 /// Tracks the status of the last Last.fm API call (OK or error).
-final lastfmStatusProvider = StateProvider<String?>((ref) => null);
+final lastfmStatusProvider = NotifierProvider<StateHolder<String?>, String?>(
+  () => StateHolder<String?>((ref) => null),
+);
 
 /// Central Last.fm client provider, watching api key, secret and session key.
 final lastFmClientProvider = Provider<LastFmClient?>((ref) {

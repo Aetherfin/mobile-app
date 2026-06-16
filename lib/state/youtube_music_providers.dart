@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'state_holder.dart';
 
 import '../core/youtube/youtube_auth.dart';
 import '../core/youtube/youtube_home_content.dart';
@@ -43,14 +43,16 @@ class YouTubeAuthNotifier extends Notifier<YouTubeAuthBundle?> {
 }
 
 /// Selected YouTube home chip parameters.
-final youtubeHomeParamsProvider = StateProvider.autoDispose<String?>(
-  (ref) => null,
-);
+final youtubeHomeParamsProvider =
+    NotifierProvider.autoDispose<StateHolder<String?>, String?>(
+      () => StateHolder<String?>((ref) => null),
+    );
 
 /// Selected chip (if any).
-final youtubeSelectedChipProvider = StateProvider.autoDispose<InnerTubeChip?>(
-  (ref) => null,
-);
+final youtubeSelectedChipProvider =
+    NotifierProvider.autoDispose<StateHolder<InnerTubeChip?>, InnerTubeChip?>(
+      () => StateHolder<InnerTubeChip?>((ref) => null),
+    );
 
 /// YouTube Music home page content (trending, popular, etc.).
 class YouTubeHomeNotifier extends AsyncNotifier<YouTubeHomeContent> {

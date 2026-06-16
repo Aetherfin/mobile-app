@@ -14,6 +14,7 @@ import 'package:aetherfin/core/audio/player_service.dart';
 import 'package:aetherfin/core/backend/music_backend.dart';
 import 'package:aetherfin/core/local/queue_history_repository.dart';
 import 'package:aetherfin/state/providers.dart';
+import 'package:aetherfin/state/state_holder.dart';
 import 'package:aetherfin/core/jellyfin/models/items.dart';
 
 class MockPlayerService extends Mock implements AfPlayerService {}
@@ -339,7 +340,9 @@ void main() {
           musicBackendProvider.overrideWithValue(mockBackend),
           queueHistoryRepositoryProvider.overrideWithValue(mockHistoryRepo),
           playerServiceProvider.overrideWithValue(mockSvc),
-          appModeProvider.overrideWith((ref) => AppMode.local),
+          appModeProvider.overrideWith(
+            () => StateHolder<AppMode?>((ref) => AppMode.local),
+          ),
           localLibraryProvider.overrideWithValue(localLib),
           initialAuthProvider.overrideWithValue(null),
         ],

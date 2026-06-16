@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'state_holder.dart';
 
 import '../core/backend/music_backend.dart';
 import '../core/jellyfin/models/items.dart';
@@ -155,7 +155,10 @@ final allPlaylistsProvider = FutureProvider.autoDispose<List<AfPlaylist>>((
   return res;
 });
 
-final savedTrackIdsProvider = StateProvider<Set<String>>((ref) => <String>{});
+final savedTrackIdsProvider =
+    NotifierProvider<StateHolder<Set<String>>, Set<String>>(
+      () => StateHolder<Set<String>>((ref) => <String>{}),
+    );
 
 final allAlbumsProvider = FutureProvider.autoDispose<List<AfAlbum>>((
   ref,

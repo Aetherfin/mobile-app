@@ -6,6 +6,7 @@ import 'package:aetherfin/core/jellyfin/models/items.dart';
 import 'package:aetherfin/design_tokens/colors.dart';
 import 'package:aetherfin/features/home/home_screen.dart';
 import 'package:aetherfin/state/providers.dart';
+import 'package:aetherfin/state/state_holder.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +17,9 @@ void main() {
     return ProviderContainer(
       overrides: [
         // ── App mode: local (avoids YouTube branch) ──
-        appModeProvider.overrideWith((ref) => AppMode.local),
+        appModeProvider.overrideWith(
+          () => StateHolder<AppMode?>((ref) => AppMode.local),
+        ),
 
         // ── Spectral: fallback palette ──
         currentSpectralProvider.overrideWith((ref) => Spectral.fallback),

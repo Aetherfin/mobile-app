@@ -13,6 +13,7 @@ import 'package:uuid/uuid.dart';
 import 'app/app.dart';
 import 'app/router.dart'
     show notifyAuthChanged, resetRouterMode, setRouterAuthState;
+import 'state/state_holder.dart';
 import 'core/audio/player_service.dart';
 import 'core/audio/player_settings_store.dart';
 import 'core/local/app_mode_store.dart';
@@ -227,20 +228,24 @@ Future<void> main() async {
           initialAuthProvider.overrideWithValue(initialAuth),
           aetherfinVersionProvider.overrideWithValue(aetherfinVersion),
           if (persistedMode != null)
-            appModeProvider.overrideWith((ref) => persistedMode),
+            appModeProvider.overrideWith(
+              () => StateHolder<AppMode?>((ref) => persistedMode),
+            ),
           offlineCacheEnabledProvider.overrideWith(
-            (ref) => offlineCacheEnabled,
+            () => StateHolder<bool>((ref) => offlineCacheEnabled),
           ),
           offlineCacheMaxSizeProvider.overrideWith(
-            (ref) => offlineCacheMaxSize,
+            () => StateHolder<int>((ref) => offlineCacheMaxSize),
           ),
-          maxBitrateProvider.overrideWith((ref) => maxBitrate),
+          maxBitrateProvider.overrideWith(
+            () => StateHolder<int>((ref) => maxBitrate),
+          ),
           playerServiceProvider.overrideWith((ref) {
             wirePlayerService(ref, handler);
             return handler;
           }),
           localOnboardingCompletedProvider.overrideWith(
-            (ref) => localOnboardingCompleted,
+            () => StateHolder<bool>((ref) => localOnboardingCompleted),
           ),
         ],
       );

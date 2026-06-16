@@ -1,15 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'state_holder.dart';
 
 import 'local_library_providers.dart';
 import 'settings_providers.dart';
 
 /// Active period selected in the profile dashboard.
 /// Last.fm expects: '7day' | '1month' | '3month' | '6month' | '12month' | 'overall'
-final statsPeriodProvider = StateProvider<String>((ref) => '7day');
+final statsPeriodProvider = NotifierProvider<StateHolder<String>, String>(
+  () => StateHolder<String>((ref) => '7day'),
+);
 
 /// Active stats tab: 'songs' | 'artists' | 'albums'
-final statsTabProvider = StateProvider<String>((ref) => 'songs');
+final statsTabProvider = NotifierProvider<StateHolder<String>, String>(
+  () => StateHolder<String>((ref) => 'songs'),
+);
 
 /// Provider for user's top tracks chart.
 final topTracksProvider =

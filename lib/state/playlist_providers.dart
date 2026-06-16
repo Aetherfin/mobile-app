@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'state_holder.dart';
 
 import '../core/jellyfin/models/items.dart';
 import '../core/smart_playlist/smart_playlist_db.dart';
@@ -16,7 +16,10 @@ void _logData(String feature, {required String source, String? extra}) {
   afLog('data', '$feature source=$source$detail');
 }
 
-final selectedLibraryIdsProvider = StateProvider<Set<String>?>((ref) => null);
+final selectedLibraryIdsProvider =
+    NotifierProvider<StateHolder<Set<String>?>, Set<String>?>(
+      () => StateHolder<Set<String>?>((ref) => null),
+    );
 
 final smartPlaylistDbProvider = Provider<SmartPlaylistDb>((ref) {
   final appDb = ref.watch(appDatabaseProvider);

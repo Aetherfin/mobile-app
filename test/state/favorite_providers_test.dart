@@ -10,6 +10,7 @@ import 'package:aetherfin/state/favorite_providers.dart';
 import 'package:aetherfin/state/library_providers.dart';
 import 'package:aetherfin/state/music_backend_providers.dart';
 import 'package:aetherfin/state/settings_providers.dart';
+import 'package:aetherfin/state/state_holder.dart';
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -42,8 +43,10 @@ ProviderContainer _createContainer({
 }) {
   final overrides = [
     musicBackendProvider.overrideWithValue(backend),
-    lastfmApiKeyProvider.overrideWith((ref) => ''),
-    lastfmSessionKeyProvider.overrideWith((ref) => ''),
+    lastfmApiKeyProvider.overrideWith(() => StateHolder<String>((ref) => '')),
+    lastfmSessionKeyProvider.overrideWith(
+      () => StateHolder<String>((ref) => ''),
+    ),
     favoriteIdsProvider.overrideWith((ref) => favoriteIds),
   ];
   return ProviderContainer(overrides: overrides);

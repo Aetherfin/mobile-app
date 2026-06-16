@@ -6,6 +6,7 @@ import 'package:aetherfin/core/jellyfin/models/items.dart';
 import 'package:aetherfin/design_tokens/colors.dart';
 import 'package:aetherfin/features/search/search_screen.dart';
 import 'package:aetherfin/state/providers.dart';
+import 'package:aetherfin/state/state_holder.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +20,9 @@ void main() {
         currentSpectralProvider.overrideWith((ref) => Spectral.fallback),
 
         // ── App mode: local (for idle grid providers) ──
-        appModeProvider.overrideWith((ref) => AppMode.local),
+        appModeProvider.overrideWith(
+          () => StateHolder<AppMode?>((ref) => AppMode.local),
+        ),
 
         // ── Backend: null (no server connected) ──
         musicBackendProvider.overrideWith((ref) => null),

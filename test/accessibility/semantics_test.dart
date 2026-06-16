@@ -10,6 +10,7 @@ import 'package:aetherfin/state/favorite_providers.dart';
 import 'package:aetherfin/state/music_backend_providers.dart';
 import 'package:aetherfin/state/player_providers.dart';
 import 'package:aetherfin/state/spectral_providers.dart';
+import 'package:aetherfin/state/state_holder.dart';
 import 'package:aetherfin/widgets/bottom_nav.dart';
 import 'package:aetherfin/widgets/track_row.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,9 @@ Widget _wrapWithProviders(Widget child) => ProviderScope(
     isBufferingProvider.overrideWithValue(false),
     currentSpectralProvider.overrideWith((_) => Spectral.fallback),
     musicBackendProvider.overrideWithValue(null),
-    trackFavoriteOverridesProvider.overrideWith((_) => {}),
+    trackFavoriteOverridesProvider.overrideWith(
+      () => StateHolder<Map<String, bool>>((ref) => {}),
+    ),
     playingStreamProvider.overrideWith((ref) => Stream.value(false)),
   ],
   child: MaterialApp(home: Scaffold(body: child)),

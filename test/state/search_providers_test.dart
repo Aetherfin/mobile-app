@@ -10,6 +10,7 @@ import 'package:aetherfin/state/app_mode_providers.dart';
 import 'package:aetherfin/state/local_library_providers.dart';
 import 'package:aetherfin/state/music_backend_providers.dart';
 import 'package:aetherfin/state/search_providers.dart';
+import 'package:aetherfin/state/state_holder.dart';
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -50,7 +51,7 @@ ProviderContainer _createContainer({
   LocalLibrary? localLibrary,
 }) {
   final overrides = [
-    appModeProvider.overrideWith((ref) => appMode),
+    appModeProvider.overrideWith(() => StateHolder<AppMode?>((ref) => appMode)),
     musicBackendProvider.overrideWithValue(backend),
   ];
   if (localLibrary != null) {

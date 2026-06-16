@@ -11,6 +11,7 @@ import 'package:aetherfin/design_tokens/colors.dart';
 import 'package:aetherfin/features/now_playing/now_playing_screen.dart';
 import 'package:aetherfin/features/now_playing/transport_row.dart';
 import 'package:aetherfin/state/providers.dart';
+import 'package:aetherfin/state/state_holder.dart';
 
 import '../../helpers/fake_player.dart';
 import '../../helpers/mock_method_channel.dart';
@@ -71,7 +72,11 @@ createNowPlayingFixture({AfTrack? track}) {
   ];
 
   if (track != null) {
-    overrides.add(currentTrackProvider.overrideWith((ref) => track));
+    overrides.add(
+      currentTrackProvider.overrideWith(
+        () => StateHolder<AfTrack?>((ref) => track),
+      ),
+    );
   }
 
   final container = ProviderContainer(overrides: overrides);

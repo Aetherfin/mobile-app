@@ -1,7 +1,7 @@
 import 'dart:async' show unawaited, Timer, StreamSubscription;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'state_holder.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart'
     show Loop, MpvPlayerError, FftFrame;
 
@@ -482,11 +482,24 @@ final playerQueueProvider = StreamProvider.autoDispose<List<AfTrack>>((ref) {
   });
 });
 
-final positionStreamProvider = StateProvider<Duration>((ref) => Duration.zero);
-final durationStreamProvider = StateProvider<Duration>((ref) => Duration.zero);
-final playbackErrorProvider = StateProvider<MpvPlayerError?>((ref) => null);
-final abLoopAProvider = StateProvider<Duration?>((ref) => null);
-final abLoopBProvider = StateProvider<Duration?>((ref) => null);
+final positionStreamProvider =
+    NotifierProvider<StateHolder<Duration>, Duration>(
+      () => StateHolder<Duration>((ref) => Duration.zero),
+    );
+final durationStreamProvider =
+    NotifierProvider<StateHolder<Duration>, Duration>(
+      () => StateHolder<Duration>((ref) => Duration.zero),
+    );
+final playbackErrorProvider =
+    NotifierProvider<StateHolder<MpvPlayerError?>, MpvPlayerError?>(
+      () => StateHolder<MpvPlayerError?>((ref) => null),
+    );
+final abLoopAProvider = NotifierProvider<StateHolder<Duration?>, Duration?>(
+  () => StateHolder<Duration?>((ref) => null),
+);
+final abLoopBProvider = NotifierProvider<StateHolder<Duration?>, Duration?>(
+  () => StateHolder<Duration?>((ref) => null),
+);
 
 /// Bridges [AfPlayerService] position/duration streams into Riverpod
 /// providers and handles EOF state reset.
@@ -666,14 +679,23 @@ final playbackSpeedProvider = StreamProvider.autoDispose<double>((ref) {
   });
 });
 
-final currentTrackProvider = StateProvider<AfTrack?>((ref) => null);
-final currentArtworkUriProvider = StateProvider<Uri?>((ref) => null);
-final mpvLoadedTrackIdProvider = StateProvider<String?>((ref) => null);
+final currentTrackProvider = NotifierProvider<StateHolder<AfTrack?>, AfTrack?>(
+  () => StateHolder<AfTrack?>((ref) => null),
+);
+final currentArtworkUriProvider = NotifierProvider<StateHolder<Uri?>, Uri?>(
+  () => StateHolder<Uri?>((ref) => null),
+);
+final mpvLoadedTrackIdProvider =
+    NotifierProvider<StateHolder<String?>, String?>(
+      () => StateHolder<String?>((ref) => null),
+    );
 
-final playerIsBufferingProvider = StateProvider<bool>((ref) {
-  final svc = ref.watch(playerServiceProvider);
-  return svc.isBuffering || svc.isPausedForCache;
-});
+final playerIsBufferingProvider = NotifierProvider<StateHolder<bool>, bool>(
+  () => StateHolder<bool>((ref) {
+    final svc = ref.watch(playerServiceProvider);
+    return svc.isBuffering || svc.isPausedForCache;
+  }),
+);
 
 final isBufferingProvider = Provider<bool>((ref) {
   final currentTrack = ref.watch(currentTrackProvider);
@@ -687,13 +709,19 @@ final isBufferingProvider = Provider<bool>((ref) {
   return ref.watch(playerIsBufferingProvider);
 });
 
-final ntimesCountProvider = StateProvider<int>((ref) => 2);
+final ntimesCountProvider = NotifierProvider<StateHolder<int>, int>(
+  () => StateHolder<int>((ref) => 2),
+);
 
 /// The current N value for forNtimes repeat mode. Defaults to 2.
-final repeatCountProvider = StateProvider<int>((ref) => 2);
+final repeatCountProvider = NotifierProvider<StateHolder<int>, int>(
+  () => StateHolder<int>((ref) => 2),
+);
 
 /// Whether forNtimes loop mode is currently active.
-final forNtimesModeProvider = StateProvider<bool>((ref) => false);
+final forNtimesModeProvider = NotifierProvider<StateHolder<bool>, bool>(
+  () => StateHolder<bool>((ref) => false),
+);
 
 final hasActivePlaybackProvider = Provider<bool>((ref) {
   return ref.watch(currentTrackProvider) != null;
