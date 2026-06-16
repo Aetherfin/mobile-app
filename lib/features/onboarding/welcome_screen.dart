@@ -149,8 +149,7 @@ class WelcomeScreen extends ConsumerWidget {
                         title: 'Play local files',
                         subtitle: 'Music on your device',
                         onTap: () async {
-                          ref.read(appModeProvider.notifier).state =
-                              AppMode.local;
+                          ref.read(appModeProvider.notifier).set(AppMode.local);
                           await AppModeStore.save(AppMode.local);
                           if (context.mounted) {
                             await context.push('/onboarding/local-setup');
@@ -163,8 +162,9 @@ class WelcomeScreen extends ConsumerWidget {
                         title: 'YouTube Music',
                         subtitle: 'Stream from YouTube catalog',
                         onTap: () async {
-                          ref.read(appModeProvider.notifier).state =
-                              AppMode.youtubeMusic;
+                          ref
+                              .read(appModeProvider.notifier)
+                              .set(AppMode.youtubeMusic);
                           await AppModeStore.save(AppMode.youtubeMusic);
                           if (context.mounted) {
                             context.go('/home');
@@ -178,8 +178,9 @@ class WelcomeScreen extends ConsumerWidget {
                         subtitle: 'Jellyfin or Navidrome',
                         onTap: () async {
                           await HapticFeedback.lightImpact();
-                          ref.read(appModeProvider.notifier).state =
-                              AppMode.server;
+                          ref
+                              .read(appModeProvider.notifier)
+                              .set(AppMode.server);
                           await AppModeStore.save(AppMode.server);
                           if (context.mounted) {
                             await context.push('/onboarding/discover');

@@ -266,7 +266,7 @@ class SmartQueueToggle extends ConsumerWidget {
       subtitle: 'Learn from skips and plays for better suggestions',
       value: enabled,
       onChanged: (v) {
-        ref.read(smartQueueEnabledProvider.notifier).state = v;
+        ref.read(smartQueueEnabledProvider.notifier).set(v);
       },
     );
   }

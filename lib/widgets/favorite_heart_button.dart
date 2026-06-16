@@ -71,9 +71,9 @@ class _FavoriteHeartButtonState extends ConsumerState<FavoriteHeartButton>
 
     final current = ref.read(currentTrackProvider);
     if (current?.id == widget.track.id) {
-      ref.read(currentTrackProvider.notifier).state = current!.copyWith(
-        isFavorite: next,
-      );
+      ref
+          .read(currentTrackProvider.notifier)
+          .set(current!.copyWith(isFavorite: next));
     }
 
     try {
@@ -97,7 +97,7 @@ class _FavoriteHeartButtonState extends ConsumerState<FavoriteHeartButton>
           .read(trackFavoriteOverridesProvider.notifier)
           .update((s) => {...s, widget.track.id: wasFavorite});
       if (current?.id == widget.track.id) {
-        ref.read(currentTrackProvider.notifier).state = current;
+        ref.read(currentTrackProvider.notifier).set(current);
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

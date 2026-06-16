@@ -55,7 +55,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final pill = ref.read(songsPillProvider);
     if (pill != null && mounted) {
       _pill = pill;
-      ref.read(songsPillProvider.notifier).state = null;
+      ref.read(songsPillProvider.notifier).set(null);
     }
   }
 
@@ -76,7 +76,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       if (next != null && next != _pill && mounted) {
         setState(() {
           _pill = next;
-          ref.read(songsPillProvider.notifier).state = null;
+          ref.read(songsPillProvider.notifier).set(null);
         });
       }
     });

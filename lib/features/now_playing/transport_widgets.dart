@@ -78,7 +78,7 @@ class ReactiveTransport extends ConsumerWidget {
             );
             break;
           case AfLoopMode.file:
-            ref.read(forNtimesModeProvider.notifier).state = true;
+            ref.read(forNtimesModeProvider.notifier).set(true);
             unawaited(
               svc.setAfForNtimes(true).catchError((Object e, StackTrace s) {
                 afLog(
@@ -91,7 +91,7 @@ class ReactiveTransport extends ConsumerWidget {
             );
             break;
           case AfLoopMode.forNtimes:
-            ref.read(forNtimesModeProvider.notifier).state = false;
+            ref.read(forNtimesModeProvider.notifier).set(false);
             svc.setLoopModeOffSync();
             unawaited(
               svc.setAfForNtimes(false).catchError((Object e, StackTrace s) {

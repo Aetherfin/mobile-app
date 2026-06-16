@@ -263,10 +263,10 @@ void _wireServiceCallbacks(Ref ref, AfPlayerService svc) {
       unawaited(sq.refillBuffer(track));
     }
 
-    ref.read(currentTrackProvider.notifier).state = track;
-    ref.read(currentArtworkUriProvider.notifier).state = track != null
-        ? svc.currentArtworkUri
-        : null;
+    ref.read(currentTrackProvider.notifier).set(track);
+    ref
+        .read(currentArtworkUriProvider.notifier)
+        .set(track != null ? svc.currentArtworkUri : null);
 
     // Update Android home screen widget on track change.
     HomeWidgetManager.update(
@@ -276,14 +276,16 @@ void _wireServiceCallbacks(Ref ref, AfPlayerService svc) {
       isFavorite: track?.isFavorite ?? false,
       artPath: _getArtPath(svc.currentArtworkUri),
     );
-    ref.read(positionStreamProvider.notifier).state = Duration.zero;
+    ref.read(positionStreamProvider.notifier).set(Duration.zero);
     ref
         .read(durationStreamProvider.notifier)
-        .state = (track != null && track.duration > Duration.zero)
-        ? track.duration
-        : Duration.zero;
-    ref.read(abLoopAProvider.notifier).state = null;
-    ref.read(abLoopBProvider.notifier).state = null;
+        .set(
+          (track != null && track.duration > Duration.zero)
+              ? track.duration
+              : Duration.zero,
+        );
+    ref.read(abLoopAProvider.notifier).set(null);
+    ref.read(abLoopBProvider.notifier).set(null);
 
     // Preload lyrics for upcoming tracks (fire-and-forget)
     if (track != null && track.duration > Duration.zero) {
@@ -305,7 +307,7 @@ void _wireServiceCallbacks(Ref ref, AfPlayerService svc) {
   };
 
   svc.onArtworkUpdated = (artUri) {
-    ref.read(currentArtworkUriProvider.notifier).state = artUri;
+    ref.read(currentArtworkUriProvider.notifier).set(artUri);
     // Refresh home widget artwork.
     final track = ref.read(currentTrackProvider);
     HomeWidgetManager.update(
@@ -318,7 +320,7 @@ void _wireServiceCallbacks(Ref ref, AfPlayerService svc) {
   };
 
   svc.onMpvLoadedTrackChanged = (trackId) {
-    ref.read(mpvLoadedTrackIdProvider.notifier).state = trackId;
+    ref.read(mpvLoadedTrackIdProvider.notifier).set(trackId);
   };
 
   svc.onToggleFavorite = () async {
@@ -344,7 +346,7 @@ void _wireServiceCallbacks(Ref ref, AfPlayerService svc) {
   };
 
   svc.onForNtimesChanged = (enabled) {
-    ref.read(forNtimesModeProvider.notifier).state = enabled;
+    ref.read(forNtimesModeProvider.notifier).set(enabled);
   };
 
   svc.onTrackCompleted = (track) async {
@@ -419,12 +421,13 @@ void _wireInfrastructure(Ref ref, AfPlayerService svc, _WireDisposables d) {
   _startPositionPolling(ref, svc);
 
   d.errorSub = svc.errorStream.listen((error) {
-    ref.read(playbackErrorProvider.notifier).state = error;
+    ref.read(playbackErrorProvider.notifier).set(error);
   });
 
   void updateBuffering() {
-    ref.read(playerIsBufferingProvider.notifier).state =
-        svc.isBuffering || svc.isPausedForCache;
+    ref
+        .read(playerIsBufferingProvider.notifier)
+        .set(svc.isBuffering || svc.isPausedForCache);
   }
 
   d.bufferingSub = svc.bufferingStream.listen((_) => updateBuffering());
@@ -525,7 +528,7 @@ void _startPositionPolling(Ref ref, AfPlayerService svc) {
       return;
     }
     lastWrittenPosition = pos;
-    ref.read(positionStreamProvider.notifier).state = pos;
+    ref.read(positionStreamProvider.notifier).set(pos);
     pendingPosition = null;
     positionThrottleTimer = Timer(
       const Duration(milliseconds: 200),
@@ -546,7 +549,7 @@ void _startPositionPolling(Ref ref, AfPlayerService svc) {
     if (dur > Duration.zero) {
       final current = ref.read(durationStreamProvider);
       if (dur != current) {
-        ref.read(durationStreamProvider.notifier).state = dur;
+        ref.read(durationStreamProvider.notifier).set(dur);
       }
     }
   });
@@ -572,7 +575,7 @@ void _startPositionPolling(Ref ref, AfPlayerService svc) {
         if (disposed) return;
         final current = ref.read(durationStreamProvider);
         if (rawDur != current) {
-          ref.read(durationStreamProvider.notifier).state = rawDur;
+          ref.read(durationStreamProvider.notifier).set(rawDur);
         }
       } else {
         // Don't fallback to metadata duration while mpv is still
@@ -582,7 +585,7 @@ void _startPositionPolling(Ref ref, AfPlayerService svc) {
         final track = ref.read(currentTrackProvider);
         if (track != null && track.duration > Duration.zero) {
           if (disposed) return;
-          ref.read(durationStreamProvider.notifier).state = track.duration;
+          ref.read(durationStreamProvider.notifier).set(track.duration);
         }
       }
     }

@@ -60,8 +60,8 @@ class _SleepTimerScreenState extends ConsumerState<SleepTimerScreen> {
       if (remaining.isNegative) {
         // Timer already fired — clear it.
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          ref.read(sleepTimerProvider.notifier).state = null;
-          ref.read(sleepTimerRemainingProvider.notifier).state = null;
+          ref.read(sleepTimerProvider.notifier).set(null);
+          ref.read(sleepTimerRemainingProvider.notifier).set(null);
         });
       }
     }
@@ -80,15 +80,15 @@ class _SleepTimerScreenState extends ConsumerState<SleepTimerScreen> {
       if (!mounted) return;
       final target = ref.read(sleepTimerProvider);
       if (target == null) {
-        ref.read(sleepTimerRemainingProvider.notifier).state = null;
+        ref.read(sleepTimerRemainingProvider.notifier).set(null);
         return;
       }
       final remaining = target.difference(DateTime.now());
       if (remaining.isNegative) {
-        ref.read(sleepTimerProvider.notifier).state = null;
-        ref.read(sleepTimerRemainingProvider.notifier).state = null;
+        ref.read(sleepTimerProvider.notifier).set(null);
+        ref.read(sleepTimerRemainingProvider.notifier).set(null);
       } else {
-        ref.read(sleepTimerRemainingProvider.notifier).state = remaining;
+        ref.read(sleepTimerRemainingProvider.notifier).set(remaining);
       }
     });
   }
@@ -98,23 +98,23 @@ class _SleepTimerScreenState extends ConsumerState<SleepTimerScreen> {
     if (_selectedMinutes == 0) {
       // End of track — set a sentinel far in the future; the watcher
       // checks for track completion separately.
-      ref.read(sleepTimerProvider.notifier).state = DateTime.now().add(
-        const Duration(days: 1),
-      );
-      ref.read(sleepTimerRemainingProvider.notifier).state = null;
+      ref
+          .read(sleepTimerProvider.notifier)
+          .set(DateTime.now().add(const Duration(days: 1)));
+      ref.read(sleepTimerRemainingProvider.notifier).set(null);
     } else {
       final target = DateTime.now().add(Duration(minutes: _selectedMinutes!));
-      ref.read(sleepTimerProvider.notifier).state = target;
-      ref.read(sleepTimerRemainingProvider.notifier).state = Duration(
-        minutes: _selectedMinutes!,
-      );
+      ref.read(sleepTimerProvider.notifier).set(target);
+      ref
+          .read(sleepTimerRemainingProvider.notifier)
+          .set(Duration(minutes: _selectedMinutes!));
     }
     Navigator.maybePop(context);
   }
 
   void _cancelTimer() {
-    ref.read(sleepTimerProvider.notifier).state = null;
-    ref.read(sleepTimerRemainingProvider.notifier).state = null;
+    ref.read(sleepTimerProvider.notifier).set(null);
+    ref.read(sleepTimerRemainingProvider.notifier).set(null);
     setState(() => _selectedMinutes = null);
   }
 
@@ -365,7 +365,7 @@ class _SleepTimerWatcherState extends ConsumerState<SleepTimerWatcher> {
         // Defensive: clear stale remaining if the provider was already
         // null but the timer somehow ticked one last time.
         if (ref.read(sleepTimerRemainingProvider) != null) {
-          ref.read(sleepTimerRemainingProvider.notifier).state = null;
+          ref.read(sleepTimerRemainingProvider.notifier).set(null);
         }
         return;
       }
@@ -377,7 +377,7 @@ class _SleepTimerWatcherState extends ConsumerState<SleepTimerWatcher> {
         // the special-case null so the badge can render the bedtime
         // icon without a label.
         if (ref.read(sleepTimerRemainingProvider) != null) {
-          ref.read(sleepTimerRemainingProvider.notifier).state = null;
+          ref.read(sleepTimerRemainingProvider.notifier).set(null);
         }
 
         final svc = ref.read(playerServiceProvider);
@@ -408,7 +408,7 @@ class _SleepTimerWatcherState extends ConsumerState<SleepTimerWatcher> {
           _fire();
           return;
         }
-        ref.read(sleepTimerRemainingProvider.notifier).state = remaining;
+        ref.read(sleepTimerRemainingProvider.notifier).set(remaining);
       }
     });
   }
@@ -416,8 +416,8 @@ class _SleepTimerWatcherState extends ConsumerState<SleepTimerWatcher> {
   void _fire() {
     _timer?.cancel();
     _endOfTrackAnchorId = null;
-    ref.read(sleepTimerProvider.notifier).state = null;
-    ref.read(sleepTimerRemainingProvider.notifier).state = null;
+    ref.read(sleepTimerProvider.notifier).set(null);
+    ref.read(sleepTimerRemainingProvider.notifier).set(null);
     ref.read(playerServiceProvider).pause();
   }
 

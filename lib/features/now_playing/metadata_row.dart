@@ -83,13 +83,13 @@ class _AbLoopButton extends ConsumerWidget {
           if (active) {
             ref.read(playerServiceProvider).setAbLoopA(null);
             ref.read(playerServiceProvider).setAbLoopB(null);
-            ref.read(abLoopAProvider.notifier).state = null;
-            ref.read(abLoopBProvider.notifier).state = null;
+            ref.read(abLoopAProvider.notifier).set(null);
+            ref.read(abLoopBProvider.notifier).set(null);
             return;
           }
           final pos = ref.read(positionStreamProvider);
           ref.read(playerServiceProvider).setAbLoopA(pos);
-          ref.read(abLoopAProvider.notifier).state = pos;
+          ref.read(abLoopAProvider.notifier).set(pos);
         },
         child: Icon(
           LucideIcons.repeat1,

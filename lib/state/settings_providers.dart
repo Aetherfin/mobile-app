@@ -85,7 +85,7 @@ final lastFmClientProvider = Provider<LastFmClient?>((ref) {
     apiKey: apiKey,
     apiSecret: apiSecret.isEmpty ? null : apiSecret,
     sessionKey: sessionKey.isEmpty ? null : sessionKey,
-    onStatus: (msg) => ref.read(lastfmStatusProvider.notifier).state = msg,
+    onStatus: (msg) => ref.read(lastfmStatusProvider.notifier).set(msg),
   );
 });
 

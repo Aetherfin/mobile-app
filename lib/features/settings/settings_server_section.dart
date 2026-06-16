@@ -98,7 +98,7 @@ class ServerSection extends ConsumerWidget {
                       if (confirmed == true && context.mounted) {
                         await ref.read(authProvider.notifier).clear();
                         await AppModeStore.clear();
-                        ref.read(appModeProvider.notifier).state = null;
+                        ref.read(appModeProvider.notifier).set(null);
                         if (context.mounted) context.go('/');
                       }
                     },
@@ -175,7 +175,7 @@ class ServerSection extends ConsumerWidget {
                     );
                   }
                   try {
-                    ref.read(appModeProvider.notifier).state = null;
+                    ref.read(appModeProvider.notifier).set(null);
                   } on Exception catch (e) {
                     afLog('settings', 'AppMode state reset failed', error: e);
                   }

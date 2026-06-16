@@ -54,7 +54,7 @@ void showOfflineCacheSizeDialog(BuildContext context, WidgetRef ref) {
             label: label,
             isActive: bytes == currentSize,
             onTap: () {
-              ref.read(offlineCacheMaxSizeProvider.notifier).state = bytes;
+              ref.read(offlineCacheMaxSizeProvider.notifier).set(bytes);
               unawaited(PlayerSettingsStore.saveOfflineCacheMaxSize(bytes));
               // Trigger eviction with new limit.
               final cache = ref.read(offlineCacheServiceProvider);

@@ -79,8 +79,8 @@ void showLastFmApiConfigDialog(BuildContext context, WidgetRef ref) {
               onPressed: () {
                 final key = apiKeyController.text.trim();
                 final secret = apiSecretController.text.trim();
-                ref.read(lastfmApiKeyProvider.notifier).state = key;
-                ref.read(lastfmApiSecretProvider.notifier).state = secret;
+                ref.read(lastfmApiKeyProvider.notifier).set(key);
+                ref.read(lastfmApiSecretProvider.notifier).set(secret);
                 unawaited(PlayerSettingsStore.saveLastFmApiKey(key));
                 unawaited(PlayerSettingsStore.saveLastFmApiSecret(secret));
                 dismiss();
@@ -175,7 +175,7 @@ class _LastFmBrowserAuthDialogState
         _pollTimer?.cancel();
         if (!mounted) return;
 
-        ref.read(lastfmSessionKeyProvider.notifier).state = sessionKey;
+        ref.read(lastfmSessionKeyProvider.notifier).set(sessionKey);
         // Recreate client with session key so verifySession can use it
         final verifiedClient = LastFmClient(
           apiKey: _apiKey,
@@ -187,7 +187,7 @@ class _LastFmBrowserAuthDialogState
         final username = verifiedName.isNotEmpty
             ? verifiedName
             : (_username ?? 'Last.fm');
-        ref.read(lastfmUsernameProvider.notifier).state = username;
+        ref.read(lastfmUsernameProvider.notifier).set(username);
         unawaited(PlayerSettingsStore.saveLastFmSessionKey(sessionKey));
         unawaited(PlayerSettingsStore.saveLastFmUsername(username));
 
@@ -367,8 +367,8 @@ Future<void> showLastFmSignOutDialog(
   );
 
   if (confirmed == true) {
-    ref.read(lastfmSessionKeyProvider.notifier).state = '';
-    ref.read(lastfmUsernameProvider.notifier).state = '';
+    ref.read(lastfmSessionKeyProvider.notifier).set('');
+    ref.read(lastfmUsernameProvider.notifier).set('');
     unawaited(PlayerSettingsStore.saveLastFmSessionKey(''));
     unawaited(PlayerSettingsStore.saveLastFmUsername(''));
 

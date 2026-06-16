@@ -60,16 +60,16 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                   _scannedCount = completed;
                   _totalCount = total;
                 });
-                ref.read(localScanProgressProvider.notifier).state = (
+                ref.read(localScanProgressProvider.notifier).set((
                   completed: completed,
                   total: total,
-                );
+                ));
               }
             },
           );
 
       if (!mounted) return;
-      ref.read(localScanProgressProvider.notifier).state = null;
+      ref.read(localScanProgressProvider.notifier).set(null);
 
       if (count == 0 && _totalCount == 0) {
         setState(() {
@@ -94,7 +94,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
         // calls notifyAuthChanged() → router redirect returns '/home'.
         // Do NOT call context.go('/home') — that races with the redirect's
         // internal navigation and produces a blank screen.
-        ref.read(localOnboardingCompletedProvider.notifier).state = true;
+        ref.read(localOnboardingCompletedProvider.notifier).set(true);
       }
     } on Exception catch (e) {
       if (mounted) {
@@ -126,7 +126,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
             // app restart after going back.
             await AppModeStore.clear();
             if (context.mounted) {
-              ref.read(appModeProvider.notifier).state = null;
+              ref.read(appModeProvider.notifier).set(null);
               // null triggers resetRouterMode() in main.dart's modeSub,
               // clearing the router's _appMode and _localOnboardingCompleted.
               //

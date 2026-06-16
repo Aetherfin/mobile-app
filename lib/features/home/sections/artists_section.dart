@@ -45,7 +45,7 @@ class ArtistsSection extends ConsumerWidget {
             title: 'Your Artists',
             actionLabel: 'See all',
             onActionTap: () {
-              ref.read(songsPillProvider.notifier).state = SongsPill.artists;
+              ref.read(songsPillProvider.notifier).set(SongsPill.artists);
               context.go('/library');
             },
             spectralPrimary: spectral.primary,

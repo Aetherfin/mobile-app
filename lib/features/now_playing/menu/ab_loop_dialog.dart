@@ -30,7 +30,7 @@ void showAbLoopDialog(BuildContext context, WidgetRef ref) {
           onPressed: () async {
             final pos = await svc.getRawPosition();
             await svc.setAbLoopA(pos);
-            ref.read(abLoopAProvider.notifier).state = pos;
+            ref.read(abLoopAProvider.notifier).set(pos);
             dismiss();
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -50,7 +50,7 @@ void showAbLoopDialog(BuildContext context, WidgetRef ref) {
           onPressed: () async {
             final pos = await svc.getRawPosition();
             await svc.setAbLoopB(pos);
-            ref.read(abLoopBProvider.notifier).state = pos;
+            ref.read(abLoopBProvider.notifier).set(pos);
             dismiss();
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -70,8 +70,8 @@ void showAbLoopDialog(BuildContext context, WidgetRef ref) {
           onPressed: () async {
             await svc.setAbLoopA(null);
             await svc.setAbLoopB(null);
-            ref.read(abLoopAProvider.notifier).state = null;
-            ref.read(abLoopBProvider.notifier).state = null;
+            ref.read(abLoopAProvider.notifier).set(null);
+            ref.read(abLoopBProvider.notifier).set(null);
             dismiss();
             if (context.mounted) {
               ScaffoldMessenger.of(

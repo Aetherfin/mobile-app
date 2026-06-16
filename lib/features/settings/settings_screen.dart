@@ -288,15 +288,15 @@ class SettingsScreen extends ConsumerWidget {
 
                                     // ── Step 6: Clear Riverpod providers ──
                                     try {
-                                      ref.read(appModeProvider.notifier).state =
-                                          null;
                                       ref
-                                              .read(
-                                                localOnboardingCompletedProvider
-                                                    .notifier,
-                                              )
-                                              .state =
-                                          false;
+                                          .read(appModeProvider.notifier)
+                                          .set(null);
+                                      ref
+                                          .read(
+                                            localOnboardingCompletedProvider
+                                                .notifier,
+                                          )
+                                          .set(false);
                                       await ref
                                           .read(authProvider.notifier)
                                           .clear();
@@ -476,7 +476,7 @@ class _LastFmSettingsBody extends ConsumerWidget {
             subtitle: 'Submit played tracks to profile',
             value: scrobbleEnabled,
             onChanged: (v) {
-              ref.read(lastfmScrobbleEnabledProvider.notifier).state = v;
+              ref.read(lastfmScrobbleEnabledProvider.notifier).set(v);
               unawaited(PlayerSettingsStore.saveLastFmScrobbleEnabled(v));
             },
           ),

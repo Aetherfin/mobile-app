@@ -72,7 +72,7 @@ final favoriteToggleProvider = Provider<Future<void> Function(AfTrack)>((ref) {
     final override = ref.read(trackFavoriteOverrideProvider(track.id));
     final wasFavorite = override ?? track.isFavorite;
     final next = !wasFavorite;
-    ref.read(trackFavoriteOverrideProvider(track.id).notifier).state = next;
+    ref.read(trackFavoriteOverrideProvider(track.id).notifier).set(next);
 
     if (backend == null) {
       _logData(
@@ -123,8 +123,9 @@ final favoriteToggleProvider = Provider<Future<void> Function(AfTrack)>((ref) {
         ref.invalidate(recentlyPlayedTracksProvider);
       } on Exception catch (e, stack) {
         afLog('error', 'favoriteToggle failed', error: e, stackTrace: stack);
-        ref.read(trackFavoriteOverrideProvider(track.id).notifier).state =
-            wasFavorite;
+        ref
+            .read(trackFavoriteOverrideProvider(track.id).notifier)
+            .set(wasFavorite);
         rethrow;
       }
     })();

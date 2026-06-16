@@ -249,12 +249,11 @@ class YouTubeChipsRow extends ConsumerWidget {
             backgroundColor: AfColors.surfaceRaised,
             onSelected: (_) {
               if (isSelected) {
-                ref.read(youtubeSelectedChipProvider.notifier).state = null;
-                ref.read(youtubeHomeParamsProvider.notifier).state = null;
+                ref.read(youtubeSelectedChipProvider.notifier).set(null);
+                ref.read(youtubeHomeParamsProvider.notifier).set(null);
               } else {
-                ref.read(youtubeSelectedChipProvider.notifier).state = chip;
-                ref.read(youtubeHomeParamsProvider.notifier).state =
-                    chip.params;
+                ref.read(youtubeSelectedChipProvider.notifier).set(chip);
+                ref.read(youtubeHomeParamsProvider.notifier).set(chip.params);
               }
             },
           );

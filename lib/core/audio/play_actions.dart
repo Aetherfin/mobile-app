@@ -41,7 +41,7 @@ class PlayActions {
       if (wasShuffleEnabled) {
         await svc.setAfShuffleMode(true);
       }
-      ref.read(currentTrackProvider.notifier).state = tracks[safeIndex];
+      ref.read(currentTrackProvider.notifier).set(tracks[safeIndex]);
 
       // Save to queue history (non-critical — log warnings, don't throw)
       try {

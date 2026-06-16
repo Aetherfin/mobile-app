@@ -253,13 +253,13 @@ Future<void> main() async {
       // Initialize Last.fm providers with boot-time values so the user
       // can update them later without restarting (remove override pattern
       // because overrideWith makes StateProviders read-only).
-      container.read(lastfmApiKeyProvider.notifier).state = lastfmApiKey;
-      container.read(lastfmApiSecretProvider.notifier).state = lastfmApiSecret;
-      container.read(lastfmSessionKeyProvider.notifier).state =
-          lastfmSessionKey;
-      container.read(lastfmUsernameProvider.notifier).state = lastfmUsername;
-      container.read(lastfmScrobbleEnabledProvider.notifier).state =
-          lastfmScrobbleEnabled;
+      container.read(lastfmApiKeyProvider.notifier).set(lastfmApiKey);
+      container.read(lastfmApiSecretProvider.notifier).set(lastfmApiSecret);
+      container.read(lastfmSessionKeyProvider.notifier).set(lastfmSessionKey);
+      container.read(lastfmUsernameProvider.notifier).set(lastfmUsername);
+      container
+          .read(lastfmScrobbleEnabledProvider.notifier)
+          .set(lastfmScrobbleEnabled);
 
       // Initialize offline cache service in the background — do not block
       // the first frame.  Failures are logged but do not crash the app.

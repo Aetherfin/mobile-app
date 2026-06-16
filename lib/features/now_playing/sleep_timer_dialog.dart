@@ -56,16 +56,16 @@ class SleepTimerDialogContentState
   void _setTimer() {
     if (_selectedMinutes == null) return;
     if (_selectedMinutes == 0) {
-      ref.read(sleepTimerProvider.notifier).state = DateTime.now().add(
-        const Duration(days: 1),
-      );
-      ref.read(sleepTimerRemainingProvider.notifier).state = null;
+      ref
+          .read(sleepTimerProvider.notifier)
+          .set(DateTime.now().add(const Duration(days: 1)));
+      ref.read(sleepTimerRemainingProvider.notifier).set(null);
     } else {
       final target = DateTime.now().add(Duration(minutes: _selectedMinutes!));
-      ref.read(sleepTimerProvider.notifier).state = target;
-      ref.read(sleepTimerRemainingProvider.notifier).state = Duration(
-        minutes: _selectedMinutes!,
-      );
+      ref.read(sleepTimerProvider.notifier).set(target);
+      ref
+          .read(sleepTimerRemainingProvider.notifier)
+          .set(Duration(minutes: _selectedMinutes!));
     }
     if (widget.dismiss != null) {
       widget.dismiss!();
@@ -75,8 +75,8 @@ class SleepTimerDialogContentState
   }
 
   void _cancelTimer() {
-    ref.read(sleepTimerProvider.notifier).state = null;
-    ref.read(sleepTimerRemainingProvider.notifier).state = null;
+    ref.read(sleepTimerProvider.notifier).set(null);
+    ref.read(sleepTimerRemainingProvider.notifier).set(null);
     if (widget.dismiss != null) {
       widget.dismiss!();
     } else {

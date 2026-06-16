@@ -55,7 +55,7 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
 
   void _startScan() {
     setState(() => _scanning = true);
-    ref.read(discoveredServersProvider.notifier).state = const [];
+    ref.read(discoveredServersProvider.notifier).set(const []);
     _sub?.cancel();
     _sub = JellyfinDiscovery(clientVersion: ref.read(aetherfinVersionProvider))
         .scan()
@@ -63,10 +63,7 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
           (s) {
             final current = ref.read(discoveredServersProvider);
             if (!current.contains(s)) {
-              ref.read(discoveredServersProvider.notifier).state = [
-                ...current,
-                s,
-              ];
+              ref.read(discoveredServersProvider.notifier).set([...current, s]);
             }
           },
           onError: (_) {},
@@ -172,7 +169,7 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
     JellyfinServer s, {
     ServerType serverType = ServerType.jellyfin,
   }) {
-    ref.read(discoveredServersProvider.notifier).state = [s];
+    ref.read(discoveredServersProvider.notifier).set([s]);
     context.push(
       '/onboarding/sign-in',
       extra: (server: s, serverType: serverType),
@@ -193,7 +190,7 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
             // app restart after going back.
             await AppModeStore.clear();
             if (context.mounted) {
-              ref.read(appModeProvider.notifier).state = null;
+              ref.read(appModeProvider.notifier).set(null);
               // null triggers resetRouterMode() in main.dart's modeSub,
               // clearing the router's _appMode and _localOnboardingCompleted.
               //

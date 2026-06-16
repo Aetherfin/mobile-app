@@ -57,7 +57,7 @@ void showStreamingQualityDialog(BuildContext context, WidgetRef ref) {
             subtitle: subtitle,
             isActive: kbps == currentQuality,
             onTap: () {
-              ref.read(maxBitrateProvider.notifier).state = kbps;
+              ref.read(maxBitrateProvider.notifier).set(kbps);
               unawaited(PlayerSettingsStore.saveMaxBitrate(kbps));
               dismiss();
             },

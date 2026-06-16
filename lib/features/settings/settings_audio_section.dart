@@ -186,8 +186,7 @@ class AudioSection extends ConsumerWidget {
                           : 'Always stream from server',
                       value: enabled,
                       onChanged: (v) {
-                        ref.read(offlineCacheEnabledProvider.notifier).state =
-                            v;
+                        ref.read(offlineCacheEnabledProvider.notifier).set(v);
                         unawaited(
                           PlayerSettingsStore.saveOfflineCacheEnabled(v),
                         );
@@ -243,7 +242,7 @@ class AudioSection extends ConsumerWidget {
                 subtitle: 'Learn from skips and plays for better suggestions',
                 value: ref.watch(smartQueueEnabledProvider),
                 onChanged: (v) {
-                  ref.read(smartQueueEnabledProvider.notifier).state = v;
+                  ref.read(smartQueueEnabledProvider.notifier).set(v);
                 },
               ),
             ],

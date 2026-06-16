@@ -67,7 +67,7 @@ class GenresSection extends ConsumerWidget {
             title: 'Browse Genres',
             actionLabel: 'See all',
             onActionTap: () {
-              ref.read(songsPillProvider.notifier).state = SongsPill.genres;
+              ref.read(songsPillProvider.notifier).set(SongsPill.genres);
               context.go('/library');
             },
             spectralPrimary: spectralPrimary,

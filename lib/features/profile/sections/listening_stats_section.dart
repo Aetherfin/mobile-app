@@ -188,7 +188,7 @@ class _PeriodChip extends ConsumerWidget {
       currentSpectralProvider.select((s) => s.primary),
     );
     return PressScale(
-      onTap: () => ref.read(statsPeriodProvider.notifier).state = value,
+      onTap: () => ref.read(statsPeriodProvider.notifier).set(value),
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AfSpacing.s8,
@@ -308,8 +308,7 @@ class _StatsPillBarState extends ConsumerState<_StatsPillBar>
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           onTap: () =>
-                              ref.read(statsTabProvider.notifier).state =
-                                  _tabs[i],
+                              ref.read(statsTabProvider.notifier).set(_tabs[i]),
                           child: Container(
                             height: 44,
                             alignment: Alignment.center,
@@ -715,7 +714,7 @@ class PeriodButton extends ConsumerWidget {
       currentSpectralProvider.select((s) => s.secondary),
     );
     return PressScale(
-      onTap: () => ref.read(statsPeriodProvider.notifier).state = value,
+      onTap: () => ref.read(statsPeriodProvider.notifier).set(value),
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AfSpacing.s12,
@@ -755,7 +754,7 @@ class TabButton extends ConsumerWidget {
     final active = value == activeValue;
     return Expanded(
       child: PressScale(
-        onTap: () => ref.read(statsTabProvider.notifier).state = value,
+        onTap: () => ref.read(statsTabProvider.notifier).set(value),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           alignment: Alignment.center,

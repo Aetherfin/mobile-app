@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Generic [Notifier] that holds a single value, replacing [StateProvider].
 ///
 /// Read: `ref.watch(provider)`.
-/// Write: `ref.read(provider.notifier).state = value`.
+/// Write: `ref.read(provider.notifier).set(value)`.
 class StateHolder<T> extends Notifier<T> {
   StateHolder(this._create);
   final T Function(Ref ref) _create;
   @override
   T build() => _create(ref);
+
+  /// Set a new value.
+  void set(T value) => state = value;
 
   /// Mutate the current state via an updater function.
   /// Equivalent to `StateController.update()` from riverpod legacy.
@@ -24,4 +27,7 @@ class FamilyStateHolder<T, A> extends Notifier<T> {
   final A _arg;
   @override
   T build() => _create(_arg);
+
+  /// Set a new value.
+  void set(T value) => state = value;
 }
