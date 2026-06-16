@@ -112,9 +112,6 @@ extension CompletedHandler on PlaybackController {
         return;
       }
 
-      final loopAtEvent = _loopModeManager.mode;
-      final playingAtEvent = _player.state.playing;
-
       if (_completedHandledForTrackId == currentTrackId) {
         afLog(
           'audio',
@@ -126,6 +123,9 @@ extension CompletedHandler on PlaybackController {
 
       await _queueLock.run(() async {
         if (_disposed) return;
+
+        final loopAtEvent = _loopModeManager.mode;
+        final playingAtEvent = _player.state.playing;
 
         if (loopAtEvent == Loop.file) {
           _onTrackChangedOrRestarted();

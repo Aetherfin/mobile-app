@@ -28,6 +28,9 @@ class AfAsyncLock {
             error: error,
             stackTrace: stack,
           );
+          if (!completer.isCompleted) {
+            completer.completeError(error, stack);
+          }
         });
     return completer.future;
   }

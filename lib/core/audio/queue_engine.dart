@@ -351,6 +351,7 @@ class AfQueueEngine {
       } else if (oldIndex > _logicalIndex && insertIdx <= _logicalIndex) {
         _logicalIndex++;
       }
+      _currentIndex = physicalIndex(_logicalIndex);
       _shuffledTracks = null;
 
       return insertIdx;
@@ -417,6 +418,7 @@ class AfQueueEngine {
       if (clampedLogical <= _logicalIndex) {
         _logicalIndex++;
       }
+      _currentIndex = physicalIndex(_logicalIndex);
       _shuffledTracks = null;
       _rebuildPhysicalToLogical();
     }

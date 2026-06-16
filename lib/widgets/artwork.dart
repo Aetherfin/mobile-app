@@ -107,13 +107,9 @@ class Artwork extends ConsumerWidget {
     );
 
     // Local files: load from disk directly.
+    // Image.file's errorBuilder handles missing/evicted cover files.
     if (url!.startsWith('file://')) {
       final filePath = url!.substring('file://'.length);
-      // Check file existence before calling Image.file() to avoid
-      // loading errors when cover files have been evicted from cache.
-      if (!File(filePath).existsSync()) {
-        return Semantics(label: semanticLabel, child: placeholder);
-      }
       return ClipRRect(
         borderRadius: radius,
         child: SizedBox(
