@@ -170,6 +170,9 @@ class YouTubeMusicClient implements MusicBackend {
   }) async => [];
 
   @override
+  Future<int> trackCount() async => 0;
+
+  @override
   Future<List<AfGenre>> genres({int limit = 200}) async => [];
 
   @override

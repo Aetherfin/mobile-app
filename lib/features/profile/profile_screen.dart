@@ -45,8 +45,14 @@ class ProfileScreen extends ConsumerWidget {
         ? const AsyncValue<List<AfTrack>>.data([])
         : isLocal
         ? ref.watch(localTracksProvider)
-        // ponytail: summary stats screen — needs full list for count
-        : ref.watch(allTracksProvider);
+        // ponytail: server mode count comes from trackCountProvider
+        : const AsyncValue<List<AfTrack>>.data([]);
+    // ponytail: count-only for server mode — avoids loading all tracks
+    final trackCountAsync = isYouTubeMusic
+        ? const AsyncValue<int>.data(0)
+        : isLocal
+        ? const AsyncValue<int>.data(0) // derived from tracksAsync.length below
+        : ref.watch(trackCountProvider);
     final albumsAsync = isYouTubeMusic
         ? const AsyncValue<List<AfAlbum>>.data([])
         : isLocal
@@ -162,7 +168,12 @@ class ProfileScreen extends ConsumerWidget {
                             (isLocalPath ? ytProfileUrl : null),
                         networkUrl: profilePhoto.networkUrl,
                       ),
-                      trackCount: _fmtCount(tracksAsync),
+                      trackCount: isLocal
+                          ? _fmtCount(tracksAsync)
+                          : trackCountAsync.maybeWhen(
+                              data: _fmt,
+                              orElse: () => '—',
+                            ),
                       albumCount: _fmtCount(albumsAsync),
                     ),
                   ),

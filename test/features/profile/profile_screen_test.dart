@@ -39,6 +39,7 @@ void main() {
         localAlbumsProvider.overrideWith((ref) => albums),
         localArtistsProvider.overrideWith((ref) => artists),
         allTracksProvider.overrideWith((ref) => tracks),
+        trackCountProvider.overrideWithValue(const AsyncData(0)),
         allAlbumsProvider.overrideWith((ref) => albums),
         allArtistsProvider.overrideWith((ref) => artists),
         allPlaylistsProvider.overrideWith((ref) => const <AfPlaylist>[]),

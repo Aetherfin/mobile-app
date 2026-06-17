@@ -27,6 +27,12 @@ abstract class MusicBackend {
   Future<List<AfPlaylist>> playlists({int limit = 200});
   Future<List<AfAlbum>> allAlbums({int limit = 500, int startIndex = 0});
   Future<List<AfTrack>> allTracks({int limit = 1000, int startIndex = 0});
+
+  /// Returns the total number of tracks in the library without loading
+  /// them into memory. Use this instead of [allTracks] when only the
+  /// count is needed (e.g. profile stats, onboarding summary).
+  Future<int> trackCount();
+
   Future<List<AfGenre>> genres({int limit = 200});
   Future<List<AfAlbum>> favoriteAlbums({int limit = 30});
   Future<List<AfTrack>> favoriteTracks({int limit = 500});

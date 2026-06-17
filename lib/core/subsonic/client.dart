@@ -375,6 +375,19 @@ class SubsonicClient implements MusicBackend {
   }
 
   @override
+  Future<int> trackCount() async {
+    final root = await _get('search3', {
+      'query': '',
+      'songCount': 0,
+      'songOffset': 0,
+      'albumCount': 0,
+      'artistCount': 0,
+    });
+    final results = root['searchResult3'] as Map<String, dynamic>?;
+    return (results?['totalMatches'] as int?) ?? 0;
+  }
+
+  @override
   Future<List<AfAlbum>> allAlbums({int limit = 200, int startIndex = 0}) async {
     final root = await _get('getAlbumList2', {
       'type': 'alphabeticalByName',

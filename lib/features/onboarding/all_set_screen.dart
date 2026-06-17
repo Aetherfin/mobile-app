@@ -155,24 +155,28 @@ class _StatRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isLocal = ref.watch(appModeProvider) == AppMode.local;
 
-    final tracksAsync = isLocal
-        ? ref.watch(localTracksProvider)
-        // ponytail: simplified for onboarding
-        : ref.watch(allTracksProvider);
+    // ponytail: count-only — avoids loading all tracks
+    final localTracksAsync = isLocal ? ref.watch(localTracksProvider) : null;
+    final trackCountAsync = isLocal ? null : ref.watch(trackCountProvider);
     final albumsAsync = isLocal
         ? ref.watch(localAlbumsProvider)
         : ref.watch(allAlbumsProvider);
 
-    final trackCount = tracksAsync.maybeWhen(
-      data: (list) => list.length,
-      orElse: () => 0,
-    );
+    final trackCount =
+        localTracksAsync?.maybeWhen(
+          data: (list) => list.length,
+          orElse: () => 0,
+        ) ??
+        trackCountAsync?.maybeWhen(data: (count) => count, orElse: () => 0) ??
+        0;
     final albumCount = albumsAsync.maybeWhen(
       data: (list) => list.length,
       orElse: () => 0,
     );
 
-    final trackLoaded = tracksAsync is AsyncData;
+    final trackLoaded =
+        (localTracksAsync != null && localTracksAsync is AsyncData) ||
+        (trackCountAsync != null && trackCountAsync is AsyncData);
     final albumLoaded = albumsAsync is AsyncData;
     final primaryColor = ref.watch(
       currentSpectralProvider.select((s) => s.primary),

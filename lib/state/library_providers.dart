@@ -176,10 +176,18 @@ final allAlbumsProvider = FutureProvider.autoDispose<List<AfAlbum>>((
   return res;
 });
 
+/// Efficient track count — uses COUNT query instead of loading all tracks.
+/// Replaces allTracksProvider for consumers that only need the number.
+final trackCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  final backend = ref.watch(musicBackendProvider);
+  if (backend == null) return 0;
+  return backend.trackCount();
+});
+
 /// DEPRECATED: Loads ALL tracks into memory at once. Prefer
-/// [tracksPaginationProvider] for UI lists or a dedicated count query for
-/// stats. Kept for smart-playlist server filtering and onboarding summaries
-/// that need the full list synchronously.
+/// [tracksPaginationProvider] for UI lists or [trackCountProvider] for
+/// stats. Kept for smart-playlist server filtering and onboarding
+/// summaries that need the full list synchronously.
 final allTracksProvider = FutureProvider.autoDispose<List<AfTrack>>((
   ref,
 ) async {

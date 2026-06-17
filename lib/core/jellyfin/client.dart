@@ -705,6 +705,21 @@ class JellyfinClient implements MusicBackend {
   }
 
   @override
+  Future<int> trackCount() async {
+    _urlBuilder.assertUser();
+    final res = await _dio.get<Map<String, dynamic>>(
+      'Users/$userId/Items',
+      queryParameters: <String, dynamic>{
+        'IncludeItemTypes': 'Audio',
+        'Recursive': true,
+        'Limit': 0,
+        'Fields': '',
+      },
+    );
+    return (res.data?['TotalRecordCount'] as int?) ?? 0;
+  }
+
+  @override
   Future<List<AfAlbum>> allAlbums({int limit = 200, int startIndex = 0}) async {
     _urlBuilder.assertUser();
     final res = await _dio.get<Map<String, dynamic>>(
