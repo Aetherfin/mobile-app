@@ -9,6 +9,7 @@ import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../widgets/bottom_sheet.dart';
+import '../../widgets/press_scale.dart';
 import '../../widgets/save_to_playlist_sheet.dart';
 import '../../widgets/track_details_sheet.dart';
 import 'menu/ab_loop_dialog.dart';
@@ -340,6 +341,7 @@ class _TrackDetailsWrapperState extends State<_TrackDetailsWrapper> {
                     color: AfColors.textPrimary,
                     size: AfIconSizes.sm,
                   ),
+                  tooltip: 'Back',
                   onPressed: widget.onBack,
                 ),
                 const SizedBox(width: AfSpacing.s8),
@@ -377,30 +379,32 @@ class MoreItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return PressScale(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AfSpacing.gutterGenerous,
-          vertical: AfSpacing.s12,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: AfIconSizes.sm,
-              height: AfIconSizes.sm,
-              child: Center(child: icon),
-            ),
-            const SizedBox(width: AfSpacing.s16),
-            SizedBox(
-              height: 20,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(label, style: AfTypography.bodyMedium),
+      child: InkWell(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AfSpacing.gutterGenerous,
+            vertical: AfSpacing.s12,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: AfIconSizes.sm,
+                height: AfIconSizes.sm,
+                child: Center(child: icon),
               ),
-            ),
-          ],
+              const SizedBox(width: AfSpacing.s16),
+              SizedBox(
+                height: 20,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(label, style: AfTypography.bodyMedium),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

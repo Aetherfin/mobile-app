@@ -7,6 +7,7 @@ import '../../core/smart_playlist/smart_playlist_model.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../widgets/af_dialog.dart';
+import '../../widgets/press_scale.dart';
 import '../../widgets/async_error_view.dart';
 import '../../widgets/skeletons/playlist_skeleton.dart';
 
@@ -144,52 +145,54 @@ class _PlaylistTile extends ConsumerWidget {
     final spectral = ref.watch(
       currentSpectralProvider.select((s) => s.primary),
     );
-    return InkWell(
+    return PressScale(
       onTap: onTap,
-      onLongPress: () => _showDeleteDialog(context),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AfSpacing.s16,
-          vertical: AfSpacing.s12,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: spectral.withValues(alpha: 0.12),
-                borderRadius: AfRadii.borderSm,
+      child: InkWell(
+        onLongPress: () => _showDeleteDialog(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AfSpacing.s16,
+            vertical: AfSpacing.s12,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: spectral.withValues(alpha: 0.12),
+                  borderRadius: AfRadii.borderSm,
+                ),
+                child: Icon(LucideIcons.sparkles, size: 20, color: spectral),
               ),
-              child: Icon(LucideIcons.sparkles, size: 20, color: spectral),
-            ),
-            const SizedBox(width: AfSpacing.s12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(playlist.name, style: AfTypography.bodyMedium),
-                  Padding(
-                    padding: const EdgeInsets.only(top: AfSpacing.s2),
-                    child: Text(
-                      playlist.ruleSummary,
-                      style: AfTypography.bodySmall.copyWith(
-                        color: AfColors.textTertiary,
+              const SizedBox(width: AfSpacing.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(playlist.name, style: AfTypography.bodyMedium),
+                    Padding(
+                      padding: const EdgeInsets.only(top: AfSpacing.s2),
+                      child: Text(
+                        playlist.ruleSummary,
+                        style: AfTypography.bodySmall.copyWith(
+                          color: AfColors.textTertiary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const Icon(
-              LucideIcons.chevronRight,
-              color: AfColors.textDisabled,
-              size: 18,
-            ),
-          ],
+              const Icon(
+                LucideIcons.chevronRight,
+                color: AfColors.textDisabled,
+                size: 18,
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -355,45 +355,47 @@ class _PlaylistCard extends StatelessWidget {
     return Material(
       color: AfColors.surfaceRaised,
       borderRadius: AfRadii.borderMd,
-      child: InkWell(
-        borderRadius: AfRadii.borderMd,
+      child: PressScale(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AfSpacing.s16,
-            vertical: AfSpacing.s12,
-          ),
-          child: Row(
-            children: [
-              leading,
-              const SizedBox(width: AfSpacing.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: AfTypography.bodyMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: AfSpacing.s2),
-                    Text(
-                      subtitle,
-                      style: AfTypography.bodySmall.copyWith(
-                        color: AfColors.textTertiary,
+        child: InkWell(
+          borderRadius: AfRadii.borderMd,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AfSpacing.s16,
+              vertical: AfSpacing.s12,
+            ),
+            child: Row(
+              children: [
+                leading,
+                const SizedBox(width: AfSpacing.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: AfTypography.bodyMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: AfSpacing.s2),
+                      Text(
+                        subtitle,
+                        style: AfTypography.bodySmall.copyWith(
+                          color: AfColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(
-                LucideIcons.chevronRight,
-                color: AfColors.textDisabled,
-                size: 18,
-              ),
-            ],
+                const Icon(
+                  LucideIcons.chevronRight,
+                  color: AfColors.textDisabled,
+                  size: 18,
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -10,6 +10,7 @@ import '../../../design_tokens/tokens.dart';
 import '../../../state/providers.dart';
 import '../../../utils/log.dart';
 import '../../../widgets/af_dialog.dart';
+import '../../../widgets/press_scale.dart';
 
 void showLastFmApiConfigDialog(BuildContext context, WidgetRef ref) {
   final apiKeyController = TextEditingController(
@@ -33,16 +34,18 @@ void showLastFmApiConfigDialog(BuildContext context, WidgetRef ref) {
           style: AfTypography.bodyMedium,
         ),
         const SizedBox(height: AfSpacing.s8),
-        InkWell(
+        PressScale(
           onTap: () => launchUrl(
             Uri.parse('https://www.last.fm/api/account/create'),
             mode: LaunchMode.externalApplication,
           ),
-          child: Text(
-            'Create a developer account and register your API key at last.fm/api/account/create',
-            style: AfTypography.bodySmall.copyWith(
-              color: spectral,
-              decoration: TextDecoration.underline,
+          child: InkWell(
+            child: Text(
+              'Create a developer account and register your API key at last.fm/api/account/create',
+              style: AfTypography.bodySmall.copyWith(
+                color: spectral,
+                decoration: TextDecoration.underline,
+              ),
             ),
           ),
         ),

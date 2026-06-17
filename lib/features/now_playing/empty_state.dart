@@ -15,6 +15,7 @@ class NowPlayingEmptyState extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronDown),
+          tooltip: 'Collapse',
           onPressed: () => Navigator.maybePop(context),
         ),
       ),

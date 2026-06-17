@@ -4,6 +4,7 @@ import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:mpv_audio_kit/mpv_audio_kit.dart' show PlayerApi;
 
+import '../../design_tokens/tokens.dart';
 import '../../utils/log.dart';
 
 /// Matches a numeric seconds value with optional sign, decimal portion,
@@ -56,7 +57,7 @@ class AfPositionTracker {
   void start() {
     if (_disposed) return;
     _positionPollTimer?.cancel();
-    _positionPollTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+    _positionPollTimer = Timer.periodic(AfDurations.expressive, (_) {
       if (_disposed) return;
       _pollAndEmitPosition();
     });
@@ -92,7 +93,7 @@ class AfPositionTracker {
     _forceEmit(position);
 
     _seekResetTimer?.cancel();
-    _seekResetTimer = Timer(const Duration(milliseconds: 300), () {
+    _seekResetTimer = Timer(AfDurations.standard, () {
       if (!_disposed) _isSeeking = false;
     });
   }

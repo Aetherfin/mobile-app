@@ -91,7 +91,7 @@ class _AudioVisualScrubberState extends ConsumerState<AudioVisualScrubber>
         } else {
           _silenceTimer?.cancel();
           if (!_ticker.isAnimating) _ticker.repeat();
-          _silenceTimer = Timer(const Duration(milliseconds: 300), () {
+          _silenceTimer = Timer(AfDurations.standard, () {
             if (mounted && _shouldRender) {
               _fftNotifier.startFadeOut();
             }

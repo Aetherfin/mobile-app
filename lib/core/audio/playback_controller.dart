@@ -4,6 +4,7 @@ import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../design_tokens/tokens.dart';
 import '../../utils/log.dart';
 import '../jellyfin/models/items.dart';
 import 'artwork_manager.dart';
@@ -398,7 +399,7 @@ class PlaybackController {
   Future<void> _reconfigureSpectrumOnTrackChange() async {
     if (_disposed) return;
     try {
-      await Future.delayed(const Duration(milliseconds: 250));
+      await Future.delayed(AfDurations.bounce);
       if (_disposed) return;
       if (_lastSpectrumSettings == defaultSpectrumSettings) return;
       await _player.setSpectrum(defaultSpectrumSettings);

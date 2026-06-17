@@ -123,6 +123,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           afLog('error', 'headers: ${e.response?.headers.map}');
         }
       }
+      if (!mounted) return;
       setState(() {
         _error = _humanizeError(e);
       });

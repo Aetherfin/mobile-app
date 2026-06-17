@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart'
     show VoidCallback, kDebugMode, visibleForTesting;
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../design_tokens/tokens.dart';
 import '../../utils/log.dart';
 import '../jellyfin/models/items.dart';
 import 'artwork_manager.dart';
@@ -88,8 +89,12 @@ class AfPlayerService {
               MediaAction.setShuffle,
               MediaAction.like,
             },
-            fastForwardInterval: Duration(seconds: 30),
-            rewindInterval: Duration(seconds: 15),
+            fastForwardInterval: Duration(
+              seconds: 30,
+            ), // ponytail: FF/RW intervals, not animation
+            rewindInterval: Duration(
+              seconds: 15,
+            ), // ponytail: FF/RW intervals, not animation
             interruptionPolicy: InterruptionPolicy.pauseAndResume,
             appName: 'Aetherfin',
             artwork: MediaSessionArtwork.none,
@@ -122,16 +127,17 @@ class AfPlayerService {
       });
     }
 
-    _player.setAudioBuffer(const Duration(milliseconds: 200)).catchError((
-      Object e,
-      StackTrace? stack,
-    ) {
-      afLog('error', 'setAudioBuffer failed', error: e, stackTrace: stack);
-    });
+    _player
+        .setAudioBuffer(
+          const Duration(milliseconds: 200),
+        ) // ponytail: audio buffer, not animation
+        .catchError((Object e, StackTrace? stack) {
+          afLog('error', 'setAudioBuffer failed', error: e, stackTrace: stack);
+        });
     _bindStreams();
     _positionTracker.start();
 
-    Future.delayed(const Duration(milliseconds: 500), () async {
+    Future.delayed(AfDurations.expressive, () async {
       if (_disposed) return;
       try {
         final devices = _player.state.audioDevices;

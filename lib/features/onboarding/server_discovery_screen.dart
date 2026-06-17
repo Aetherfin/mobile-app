@@ -122,6 +122,7 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
     );
     try {
       final resolved = await jellyfinClient.publicInfo();
+      if (!mounted) return;
       setState(() => _busy = false);
       _continueWith(resolved);
       return;
@@ -151,6 +152,7 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
         // Expected — wrong/empty creds but the Subsonic envelope arrived
       }
       testClient.close();
+      if (!mounted) return;
       setState(() => _busy = false);
       _continueWith(
         server.copyWith(name: 'Navidrome', isReachable: true),
@@ -158,6 +160,7 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
       );
     } on Exception catch (e, stack) {
       afLog('error', 'server discovery failed', error: e, stackTrace: stack);
+      if (!mounted) return;
       setState(() {
         _manualError = 'Couldn\'t reach ${server.baseUrl}. $e';
         _busy = false;

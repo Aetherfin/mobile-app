@@ -75,7 +75,7 @@ extension CompletedHandler on PlaybackController {
 
     final duration = _player.state.duration;
     if (duration <= Duration.zero) return;
-    if (pos < duration - const Duration(milliseconds: 500)) return;
+    if (pos < duration - AfDurations.expressive) return;
     if (_player.state.playing) return;
 
     afLog(

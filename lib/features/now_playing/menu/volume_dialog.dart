@@ -32,6 +32,7 @@ void showVolumeDialog(BuildContext context, WidgetRef ref) {
                   color: AfColors.textPrimary,
                   size: 24,
                 ),
+                tooltip: 'Toggle mute',
                 onPressed: () {
                   muted = !muted;
                   svc.setMute(muted);

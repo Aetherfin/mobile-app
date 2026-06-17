@@ -111,6 +111,7 @@ class _AlbumActionRowState extends ConsumerState<AlbumActionRow> {
       ref.invalidate(favoriteAlbumsProvider);
       ref.invalidate(albumDetailProvider(widget.album.id));
     } on Exception catch (e) {
+      if (!mounted) return;
       setState(() => _isFavorite = !_isFavorite);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

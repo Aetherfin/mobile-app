@@ -36,6 +36,7 @@ class MiniNowPlaying extends ConsumerWidget {
       child: AnimatedOpacity(
         opacity: isVisible ? 1.0 : 0.0,
         duration: AfDurations.quick,
+        curve: AfCurves.easeStandard,
         child: track == null
             ? const SizedBox(height: height)
             : _MiniPlayerContent(track: track),

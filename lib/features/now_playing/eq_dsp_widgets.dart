@@ -548,12 +548,14 @@ Widget eqTextFieldRow(
         Expanded(
           child: TextFormField(
             initialValue: value,
+            // ponytail: no matching AfTypography token for 13px mono
             style: AfTypography.mono.copyWith(fontSize: 13),
             validator: numericPipe ? _validatePipeSeparatedNumbers : null,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             decoration: InputDecoration(
               labelText: label,
               hintText: hint,
+              // ponytail: no matching AfTypography token for 12px mono
               hintStyle: AfTypography.mono.copyWith(
                 fontSize: 12,
                 color: AfColors.textTertiary,

@@ -4,6 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../design_tokens/tokens.dart';
+import '../../../widgets/press_scale.dart';
 import '../../../widgets/section_header.dart';
 
 /// About section with app info and links.
@@ -163,32 +164,34 @@ class _AboutTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      child: InkWell(
+      child: PressScale(
         onTap: onTap,
-        borderRadius: AfRadii.borderMd,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AfSpacing.s12,
-            vertical: AfSpacing.s12,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: AfColors.textSecondary),
-              const SizedBox(width: AfSpacing.s12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: AfTypography.bodyMedium.copyWith(
-                    color: AfColors.textPrimary,
+        child: InkWell(
+          borderRadius: AfRadii.borderMd,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AfSpacing.s12,
+              vertical: AfSpacing.s12,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: AfColors.textSecondary),
+                const SizedBox(width: AfSpacing.s12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: AfTypography.bodyMedium.copyWith(
+                      color: AfColors.textPrimary,
+                    ),
                   ),
                 ),
-              ),
-              const Icon(
-                LucideIcons.chevronRight,
-                size: 16,
-                color: AfColors.textTertiary,
-              ),
-            ],
+                const Icon(
+                  LucideIcons.chevronRight,
+                  size: 16,
+                  color: AfColors.textTertiary,
+                ),
+              ],
+            ),
           ),
         ),
       ),

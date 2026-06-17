@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/local/app_mode_store.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../widgets/press_scale.dart';
 import '../../widgets/stagger_reveal.dart';
 
 /// Onboarding screen for local mode: pick a folder, scan it, then proceed.
@@ -34,6 +35,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
     if (uri == null) return;
     final folders = await ref.read(localLibraryProvider).getFolders();
     final folder = folders.lastOrNull;
+    if (!mounted) return;
     setState(() {
       _folderUri = uri;
       _folderDisplay = folder?.displayPath ?? uri;
@@ -176,67 +178,69 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                   Material(
                     color: AfColors.surfaceRaised,
                     borderRadius: AfRadii.borderLg,
-                    child: InkWell(
+                    child: PressScale(
                       onTap: _scanning ? null : _pickFolder,
-                      borderRadius: AfRadii.borderLg,
-                      child: Container(
-                        padding: const EdgeInsets.all(AfSpacing.s16),
-                        decoration: BoxDecoration(
-                          borderRadius: AfRadii.borderLg,
-                          border: Border.all(
-                            color: _folderUri != null
-                                ? spectral.withValues(alpha: 0.4)
-                                : AfColors.surfaceHigh,
+                      child: InkWell(
+                        borderRadius: AfRadii.borderLg,
+                        child: Container(
+                          padding: const EdgeInsets.all(AfSpacing.s16),
+                          decoration: BoxDecoration(
+                            borderRadius: AfRadii.borderLg,
+                            border: Border.all(
+                              color: _folderUri != null
+                                  ? spectral.withValues(alpha: 0.4)
+                                  : AfColors.surfaceHigh,
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: spectral.withValues(alpha: 0.15),
-                                shape: BoxShape.circle,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: spectral.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  LucideIcons.folderOpen,
+                                  color: spectral,
+                                ),
                               ),
-                              child: Icon(
-                                LucideIcons.folderOpen,
-                                color: spectral,
-                              ),
-                            ),
-                            const SizedBox(width: AfSpacing.s12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _folderUri != null
-                                        ? 'Folder selected'
-                                        : 'Tap to choose a folder',
-                                    style: AfTypography.bodyMedium,
-                                  ),
-                                  if (_folderDisplay != null)
+                              const SizedBox(width: AfSpacing.s12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
                                     Text(
-                                      _folderDisplay!,
-                                      style: AfTypography.bodySmall.copyWith(
-                                        color: AfColors.textTertiary,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                      _folderUri != null
+                                          ? 'Folder selected'
+                                          : 'Tap to choose a folder',
+                                      style: AfTypography.bodyMedium,
                                     ),
-                                ],
+                                    if (_folderDisplay != null)
+                                      Text(
+                                        _folderDisplay!,
+                                        style: AfTypography.bodySmall.copyWith(
+                                          color: AfColors.textTertiary,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            if (_folderUri == null)
-                              const Icon(
-                                LucideIcons.plus,
-                                color: AfColors.textTertiary,
-                              ),
-                            if (_folderUri != null)
-                              const Icon(
-                                LucideIcons.checkCircle,
-                                color: AfColors.semanticSuccess,
-                              ),
-                          ],
+                              if (_folderUri == null)
+                                const Icon(
+                                  LucideIcons.plus,
+                                  color: AfColors.textTertiary,
+                                ),
+                              if (_folderUri != null)
+                                const Icon(
+                                  LucideIcons.checkCircle,
+                                  color: AfColors.semanticSuccess,
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

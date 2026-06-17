@@ -32,6 +32,10 @@ class YouTubeHomeView extends ConsumerStatefulWidget {
 }
 
 class _YouTubeHomeViewState extends ConsumerState<YouTubeHomeView> {
+  // YouTube brand colors — no AfColors token applicable
+  static const _youtubeRed = Color(0xFFFF0000);
+  static const _youtubeRedDark = Color(0xFFFF4444);
+
   bool _autoLoaded = false;
 
   void _checkAutoLoad(YouTubeHomeContent home) {
@@ -76,7 +80,7 @@ class _YouTubeHomeViewState extends ConsumerState<YouTubeHomeView> {
                   children: [
                     ShaderMask(
                       shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Color(0xFFFF0000), Color(0xFFFF4444)],
+                        colors: [_youtubeRed, _youtubeRedDark],
                       ).createShader(bounds),
                       child: Text(
                         'YouTube Music',
