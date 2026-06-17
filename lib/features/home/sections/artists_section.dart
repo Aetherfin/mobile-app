@@ -379,21 +379,28 @@ class _CircleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AfSpacing.s8),
-        decoration: BoxDecoration(
-          color: filled ? AfColors.textPrimary : Colors.transparent,
-          shape: BoxShape.circle,
-          border: filled
-              ? null
-              : Border.all(color: AfColors.textSecondary, width: 1),
-        ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: filled ? AfColors.surfaceCanvas : AfColors.textSecondary,
+    final label = filled
+        ? 'Play'
+        : (icon == LucideIcons.shuffle ? 'Shuffle' : 'More options');
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AfSpacing.s8),
+          decoration: BoxDecoration(
+            color: filled ? AfColors.textPrimary : Colors.transparent,
+            shape: BoxShape.circle,
+            border: filled
+                ? null
+                : Border.all(color: AfColors.textSecondary, width: 1),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: filled ? AfColors.surfaceCanvas : AfColors.textSecondary,
+          ),
         ),
       ),
     );
@@ -413,20 +420,24 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PressScale(
-      onTap: onTap,
-      child: InkWell(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AfSpacing.gutterGenerous,
-            vertical: AfSpacing.s12,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: AfColors.textPrimary),
-              const SizedBox(width: AfSpacing.s12),
-              Text(label, style: AfTypography.bodyMedium),
-            ],
+    return Semantics(
+      button: true,
+      label: label,
+      child: PressScale(
+        onTap: onTap,
+        child: InkWell(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AfSpacing.gutterGenerous,
+              vertical: AfSpacing.s12,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: AfColors.textPrimary),
+                const SizedBox(width: AfSpacing.s12),
+                Text(label, style: AfTypography.bodyMedium),
+              ],
+            ),
           ),
         ),
       ),

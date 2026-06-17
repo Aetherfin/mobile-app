@@ -134,38 +134,42 @@ class EqMasterBanner extends ConsumerWidget {
             label: 'DSP processing: ${enabled ? "on" : "off"}',
             child: GestureDetector(
               onTap: () => onChanged(!enabled),
-              child: AnimatedContainer(
-                duration: AfDurations.quick,
-                curve: AfCurves.easeStandard,
-                width: 52,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: enabled ? spectral.primary : AfColors.surfaceHigh,
-                  borderRadius: AfRadii.borderPill,
-                  boxShadow: enabled
-                      ? [
-                          BoxShadow(
-                            color: spectral.primary.withValues(alpha: 0.4),
-                            blurRadius: 8,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: AnimatedAlign(
+              behavior: HitTestBehavior.opaque,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                child: AnimatedContainer(
                   duration: AfDurations.quick,
-                  alignment: enabled
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
                   curve: AfCurves.easeStandard,
-                  child: Container(
-                    width: 26,
-                    height: 26,
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: AfSpacing.s2,
-                    ),
-                    decoration: const BoxDecoration(
-                      color: AfColors.textPrimary,
-                      shape: BoxShape.circle,
+                  width: 52,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: enabled ? spectral.primary : AfColors.surfaceHigh,
+                    borderRadius: AfRadii.borderPill,
+                    boxShadow: enabled
+                        ? [
+                            BoxShadow(
+                              color: spectral.primary.withValues(alpha: 0.4),
+                              blurRadius: 8,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: AnimatedAlign(
+                    duration: AfDurations.quick,
+                    alignment: enabled
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
+                    curve: AfCurves.easeStandard,
+                    child: Container(
+                      width: 26,
+                      height: 26,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: AfSpacing.s2,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: AfColors.textPrimary,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
                 ),
@@ -221,69 +225,74 @@ class EqAccordionSection extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onTap,
-            child: Focus(
-              onKeyEvent: (node, event) {
-                if (event is KeyDownEvent &&
-                    (event.logicalKey == LogicalKeyboardKey.enter ||
-                        event.logicalKey == LogicalKeyboardKey.space)) {
-                  onTap();
-                  return KeyEventResult.handled;
-                }
-                return KeyEventResult.ignored;
-              },
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minHeight: AfSpacing.minHitTarget,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AfSpacing.s16,
-                    vertical: AfSpacing.s12,
+          Semantics(
+            button: true,
+            expanded: isOpen,
+            label: '$label section',
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
+              child: Focus(
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent &&
+                      (event.logicalKey == LogicalKeyboardKey.enter ||
+                          event.logicalKey == LogicalKeyboardKey.space)) {
+                    onTap();
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: AfSpacing.minHitTarget,
                   ),
-                  child: Row(
-                    children: [
-                      Text(
-                        label,
-                        style: AfTypography.label.copyWith(
-                          color: isOpen
-                              ? spectral.primary
-                              : AfColors.textSecondary,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AfSpacing.s16,
+                      vertical: AfSpacing.s12,
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          label,
+                          style: AfTypography.label.copyWith(
+                            color: isOpen
+                                ? spectral.primary
+                                : AfColors.textSecondary,
+                          ),
                         ),
-                      ),
-                      if (badgeCount != null) ...[
-                        const SizedBox(width: AfSpacing.s8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AfSpacing.s8,
-                            vertical: AfSpacing.s2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: spectral.secondary.withValues(alpha: 0.3),
-                            borderRadius: AfRadii.borderPill,
-                          ),
-                          child: Text(
-                            '$badgeCount',
-                            style: AfTypography.overline.copyWith(
-                              color: spectral.primary,
+                        if (badgeCount != null) ...[
+                          const SizedBox(width: AfSpacing.s8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AfSpacing.s8,
+                              vertical: AfSpacing.s2,
                             ),
+                            decoration: BoxDecoration(
+                              color: spectral.secondary.withValues(alpha: 0.3),
+                              borderRadius: AfRadii.borderPill,
+                            ),
+                            child: Text(
+                              '$badgeCount',
+                              style: AfTypography.overline.copyWith(
+                                color: spectral.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                        const Spacer(),
+                        AnimatedRotation(
+                          turns: isOpen ? 0.5 : 0,
+                          duration: AfDurations.standard,
+                          curve: AfCurves.easeStandard,
+                          child: const Icon(
+                            LucideIcons.chevronDown,
+                            size: 24,
+                            color: AfColors.textTertiary,
                           ),
                         ),
                       ],
-                      const Spacer(),
-                      AnimatedRotation(
-                        turns: isOpen ? 0.5 : 0,
-                        duration: AfDurations.standard,
-                        curve: AfCurves.easeStandard,
-                        child: const Icon(
-                          LucideIcons.chevronDown,
-                          size: 24,
-                          color: AfColors.textTertiary,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),

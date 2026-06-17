@@ -80,48 +80,52 @@ class AsyncErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     final compactHeight = this.compactHeight;
     if (compactHeight != null) {
-      return GestureDetector(
-        onLongPress: () => _showFullError(context),
-        child: SizedBox(
-          height: compactHeight,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
-            child: Row(
-              children: [
-                const Icon(
-                  LucideIcons.cloudOff,
-                  color: AfColors.semanticError,
-                  size: 20,
-                ),
-                const SizedBox(width: AfSpacing.s8),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AfTypography.bodyMedium.copyWith(
-                          color: AfColors.textPrimary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Text(
-                        displayError(error),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AfTypography.caption.copyWith(
-                          color: AfColors.textSecondary,
-                        ),
-                      ),
-                    ],
+      return Semantics(
+        button: true,
+        label: 'Error: $label. Long press for details.',
+        child: GestureDetector(
+          onLongPress: () => _showFullError(context),
+          child: SizedBox(
+            height: compactHeight,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+              child: Row(
+                children: [
+                  const Icon(
+                    LucideIcons.cloudOff,
+                    color: AfColors.semanticError,
+                    size: 20,
                   ),
-                ),
-                const SizedBox(width: AfSpacing.s8),
-                TextButton(onPressed: onRetry, child: const Text('Retry')),
-              ],
+                  const SizedBox(width: AfSpacing.s8),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AfTypography.bodyMedium.copyWith(
+                            color: AfColors.textPrimary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          displayError(error),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AfTypography.caption.copyWith(
+                            color: AfColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AfSpacing.s8),
+                  TextButton(onPressed: onRetry, child: const Text('Retry')),
+                ],
+              ),
             ),
           ),
         ),
@@ -148,15 +152,19 @@ class AsyncErrorView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AfSpacing.s4),
-            GestureDetector(
-              onLongPress: () => _showFullError(context),
-              child: Text(
-                displayError(error),
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: AfTypography.bodySmall.copyWith(
-                  color: AfColors.textSecondary,
+            Semantics(
+              button: true,
+              label: 'Error: $label. Long press for details.',
+              child: GestureDetector(
+                onLongPress: () => _showFullError(context),
+                child: Text(
+                  displayError(error),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: AfTypography.bodySmall.copyWith(
+                    color: AfColors.textSecondary,
+                  ),
                 ),
               ),
             ),

@@ -96,7 +96,8 @@ class LocalLibrary {
   Future<List<AfTrack>> tracksByArtist(String artistName, {int? limit}) =>
       _db.tracksByArtist(artistName, limit: limit);
 
-  Future<List<AfTrack>> tracksByGenre(String genre) => _db.tracksByGenre(genre);
+  Future<List<AfTrack>> tracksByGenre(String genre, {int limit = 500}) =>
+      _db.tracksByGenre(genre, limit: limit);
 
   Future<List<AfTrack>> search(String query) => _db.searchTracks(query);
 

@@ -30,7 +30,7 @@ String _render(Object e) {
     final summary = '${e.type.name} from $url';
     return msg == null || msg.isEmpty ? summary : '$summary: $msg';
   }
-  // Non-Dio errors — return the raw toString. These are typically
-  // FormatException / StateError / etc. with no embedded credentials.
-  return e.toString();
+  // Non-Dio errors — redact in case the toString contains sensitive data
+  // (e.g. URLs with embedded auth tokens from nested exceptions).
+  return redactSensitiveQueryParams(e.toString());
 }

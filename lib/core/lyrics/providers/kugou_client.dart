@@ -48,7 +48,7 @@ class KuGouClient {
 
       // Step 1: Search for song to get hash
       final searchResponse = await _dio.get<Map<String, dynamic>>(
-        'http://mobilecdn.kugou.com/api/v3/search/song',
+        'https://mobilecdn.kugou.com/api/v3/search/song',
         queryParameters: {
           'format': 'json',
           'keyword': query,

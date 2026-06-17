@@ -40,26 +40,46 @@ class ServerPill extends StatelessWidget {
         ? AfColors.surfaceHigh
         : AfColors.surfaceRaised;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AfSpacing.s12,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(color: bg, borderRadius: AfRadii.borderPill),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _Dot(color: dotColor, pulse: state == ServerPillState.reconnecting),
-            const SizedBox(width: AfSpacing.s8),
-            Text(
-              _truncate(label),
-              style: AfTypography.bodySmall.copyWith(
-                color: AfColors.textSecondary,
-              ),
+    final stateLabel = switch (state) {
+      ServerPillState.connectedOther => 'Connected to $label',
+      ServerPillState.reconnecting => 'Reconnecting to $label',
+      ServerPillState.offline => '$label offline',
+      ServerPillState.hidden => label,
+    };
+    return Semantics(
+      button: true,
+      label: stateLabel,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AfSpacing.s12,
+              vertical: 6,
             ),
-          ],
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: AfRadii.borderPill,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _Dot(
+                  color: dotColor,
+                  pulse: state == ServerPillState.reconnecting,
+                ),
+                const SizedBox(width: AfSpacing.s8),
+                Text(
+                  _truncate(label),
+                  style: AfTypography.bodySmall.copyWith(
+                    color: AfColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

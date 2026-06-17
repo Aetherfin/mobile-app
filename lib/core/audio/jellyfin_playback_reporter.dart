@@ -334,8 +334,8 @@ class JellyfinPlaybackReporter {
           stackTrace: stack,
         );
       }
-    } catch (_) {
-      // Ignored: container is likely already disposed.
+    } catch (e) {
+      afLog('audio', 'reportPlaybackStop dispose guard', error: e);
     }
   }
 

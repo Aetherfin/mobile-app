@@ -180,67 +180,64 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
                     borderRadius: AfRadii.borderLg,
                     child: PressScale(
                       onTap: _scanning ? null : _pickFolder,
-                      child: InkWell(
-                        borderRadius: AfRadii.borderLg,
-                        child: Container(
-                          padding: const EdgeInsets.all(AfSpacing.s16),
-                          decoration: BoxDecoration(
-                            borderRadius: AfRadii.borderLg,
-                            border: Border.all(
-                              color: _folderUri != null
-                                  ? spectral.withValues(alpha: 0.4)
-                                  : AfColors.surfaceHigh,
+                      child: Container(
+                        padding: const EdgeInsets.all(AfSpacing.s16),
+                        decoration: BoxDecoration(
+                          borderRadius: AfRadii.borderLg,
+                          border: Border.all(
+                            color: _folderUri != null
+                                ? spectral.withValues(alpha: 0.4)
+                                : AfColors.surfaceHigh,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: spectral.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                LucideIcons.folderOpen,
+                                color: spectral,
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: spectral.withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  LucideIcons.folderOpen,
-                                  color: spectral,
-                                ),
-                              ),
-                              const SizedBox(width: AfSpacing.s12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
+                            const SizedBox(width: AfSpacing.s12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _folderUri != null
+                                        ? 'Folder selected'
+                                        : 'Tap to choose a folder',
+                                    style: AfTypography.bodyMedium,
+                                  ),
+                                  if (_folderDisplay != null)
                                     Text(
-                                      _folderUri != null
-                                          ? 'Folder selected'
-                                          : 'Tap to choose a folder',
-                                      style: AfTypography.bodyMedium,
-                                    ),
-                                    if (_folderDisplay != null)
-                                      Text(
-                                        _folderDisplay!,
-                                        style: AfTypography.bodySmall.copyWith(
-                                          color: AfColors.textTertiary,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      _folderDisplay!,
+                                      style: AfTypography.bodySmall.copyWith(
+                                        color: AfColors.textTertiary,
                                       ),
-                                  ],
-                                ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                ],
                               ),
-                              if (_folderUri == null)
-                                const Icon(
-                                  LucideIcons.plus,
-                                  color: AfColors.textTertiary,
-                                ),
-                              if (_folderUri != null)
-                                const Icon(
-                                  LucideIcons.checkCircle,
-                                  color: AfColors.semanticSuccess,
-                                ),
-                            ],
-                          ),
+                            ),
+                            if (_folderUri == null)
+                              const Icon(
+                                LucideIcons.plus,
+                                color: AfColors.textTertiary,
+                              ),
+                            if (_folderUri != null)
+                              const Icon(
+                                LucideIcons.checkCircle,
+                                color: AfColors.semanticSuccess,
+                              ),
+                          ],
                         ),
                       ),
                     ),

@@ -108,13 +108,17 @@ class TrackRepository {
 
       if (rows.isEmpty) break;
 
-      final staleIds = <String>[];
-      for (final row in rows) {
+      // Batch File.exists() I/O — ponytail: parallel disk checks beat sequential
+      final existChecks = rows.map((row) async {
         final coverPath = row.coverPath;
-        if (coverPath != null && !await File(coverPath).exists()) {
-          staleIds.add(row.id);
-        }
-      }
+        if (coverPath == null) return (id: row.id, stale: false);
+        return (id: row.id, stale: !await File(coverPath).exists());
+      }).toList();
+      final results = await Future.wait(existChecks);
+      final staleIds = [
+        for (final r in results)
+          if (r.stale) r.id,
+      ];
 
       if (staleIds.isNotEmpty) {
         await (db.update(db.tracks)..where((t) => t.id.isIn(staleIds))).write(
@@ -136,75 +140,59 @@ class TrackRepository {
   ///
   /// This ensures consistent album art across all tracks in an album,
   /// even if only one track has embedded cover art.
+  ///
+  /// Ponytail: single correlated-subquery UPDATE replaces the N per-album
+  /// SELECT+UPDATE loop. SQLite handles the self-join efficiently via the
+  /// album+artist index.
   Future<int> propagateAlbumArt() async {
-    // Get all albums with their tracks' cover_path status
+    // Count albums with partial art coverage before fixing
     final albumRows = await db
         .customSelect(
           '''
-      SELECT album, artist, album_artist,
-             COUNT(*) as total_tracks,
-             SUM(CASE WHEN cover_path IS NOT NULL THEN 1 ELSE 0 END) as tracks_with_art
-      FROM tracks
-      WHERE album != ''
-      GROUP BY album, COALESCE(NULLIF(album_artist, ''), artist)
-      HAVING tracks_with_art > 0 AND tracks_with_art < total_tracks
+      SELECT COUNT(*) as album_count
+      FROM (
+        SELECT album, COALESCE(NULLIF(album_artist, ''), artist) as art_key
+        FROM tracks
+        WHERE album != ''
+        GROUP BY album, art_key
+        HAVING SUM(CASE WHEN cover_path IS NOT NULL THEN 1 ELSE 0 END) > 0
+           AND SUM(CASE WHEN cover_path IS NOT NULL THEN 1 ELSE 0 END) < COUNT(*)
+      )
       ''',
           readsFrom: {db.tracks},
         )
-        .get();
+        .getSingle();
+    final albumCount = albumRows.read<int>('album_count');
 
-    int propagated = 0;
+    if (albumCount == 0) return 0;
 
-    for (final albumRow in albumRows) {
-      final albumName = albumRow.read<String>('album');
-      final artistName =
-          albumRow.read<String?>('album_artist')?.isNotEmpty == true
-          ? albumRow.read<String>('album_artist')
-          : albumRow.read<String>('artist');
-
-      // Find the first track in this album that has cover art
-      final coverTrack = await db
-          .customSelect(
-            '''
-        SELECT cover_path FROM tracks
-        WHERE album = ?1
-          AND COALESCE(NULLIF(album_artist, ''), artist) = ?2
-          AND cover_path IS NOT NULL
+    // Single bulk UPDATE: for each track with NULL cover_path, pick the
+    // first cover_path from any track in the same album.
+    await db.customStatement('''
+      UPDATE tracks
+      SET cover_path = (
+        SELECT t2.cover_path
+        FROM tracks t2
+        WHERE t2.album = tracks.album
+          AND COALESCE(NULLIF(t2.album_artist, ''), t2.artist) =
+              COALESCE(NULLIF(tracks.album_artist, ''), tracks.artist)
+          AND t2.cover_path IS NOT NULL
         LIMIT 1
-        ''',
-            variables: [
-              Variable<String>(albumName),
-              Variable<String>(artistName),
-            ],
-            readsFrom: {db.tracks},
-          )
-          .getSingleOrNull();
+      )
+      WHERE cover_path IS NULL
+        AND album != ''
+        AND EXISTS (
+          SELECT 1
+          FROM tracks t3
+          WHERE t3.album = tracks.album
+            AND COALESCE(NULLIF(t3.album_artist, ''), t3.artist) =
+                COALESCE(NULLIF(tracks.album_artist, ''), tracks.artist)
+            AND t3.cover_path IS NOT NULL
+        )
+      ''');
 
-      if (coverTrack == null) continue;
-
-      final coverPath = coverTrack.read<String>('cover_path');
-
-      // Update all tracks in this album that don't have cover art
-      await db.customStatement(
-        '''
-        UPDATE tracks
-        SET cover_path = ?1
-        WHERE album = ?2
-          AND COALESCE(NULLIF(album_artist, ''), artist) = ?3
-          AND cover_path IS NULL
-        ''',
-        [coverPath, albumName, artistName],
-      );
-
-      // Track that this album was processed (exact count not available from customStatement)
-      propagated++;
-      afLog('local', 'propagated cover art in album: $albumName');
-    }
-
-    if (propagated > 0) {
-      afLog('local', 'propagated cover art across $propagated albums');
-    }
-    return propagated;
+    afLog('local', 'propagated cover art across $albumCount albums');
+    return albumCount;
   }
 
   Future<int?> getTrackLastModified(String id) async {
@@ -362,7 +350,7 @@ class TrackRepository {
     return map;
   }
 
-  Future<List<AfTrack>> tracksByGenre(String genre) async {
+  Future<List<AfTrack>> tracksByGenre(String genre, {int limit = 500}) async {
     final rows =
         await (db.select(db.tracks)
               ..where((t) => t.genre.equals(genre))
@@ -371,7 +359,8 @@ class TrackRepository {
                   expression: t.title.collate(Collate.noCase),
                   mode: OrderingMode.asc,
                 ),
-              ]))
+              ])
+              ..limit(limit))
             .get();
     return rows.map(rowToTrack).toList();
   }

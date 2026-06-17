@@ -12,6 +12,7 @@ import '../../state/lastfm_metadata_providers.dart';
 import '../../state/providers.dart';
 import '../../widgets/artwork.dart';
 import '../../widgets/async_error_view.dart';
+import '../../widgets/af_loading_indicator.dart';
 import '../../widgets/opacity_app_bar.dart';
 import '../../widgets/breadcrumb.dart';
 import '../../widgets/press_scale.dart';
@@ -503,7 +504,7 @@ class ArtistAllSongsScreen extends ConsumerWidget {
         ),
       ),
       body: topTracksAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: AfLoadingIndicator()),
         error: (e, _) => AsyncErrorView(
           label: 'Could not load top songs',
           error: e,
@@ -577,7 +578,7 @@ class ArtistAllAlbumsScreen extends ConsumerWidget {
         ),
       ),
       body: albumsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: AfLoadingIndicator()),
         error: (e, _) => AsyncErrorView(
           label: 'Could not load albums',
           error: e,

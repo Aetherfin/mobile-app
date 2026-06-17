@@ -157,6 +157,7 @@ class _StatRow extends ConsumerWidget {
 
     final tracksAsync = isLocal
         ? ref.watch(localTracksProvider)
+        // ponytail: simplified for onboarding
         : ref.watch(allTracksProvider);
     final albumsAsync = isLocal
         ? ref.watch(localAlbumsProvider)

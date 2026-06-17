@@ -101,6 +101,7 @@ class AfPlayerService {
           ),
         )
         .catchError((Object e, StackTrace stack) {
+          _initFailed = true;
           afLog('audio', 'setMediaSession failed', error: e, stackTrace: stack);
         });
 
@@ -118,11 +119,13 @@ class AfPlayerService {
     });
 
     _player.setAudioDriver('aaudio').catchError((Object e, StackTrace? stack) {
+      _initFailed = true;
       afLog('error', 'setAudioDriver failed', error: e, stackTrace: stack);
     });
 
     if (kDebugMode) {
       _player.setLogLevel(LogLevel.debug).catchError((Object e, StackTrace s) {
+        _initFailed = true;
         afLog('audio', 'setLogLevel failed', error: e, stackTrace: s);
       });
     }
@@ -132,6 +135,7 @@ class AfPlayerService {
           const Duration(milliseconds: 200),
         ) // ponytail: audio buffer, not animation
         .catchError((Object e, StackTrace? stack) {
+          _initFailed = true;
           afLog('error', 'setAudioBuffer failed', error: e, stackTrace: stack);
         });
     _bindStreams();
@@ -232,6 +236,10 @@ class AfPlayerService {
 
   bool _disposed = false;
   double _preDuckVolume = 1.0;
+  bool _initFailed = false;
+
+  /// True if any constructor `.catchError` fired — indicates a partial init.
+  bool get hasInitFailure => _initFailed;
 
   // ---------------------------------------------------------------------------
   // Callbacks (public — set by UI layer)
@@ -718,154 +726,153 @@ class AfPlayerService {
       <StreamSubscription<dynamic>>[];
 
   void _bindStreams() {
-    _subs.add(_positionTracker.positionStream.listen(_playback.onPositionTick));
-    _subs.add(
-      _player.stream.playing.listen((playing) async {
-        try {
-          _playback.updateMediaSession();
-        } on Exception catch (e, stack) {
-          afLog('audio', 'playing handler failed', error: e, stackTrace: stack);
-        }
-      }),
-    );
+    _subs.add(_positionTracker.positionStream.listen(_onPositionTick));
+    _subs.add(_player.stream.playing.listen(_onPlayingChanged));
+    _subs.add(_player.stream.buffering.listen(_onBufferingChanged));
+    _subs.add(_player.stream.audioOutputState.listen(_onAudioOutputFailed));
+    _subs.add(_player.stream.completed.listen(_onCompleted));
+    _subs.add(_player.stream.rate.listen(_onRateChanged));
+    _subs.add(_player.stream.duration.listen(_onDurationChanged));
+    _subs.add(_player.stream.coverArt.listen(_onCoverArtChanged));
+    _subs.add(_player.stream.audioDevice.listen(_onAudioDeviceChanged));
+  }
 
-    _subs.add(
-      _player.stream.buffering.listen((_) => _playback.updateMediaSession()),
-    );
+  // ponytail: extracted stream handlers for readability
 
-    _subs.add(
-      _player.stream.audioOutputState.listen((state) async {
+  void _onPositionTick(Duration pos) {
+    _playback.onPositionTick(pos);
+  }
+
+  void _onPlayingChanged(bool playing) {
+    try {
+      _playback.updateMediaSession();
+    } on Exception catch (e, stack) {
+      afLog('audio', 'playing handler failed', error: e, stackTrace: stack);
+    }
+  }
+
+  void _onBufferingChanged(bool _) {
+    _playback.updateMediaSession();
+  }
+
+  Future<void> _onAudioOutputFailed(AudioOutputState state) async {
+    try {
+      if (state == AudioOutputState.failed) {
+        afLog('error', 'Audio output failed, attempting fallback');
+        onAudioOutputFailed?.call(state);
         try {
-          if (state == AudioOutputState.failed) {
-            afLog('error', 'Audio output failed, attempting fallback');
-            onAudioOutputFailed?.call(state);
-            try {
-              await _player.setAudioDriver('audiotrack');
-              afLog('audio', 'Fallback to audiotrack succeeded');
-            } on Exception catch (e, stack) {
-              afLog(
-                'audio',
-                'audiotrack fallback failed, trying auto',
-                error: e,
-                stackTrace: stack,
-              );
-              try {
-                await _player.setAudioDriver('auto');
-                afLog('audio', 'Fallback to auto succeeded');
-              } on Exception catch (e2, stack2) {
-                afLog(
-                  'audio',
-                  'auto fallback also failed',
-                  error: e2,
-                  stackTrace: stack2,
-                );
-              }
-            }
-          }
+          await _player.setAudioDriver('audiotrack');
+          afLog('audio', 'Fallback to audiotrack succeeded');
         } on Exception catch (e, stack) {
           afLog(
             'audio',
-            'audioOutputState handler failed',
+            'audiotrack fallback failed, trying auto',
             error: e,
             stackTrace: stack,
           );
-        }
-      }),
-    );
-
-    _subs.add(_player.stream.completed.listen(_playback.handleCompleted));
-
-    _subs.add(
-      _player.stream.rate.listen((_) => _playback.updateMediaSession()),
-    );
-    _subs.add(
-      _player.stream.duration.listen((dur) {
-        if (dur > Duration.zero) {
-          _playback.updateMediaSession();
-        }
-      }),
-    );
-    _subs.add(
-      _player.stream.coverArt.listen((raw) async {
-        try {
           try {
-            await _artworkManager.persistCover(raw);
-            // Also save permanently to the cover cache so artwork
-            // appears in library views (not just Now Playing).
-            final track = _queueManager.currentTrack;
-            if (raw != null && track != null) {
-              unawaited(
-                _artworkManager.persistCoverToPermanentCache(track.id, raw),
-              );
-            }
-          } on Exception catch (e, stack) {
-            afLog('audio', 'persistCover failed', error: e, stackTrace: stack);
-          }
-          _playback.updateMediaSession();
-        } on Exception catch (e, stack) {
-          afLog(
-            'audio',
-            'coverArt handler failed',
-            error: e,
-            stackTrace: stack,
-          );
-        }
-      }),
-    );
-
-    _subs.add(
-      _player.stream.audioDevice.listen((newDevice) async {
-        try {
-          if (!_audioDeviceManager.isRealDeviceChange(newDevice.name)) return;
-          try {
-            await _audioDeviceManager.reapplyPersistedEffects();
-          } on Exception catch (e, stack) {
+            await _player.setAudioDriver('auto');
+            afLog('audio', 'Fallback to auto succeeded');
+          } on Exception catch (e2, stack2) {
             afLog(
               'audio',
-              'reapplyPersistedEffects failed',
-              error: e,
-              stackTrace: stack,
+              'auto fallback also failed',
+              error: e2,
+              stackTrace: stack2,
             );
           }
-        } on Exception catch (e, stack) {
-          afLog(
-            'audio',
-            'audioDevice handler failed',
-            error: e,
-            stackTrace: stack,
+        }
+      }
+    } on Exception catch (e, stack) {
+      afLog(
+        'audio',
+        'audioOutputState handler failed',
+        error: e,
+        stackTrace: stack,
+      );
+    }
+  }
+
+  void _onCompleted(bool completed) {
+    _playback.handleCompleted(completed);
+  }
+
+  void _onRateChanged(double _) {
+    _playback.updateMediaSession();
+  }
+
+  void _onDurationChanged(Duration dur) {
+    if (dur > Duration.zero) {
+      _playback.updateMediaSession();
+    }
+  }
+
+  Future<void> _onCoverArtChanged(CoverArt? raw) async {
+    try {
+      try {
+        await _artworkManager.persistCover(raw);
+        // Also save permanently to the cover cache so artwork
+        // appears in library views (not just Now Playing).
+        final track = _queueManager.currentTrack;
+        if (raw != null && track != null) {
+          unawaited(
+            _artworkManager.persistCoverToPermanentCache(track.id, raw),
           );
         }
-      }),
-    );
+      } on Exception catch (e, stack) {
+        afLog('audio', 'persistCover failed', error: e, stackTrace: stack);
+      }
+      _playback.updateMediaSession();
+    } on Exception catch (e, stack) {
+      afLog('audio', 'coverArt handler failed', error: e, stackTrace: stack);
+    }
+  }
+
+  Future<void> _onAudioDeviceChanged(Device newDevice) async {
+    try {
+      if (!_audioDeviceManager.isRealDeviceChange(newDevice.name)) return;
+      try {
+        await _audioDeviceManager.reapplyPersistedEffects();
+      } on Exception catch (e, stack) {
+        afLog(
+          'audio',
+          'reapplyPersistedEffects failed',
+          error: e,
+          stackTrace: stack,
+        );
+      }
+    } on Exception catch (e, stack) {
+      afLog('audio', 'audioDevice handler failed', error: e, stackTrace: stack);
+    }
+  }
+
+  void _onMediaSessionCommand(dynamic command) {
+    if (_disposed) return;
+    switch (command) {
+      case MediaSessionCommandNext():
+        unawaited(_playback.skipToNext());
+      case MediaSessionCommandPrevious():
+        unawaited(_playback.skipToPrevious());
+      case MediaSessionCommandSetShuffle(:final shuffle):
+        unawaited(_playback.setAfShuffleMode(shuffle));
+      case MediaSessionCommandSetRepeatMode(:final loop):
+        unawaited(_playback.setAfLoopMode(loop));
+      case MediaSessionCommandSetPlaybackRate(:final rate):
+        unawaited(_playback.setAfSpeed(rate));
+      case MediaSessionCommandLike():
+        onToggleFavorite?.call();
+      case MediaSessionCommandSeekBy(:final offset):
+        unawaited(_playback.seek(_positionTracker.lastKnownPosition + offset));
+      case MediaSessionCommandStop():
+        unawaited(_playback.stop());
+      case _:
+        break;
+    }
   }
 
   void _wireMediaSessionCommands() {
     _subs.add(
-      _player.stream.mediaSessionCommands.listen((command) {
-        if (_disposed) return;
-        switch (command) {
-          case MediaSessionCommandNext():
-            unawaited(_playback.skipToNext());
-          case MediaSessionCommandPrevious():
-            unawaited(_playback.skipToPrevious());
-          case MediaSessionCommandSetShuffle(:final shuffle):
-            unawaited(_playback.setAfShuffleMode(shuffle));
-          case MediaSessionCommandSetRepeatMode(:final loop):
-            unawaited(_playback.setAfLoopMode(loop));
-          case MediaSessionCommandSetPlaybackRate(:final rate):
-            unawaited(_playback.setAfSpeed(rate));
-          case MediaSessionCommandLike():
-            onToggleFavorite?.call();
-          case MediaSessionCommandSeekBy(:final offset):
-            unawaited(
-              _playback.seek(_positionTracker.lastKnownPosition + offset),
-            );
-          case MediaSessionCommandStop():
-            unawaited(_playback.stop());
-          case _:
-            break;
-        }
-      }),
+      _player.stream.mediaSessionCommands.listen(_onMediaSessionCommand),
     );
   }
 

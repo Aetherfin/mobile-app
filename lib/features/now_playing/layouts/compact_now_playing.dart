@@ -43,19 +43,23 @@ class CompactNowPlaying extends StatelessWidget {
           bottom: MediaQuery.of(context).size.height * _contentHeightRatio,
           left: _artworkHorizontalMargin,
           right: _artworkHorizontalMargin,
-          child: GestureDetector(
-            onTap: () {
-              if (lyricsExpandedNotifier.value) {
-                lyricsExpandedNotifier.value = false;
-              }
-            },
-            onVerticalDragEnd: (details) {
-              if ((details.primaryVelocity ?? 0) < -200) {
-                expandedNotifier.value = true;
-              }
-            },
-            behavior: HitTestBehavior.translucent,
-            child: RepaintBoundary(child: ReactiveArtwork(track: track)),
+          child: Semantics(
+            button: true,
+            label: 'Now playing artwork',
+            child: GestureDetector(
+              onTap: () {
+                if (lyricsExpandedNotifier.value) {
+                  lyricsExpandedNotifier.value = false;
+                }
+              },
+              onVerticalDragEnd: (details) {
+                if ((details.primaryVelocity ?? 0) < -200) {
+                  expandedNotifier.value = true;
+                }
+              },
+              behavior: HitTestBehavior.translucent,
+              child: RepaintBoundary(child: ReactiveArtwork(track: track)),
+            ),
           ),
         ),
 

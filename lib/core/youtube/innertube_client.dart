@@ -498,7 +498,7 @@ class InnerTubeClient {
 
   /// Browse an artist page and return header info + songs + carousel items.
   /// Makes ONE HTTP call — like Metrolist's YouTube.artist().
-  // ignore: library_private_types_in_public_api
+  // ignore: library_private_types_in_public_api — internal client, not public API surface
   Future<_ArtistPage?> browseArtistPage(String channelId) async {
     await _ensureInitialized();
 
@@ -718,7 +718,7 @@ class InnerTubeClient {
     return result?.tracks ?? [];
   }
 
-  // ignore: library_private_types_in_public_api
+  // ignore: library_private_types_in_public_api — internal client, not public API surface
   Future<_BrowseResult?> browsePlaylistWithMetadata(String browseId) async {
     await _ensureInitialized();
 
@@ -964,7 +964,7 @@ class InnerTubeBrowseResponse {
   final String? continuation;
   final List<InnerTubeChip> chips;
 
-  // ignore: sort_constructors_first
+  // ignore: sort_constructors_first — factory depends on field defaults, reordering harms readability
   factory InnerTubeBrowseResponse.fromJson(Map<String, dynamic> json) {
     final sections = <InnerTubeSection>[];
     final chips = <InnerTubeChip>[];

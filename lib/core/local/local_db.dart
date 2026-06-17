@@ -155,8 +155,8 @@ class LocalDb {
   Future<Map<String, List<AfTrack>>> tracksByArtists(Set<String> artistNames) =>
       tracks.tracksByArtists(artistNames);
 
-  Future<List<AfTrack>> tracksByGenre(String genre) =>
-      tracks.tracksByGenre(genre);
+  Future<List<AfTrack>> tracksByGenre(String genre, {int limit = 500}) =>
+      tracks.tracksByGenre(genre, limit: limit);
 
   Future<List<AfTrack>> getSimilarTracks(String seedId, {int limit = 50}) =>
       tracks.getSimilarTracks(seedId, limit: limit);

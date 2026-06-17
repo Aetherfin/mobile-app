@@ -529,7 +529,15 @@ class ArtistIdleGrid extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, _) => const SliverToBoxAdapter(child: SizedBox.shrink()),
+      error: (_, _) => const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+          child: Text(
+            'Couldn\'t load suggestions',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
       data: (list) => SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
         sliver: SliverGrid.builder(
@@ -586,7 +594,15 @@ class GenreIdleGrid extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, _) => const SliverToBoxAdapter(child: SizedBox.shrink()),
+      error: (_, _) => const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+          child: Text(
+            'Couldn\'t load suggestions',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
       data: (list) => SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
         sliver: SliverGrid.builder(
@@ -658,7 +674,15 @@ class AlbumIdleGrid extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, _) => const SliverToBoxAdapter(child: SizedBox.shrink()),
+      error: (_, _) => const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+          child: Text(
+            'Couldn\'t load suggestions',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
       data: (list) => SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
         sliver: SliverGrid.builder(

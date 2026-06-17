@@ -41,7 +41,6 @@ void main() {
   }
 
   group('AlbumScreen', () {
-
     // Run non-scroll tests first.
     testWidgets('null album shows "Album not found"', (tester) async {
       final fixture = buildAlbumContainer();

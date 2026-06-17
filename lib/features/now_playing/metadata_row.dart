@@ -28,21 +28,28 @@ class MetadataRow extends ConsumerWidget {
             maxLines: 1,
           ),
           const SizedBox(height: AfSpacing.s4),
-          GestureDetector(
-            onTap: () => navigateToArtist(
-              context,
-              ref,
-              artistId: track.artistId,
-              artistName: track.artistName,
-            ),
-            child: Text(
-              track.artistName,
-              style: AfTypography.bodyLarge.copyWith(
-                color: AfColors.textSecondary,
+          Semantics(
+            button: true,
+            label: 'Go to artist ${track.artistName}',
+            child: GestureDetector(
+              onTap: () => navigateToArtist(
+                context,
+                ref,
+                artistId: track.artistId,
+                artistName: track.artistName,
               ),
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              maxLines: 1,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  track.artistName,
+                  style: AfTypography.bodyLarge.copyWith(
+                    color: AfColors.textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: AfSpacing.s12),
@@ -79,6 +86,7 @@ class _AbLoopButton extends ConsumerWidget {
       label: 'A-B loop',
       button: true,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () {
           if (active) {
             ref.read(playerServiceProvider).setAbLoopA(null);
@@ -91,10 +99,17 @@ class _AbLoopButton extends ConsumerWidget {
           ref.read(playerServiceProvider).setAbLoopA(pos);
           ref.read(abLoopAProvider.notifier).set(pos);
         },
-        child: Icon(
-          LucideIcons.repeat1,
-          size: 20,
-          color: active ? spectral : AfColors.textTertiary,
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: Align(
+            alignment: Alignment.center,
+            child: Icon(
+              LucideIcons.repeat1,
+              size: 20,
+              color: active ? spectral : AfColors.textTertiary,
+            ),
+          ),
         ),
       ),
     );

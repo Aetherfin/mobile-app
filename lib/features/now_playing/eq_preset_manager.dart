@@ -74,20 +74,25 @@ class EqPresetManager {
           final isUserPreset = userPresets.containsKey(entry.key);
           return Padding(
             padding: const EdgeInsets.only(right: AfSpacing.s8),
-            child: GestureDetector(
-              onLongPress: isUserPreset ? () => onDelete(entry.key) : null,
-              child: ChoiceChip(
-                label: Text(entry.key),
-                selected: isActive,
-                onSelected: (_) => onApply(entry.key, entry.value),
-                selectedColor: spectral.secondary.withValues(alpha: 0.3),
-                backgroundColor: AfColors.surfaceBase,
-                labelStyle: AfTypography.bodySmall.copyWith(
-                  color: isActive ? spectral.primary : AfColors.textSecondary,
+            child: Semantics(
+              button: true,
+              selected: isActive,
+              label: 'EQ preset: ${entry.key}',
+              child: GestureDetector(
+                onLongPress: isUserPreset ? () => onDelete(entry.key) : null,
+                child: ChoiceChip(
+                  label: Text(entry.key),
+                  selected: isActive,
+                  onSelected: (_) => onApply(entry.key, entry.value),
+                  selectedColor: spectral.secondary.withValues(alpha: 0.3),
+                  backgroundColor: AfColors.surfaceBase,
+                  labelStyle: AfTypography.bodySmall.copyWith(
+                    color: isActive ? spectral.primary : AfColors.textSecondary,
+                  ),
+                  side: isActive
+                      ? BorderSide(color: spectral.primary, width: 1.5)
+                      : const BorderSide(color: AfColors.surfaceHigh),
                 ),
-                side: isActive
-                    ? BorderSide(color: spectral.primary, width: 1.5)
-                    : const BorderSide(color: AfColors.surfaceHigh),
               ),
             ),
           );
@@ -262,20 +267,25 @@ class EqPresetManager {
           final isUserPreset = userPresets.containsKey(entry.key);
           return Padding(
             padding: const EdgeInsets.only(right: AfSpacing.s8),
-            child: GestureDetector(
-              onLongPress: isUserPreset ? () => onDelete(entry.key) : null,
-              child: ChoiceChip(
-                label: Text(entry.key),
-                selected: isActive,
-                onSelected: (_) => onApply(entry.key, entry.value),
-                selectedColor: spectral.secondary.withValues(alpha: 0.3),
-                backgroundColor: AfColors.surfaceBase,
-                labelStyle: AfTypography.bodySmall.copyWith(
-                  color: isActive ? spectral.primary : AfColors.textSecondary,
+            child: Semantics(
+              button: true,
+              selected: isActive,
+              label: 'Parametric preset: ${entry.key}',
+              child: GestureDetector(
+                onLongPress: isUserPreset ? () => onDelete(entry.key) : null,
+                child: ChoiceChip(
+                  label: Text(entry.key),
+                  selected: isActive,
+                  onSelected: (_) => onApply(entry.key, entry.value),
+                  selectedColor: spectral.secondary.withValues(alpha: 0.3),
+                  backgroundColor: AfColors.surfaceBase,
+                  labelStyle: AfTypography.bodySmall.copyWith(
+                    color: isActive ? spectral.primary : AfColors.textSecondary,
+                  ),
+                  side: isActive
+                      ? BorderSide(color: spectral.primary, width: 1.5)
+                      : const BorderSide(color: AfColors.surfaceHigh),
                 ),
-                side: isActive
-                    ? BorderSide(color: spectral.primary, width: 1.5)
-                    : const BorderSide(color: AfColors.surfaceHigh),
               ),
             ),
           );

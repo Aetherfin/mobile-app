@@ -8,7 +8,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../widgets/async_error_view.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/skeletons/queue_skeleton.dart';
 import 'queue_actions.dart';
 import 'queue_list_view.dart';
 
@@ -165,20 +167,19 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
     final current = ref.watch(currentTrackProvider.select((t) => t?.id));
     final isBuffering = ref.watch(isBufferingProvider);
 
-    final liveQueue = queueAsync.maybeWhen(
-      data: (q) => q,
-      orElse: () => const <AfTrack>[],
-    );
-
-    final liveIds = liveQueue.map((t) => t.id).toList(growable: false);
-    if (!_listsMatch(liveIds, _lastQueueIds)) {
-      _items = List<AfTrack>.from(liveQueue);
-      _cachedIds = null;
-      _lastQueueIds = liveIds;
-      _hasScrolledToActive = false;
-      // Clear selection when queue changes externally.
-      if (_isSelectionMode) {
-        _exitSelectionMode();
+    // Sync items only when data is available.
+    final liveQueue = queueAsync.maybeWhen(data: (q) => q, orElse: () => null);
+    if (liveQueue != null) {
+      final liveIds = liveQueue.map((t) => t.id).toList(growable: false);
+      if (!_listsMatch(liveIds, _lastQueueIds)) {
+        _items = List<AfTrack>.from(liveQueue);
+        _cachedIds = null;
+        _lastQueueIds = liveIds;
+        _hasScrolledToActive = false;
+        // Clear selection when queue changes externally.
+        if (_isSelectionMode) {
+          _exitSelectionMode();
+        }
       }
     }
 
@@ -226,29 +227,37 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
               ),
             ),
             SafeArea(
-              child: _items.isEmpty
-                  ? const Center(
-                      child: EmptyState(
-                        icon: LucideIcons.listMusic,
-                        title: 'Queue is empty',
-                        body: 'Pick an album or track to start playback',
+              child: queueAsync.when(
+                loading: () => const Center(child: QueueSkeleton()),
+                error: (e, _) => AsyncErrorView(
+                  label: 'Couldn\u2019t load queue',
+                  error: e,
+                  onRetry: () => ref.invalidate(playerQueueProvider),
+                ),
+                data: (_) => _items.isEmpty
+                    ? const Center(
+                        child: EmptyState(
+                          icon: LucideIcons.listMusic,
+                          title: 'Queue is empty',
+                          body: 'Pick an album or track to start playback',
+                        ),
+                      )
+                    : RepaintBoundary(
+                        child: QueueListView(
+                          items: _items,
+                          currentId: current,
+                          isBuffering: isBuffering,
+                          scrollController: _scrollController,
+                          isSelectionMode: _isSelectionMode,
+                          selectedIndices: _selectedIndices,
+                          onReorder: _onReorder,
+                          onDismiss: _onDismiss,
+                          onTap: _onItemTap,
+                          onLongPress: _onItemLongPress,
+                          onSelectToggle: _toggleSelection,
+                        ),
                       ),
-                    )
-                  : RepaintBoundary(
-                      child: QueueListView(
-                        items: _items,
-                        currentId: current,
-                        isBuffering: isBuffering,
-                        scrollController: _scrollController,
-                        isSelectionMode: _isSelectionMode,
-                        selectedIndices: _selectedIndices,
-                        onReorder: _onReorder,
-                        onDismiss: _onDismiss,
-                        onTap: _onItemTap,
-                        onLongPress: _onItemLongPress,
-                        onSelectToggle: _toggleSelection,
-                      ),
-                    ),
+              ),
             ),
           ],
         ),

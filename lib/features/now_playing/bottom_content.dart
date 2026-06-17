@@ -108,120 +108,123 @@ class _BottomContentState extends ConsumerState<BottomContent>
 
         return SizedBox(
           height: currentH,
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onVerticalDragEnd: (details) {
-              final vy = details.primaryVelocity ?? 0;
-              if (vy < -200 || (vy < 0 && !_expanded)) {
-                if (!_expanded) _toggleExpand();
-              } else if (vy > 200 || (vy > 0 && _expanded)) {
-                if (_expanded) _toggleExpand();
-              }
-            },
-            child: GlassCard(
-              // ponytail: top-only corner, no matching AfRadii token
-              borderRadius: const BorderRadius.vertical(top: AfRadii.rLg),
-              blurSigma: 30,
-              color: AfColors.glassFillHeavy,
-              padding: EdgeInsets.zero,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AfSpacing.s16,
-                      AfSpacing.s12,
-                      AfSpacing.s16,
-                      AfSpacing.s8,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // ── Metadata overlay (title + artist) ──
-                        RepaintBoundary(
-                          child: MetadataOverlay(track: widget.track),
-                        ),
-                        const SizedBox(height: AfSpacing.s12),
-                        // ── Progress bar ──
-                        ReactiveProgress(track: widget.track),
-                        const SizedBox(height: AfSpacing.s12),
-                        // ── Transport controls ──
-                        ReactiveTransport(track: widget.track),
-                      ],
-                    ),
-                  ),
-
-                  // ── Expandable queue section ──
-                  if (_expanded && upNext.isNotEmpty) ...[
-                    const Divider(height: 1, color: AfColors.surfaceHigh),
+          child: Semantics(
+            label: 'Now playing bottom content',
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onVerticalDragEnd: (details) {
+                final vy = details.primaryVelocity ?? 0;
+                if (vy < -200 || (vy < 0 && !_expanded)) {
+                  if (!_expanded) _toggleExpand();
+                } else if (vy > 200 || (vy > 0 && _expanded)) {
+                  if (_expanded) _toggleExpand();
+                }
+              },
+              child: GlassCard(
+                // ponytail: top-only corner, no matching AfRadii token
+                borderRadius: const BorderRadius.vertical(top: AfRadii.rLg),
+                blurSigma: 30,
+                color: AfColors.glassFillHeavy,
+                padding: EdgeInsets.zero,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AfSpacing.s16,
-                        vertical: AfSpacing.s8,
+                      padding: const EdgeInsets.fromLTRB(
+                        AfSpacing.s16,
+                        AfSpacing.s12,
+                        AfSpacing.s16,
+                        AfSpacing.s8,
                       ),
-                      child: Row(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'Up Next',
-                            style: AfTypography.titleSmall.copyWith(
-                              color: AfColors.textSecondary,
-                            ),
+                          // ── Metadata overlay (title + artist) ──
+                          RepaintBoundary(
+                            child: MetadataOverlay(track: widget.track),
                           ),
-                          const SizedBox(width: AfSpacing.s8),
-                          Text(
-                            '${upNext.length} tracks',
-                            style: AfTypography.caption.copyWith(
-                              color: AfColors.textTertiary,
-                            ),
-                          ),
+                          const SizedBox(height: AfSpacing.s12),
+                          // ── Progress bar ──
+                          ReactiveProgress(track: widget.track),
+                          const SizedBox(height: AfSpacing.s12),
+                          // ── Transport controls ──
+                          ReactiveTransport(track: widget.track),
                         ],
                       ),
                     ),
-                    Flexible(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.only(bottom: AfSpacing.s8),
-                        itemCount: upNext.length,
-                        itemBuilder: (context, index) {
-                          final t = upNext[index];
-                          return PressScale(
-                            key: ValueKey(t.id),
-                            onTap: () {
-                              unawaited(
-                                ref
-                                    .read(playerServiceProvider)
-                                    .skipToQueueItem(queue.indexOf(t)),
-                              );
-                            },
-                            child: ListTile(
-                              dense: true,
-                              visualDensity: VisualDensity.compact,
-                              leading: Text(
-                                '${index + 1}',
-                                style: AfTypography.caption.copyWith(
-                                  color: AfColors.textTertiary,
-                                ),
-                              ),
-                              title: Text(
-                                t.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AfTypography.bodyMedium,
-                              ),
-                              subtitle: Text(
-                                t.artistName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AfTypography.caption.copyWith(
-                                  color: AfColors.textTertiary,
-                                ),
+
+                    // ── Expandable queue section ──
+                    if (_expanded && upNext.isNotEmpty) ...[
+                      const Divider(height: 1, color: AfColors.surfaceHigh),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AfSpacing.s16,
+                          vertical: AfSpacing.s8,
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Up Next',
+                              style: AfTypography.titleSmall.copyWith(
+                                color: AfColors.textSecondary,
                               ),
                             ),
-                          );
-                        },
+                            const SizedBox(width: AfSpacing.s8),
+                            Text(
+                              '${upNext.length} tracks',
+                              style: AfTypography.caption.copyWith(
+                                color: AfColors.textTertiary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                      Flexible(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.only(bottom: AfSpacing.s8),
+                          itemCount: upNext.length,
+                          itemBuilder: (context, index) {
+                            final t = upNext[index];
+                            return PressScale(
+                              key: ValueKey(t.id),
+                              onTap: () {
+                                unawaited(
+                                  ref
+                                      .read(playerServiceProvider)
+                                      .skipToQueueItem(queue.indexOf(t)),
+                                );
+                              },
+                              child: ListTile(
+                                dense: true,
+                                visualDensity: VisualDensity.compact,
+                                leading: Text(
+                                  '${index + 1}',
+                                  style: AfTypography.caption.copyWith(
+                                    color: AfColors.textTertiary,
+                                  ),
+                                ),
+                                title: Text(
+                                  t.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AfTypography.bodyMedium,
+                                ),
+                                subtitle: Text(
+                                  t.artistName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AfTypography.caption.copyWith(
+                                    color: AfColors.textTertiary,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),

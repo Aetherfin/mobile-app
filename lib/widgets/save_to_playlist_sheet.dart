@@ -90,7 +90,7 @@ class _SaveToPlaylistSheetState extends ConsumerState<SaveToPlaylistSheet> {
     } on Exception catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = displayError(e);
           _loading = false;
         });
       }

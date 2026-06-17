@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -26,6 +28,7 @@ class _LibrarySearchState extends ConsumerState<LibrarySearch> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   String _query = '';
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -37,6 +40,7 @@ class _LibrarySearchState extends ConsumerState<LibrarySearch> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -167,8 +171,12 @@ class _LibrarySearchState extends ConsumerState<LibrarySearch> {
                       vertical: AfSpacing.s12,
                     ),
                   ),
-                  onChanged: (v) =>
-                      setState(() => _query = v.trim().toLowerCase()),
+                  onChanged: (v) {
+                    _debounce?.cancel();
+                    _debounce = Timer(const Duration(milliseconds: 300), () {
+                      setState(() => _query = v.trim().toLowerCase());
+                    });
+                  },
                 ),
               ),
 

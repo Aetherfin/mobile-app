@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../state/state_holder.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../state/state_holder.dart';
 import '../../widgets/af_scrollbar.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/section_header.dart';
@@ -337,7 +337,13 @@ class _RecentlyAddedSection extends ConsumerWidget {
           );
         },
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+        child: Text(
+          'Couldn\'t load recently added',
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 }

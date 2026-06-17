@@ -8,6 +8,7 @@ import '../../../core/audio/player_settings_store.dart';
 import '../../../core/lastfm/lastfm_client.dart';
 import '../../../design_tokens/tokens.dart';
 import '../../../state/providers.dart';
+import '../../../utils/display_error.dart';
 import '../../../utils/log.dart';
 import '../../../widgets/af_dialog.dart';
 import '../../../widgets/press_scale.dart';
@@ -164,7 +165,7 @@ class _LastFmBrowserAuthDialogState
     } on Exception catch (e) {
       setState(() {
         _loading = false;
-        _error = e.toString().replaceAll('Exception: ', '');
+        _error = displayError(e);
       });
     }
   }

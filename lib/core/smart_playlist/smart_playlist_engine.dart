@@ -7,6 +7,23 @@ import '../jellyfin/models/items.dart';
 import '../local/local_db.dart';
 import 'smart_playlist_model.dart';
 
+/// Whitelist mapping smart playlist rule field names to SQLite column names.
+/// Unknown fields return null (rejected by the query builder), preventing
+/// injection via unexpected field values.
+const _kFieldToColumn = <String, String>{
+  'title': 'title',
+  'artist': 'artist',
+  'album': 'album',
+  'genre': 'genre',
+  'year': 'year',
+  'duration': 'duration_ms',
+  'codec': 'codec',
+  'bitrate': 'bitrate',
+  'dateAdded': 'last_modified',
+  'playCount': 'play_count',
+  'lastPlayed': 'last_played',
+};
+
 /// Typed operator for smart playlist rules, replacing raw string comparisons.
 enum SmartPlaylistOperator {
   is_('is'),
@@ -308,19 +325,5 @@ class SmartPlaylistEngine {
     return '$col COLLATE NOCASE $dir';
   }
 
-  String? _fieldToColumn(String field) => switch (field) {
-    'title' => 'title',
-    'artist' => 'artist',
-    'album' => 'album',
-    'genre' => 'genre',
-    'year' => 'year',
-    'duration' => 'duration_ms',
-    'codec' => 'codec',
-    'bitrate' => 'bitrate',
-    'dateAdded' => 'last_modified',
-    'isFavorite' => null, // Not in local DB
-    'playCount' => 'play_count',
-    'lastPlayed' => 'last_played',
-    _ => null,
-  };
+  String? _fieldToColumn(String field) => _kFieldToColumn[field];
 }

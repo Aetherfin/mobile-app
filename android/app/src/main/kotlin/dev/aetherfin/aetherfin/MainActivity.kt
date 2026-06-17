@@ -73,6 +73,11 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "changeAppIcon" -> {
                     val icon = call.argument<String>("icon") ?: "DefaultIcon"
+                    val validIcons = setOf("DefaultIcon", "MidnightIcon", "NordicIcon", "SunsetIcon")
+                    if (icon !in validIcons) {
+                        result.error("INVALID_ICON", "Unknown icon: $icon", null)
+                        return@setMethodCallHandler
+                    }
                     LauncherIconController.setIcon(this, icon)
                     result.success(null)
                 }

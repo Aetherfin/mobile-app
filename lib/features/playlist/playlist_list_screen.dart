@@ -7,6 +7,7 @@ import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../state/youtube_music_providers.dart';
+import '../../widgets/async_error_view.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/skeletons/playlist_skeleton.dart';
 import '../../widgets/af_scrollbar.dart';
@@ -187,16 +188,10 @@ class PlaylistListScreen extends ConsumerWidget {
                 ],
                 error: (e, _) => [
                   SliverToBoxAdapter(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(AfSpacing.s24),
-                        child: Text(
-                          'Couldn\u2019t load playlists',
-                          style: AfTypography.bodyMedium.copyWith(
-                            color: AfColors.semanticError,
-                          ),
-                        ),
-                      ),
+                    child: AsyncErrorView(
+                      label: 'Couldn\u2019t load playlists',
+                      error: e,
+                      onRetry: () => ref.invalidate(allPlaylistsProvider),
                     ),
                   ),
                 ],
@@ -352,49 +347,53 @@ class _PlaylistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AfColors.surfaceRaised,
-      borderRadius: AfRadii.borderMd,
-      child: PressScale(
-        onTap: onTap,
-        child: InkWell(
-          borderRadius: AfRadii.borderMd,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AfSpacing.s16,
-              vertical: AfSpacing.s12,
-            ),
-            child: Row(
-              children: [
-                leading,
-                const SizedBox(width: AfSpacing.s12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        style: AfTypography.bodyMedium,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: AfSpacing.s2),
-                      Text(
-                        subtitle,
-                        style: AfTypography.bodySmall.copyWith(
-                          color: AfColors.textTertiary,
+    return Semantics(
+      button: true,
+      label: '$title, $subtitle',
+      child: Material(
+        color: AfColors.surfaceRaised,
+        borderRadius: AfRadii.borderMd,
+        child: PressScale(
+          onTap: onTap,
+          child: InkWell(
+            borderRadius: AfRadii.borderMd,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AfSpacing.s16,
+                vertical: AfSpacing.s12,
+              ),
+              child: Row(
+                children: [
+                  leading,
+                  const SizedBox(width: AfSpacing.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: AfTypography.bodyMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: AfSpacing.s2),
+                        Text(
+                          subtitle,
+                          style: AfTypography.bodySmall.copyWith(
+                            color: AfColors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const Icon(
-                  LucideIcons.chevronRight,
-                  color: AfColors.textDisabled,
-                  size: 18,
-                ),
-              ],
+                  const Icon(
+                    LucideIcons.chevronRight,
+                    color: AfColors.textDisabled,
+                    size: 18,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

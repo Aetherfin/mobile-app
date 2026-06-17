@@ -1,10 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'state_holder.dart';
 
 import '../core/backend/music_backend.dart';
 import '../core/jellyfin/models/items.dart';
+import '../utils/display_error.dart';
 import '../utils/log.dart';
 import 'music_backend_providers.dart';
+import 'state_holder.dart';
 
 // ── Pagination helpers ─────────────────────────────────────────────────────
 
@@ -65,7 +66,7 @@ class TracksNotifier extends Notifier<PaginationState<AfTrack>> {
         hasMore: tracks.length >= _pageSize,
       );
     } on Exception catch (e) {
-      state = state.copyWith(isLoadingMore: false, error: e.toString());
+      state = state.copyWith(isLoadingMore: false, error: displayError(e));
     }
   }
 
@@ -81,13 +82,14 @@ class TracksNotifier extends Notifier<PaginationState<AfTrack>> {
         limit: _pageSize,
         startIndex: startIndex,
       );
+      final newList = List<AfTrack>.from(state.items)..addAll(tracks);
       state = PaginationState<AfTrack>(
-        items: [...state.items, ...tracks],
+        items: newList,
         currentPage: state.currentPage + 1,
         hasMore: tracks.length >= _pageSize,
       );
     } on Exception catch (e) {
-      state = state.copyWith(isLoadingMore: false, error: e.toString());
+      state = state.copyWith(isLoadingMore: false, error: displayError(e));
     }
   }
 }
@@ -174,6 +176,10 @@ final allAlbumsProvider = FutureProvider.autoDispose<List<AfAlbum>>((
   return res;
 });
 
+/// DEPRECATED: Loads ALL tracks into memory at once. Prefer
+/// [tracksPaginationProvider] for UI lists or a dedicated count query for
+/// stats. Kept for smart-playlist server filtering and onboarding summaries
+/// that need the full list synchronously.
 final allTracksProvider = FutureProvider.autoDispose<List<AfTrack>>((
   ref,
 ) async {

@@ -45,7 +45,7 @@ class MetadataScanner {
       afLog('local', 'scanFolder start: $treeUri');
 
       // 1. List all audio files
-      final files = await SafPicker.listAudioFiles(treeUri);
+      final files = await _listFiles(treeUri);
       afLog('local', 'found ${files.length} audio files');
 
       if (files.isEmpty) return 0;
@@ -85,34 +85,13 @@ class MetadataScanner {
         final chunk = files.sublist(i, end);
 
         // Separate files that need processing from those already cached.
-        // Retry cover art extraction for files whose lastModified matches
-        // but cover_path was null OR the cover file was evicted from disk.
-        final toProcess = <SafFile>[];
-        final coverOnly = <SafFile>[];
-        for (final file in chunk) {
-          final info = scanInfo[file.uri];
-          if (info != null && info.lastModified == file.lastModified) {
-            if (!info.hasCover) {
-              // Check if we have a no-art marker (skip if track has no art)
-              if (!_hasNoArtMarker(file.uri, coverCacheDir)) {
-                coverOnly.add(file);
-              }
-            } else if (info.hasCover) {
-              // DB says cover exists — verify file is actually on disk.
-              final coverFile = File(
-                p.join(coverCacheDir, _coverFilename(file.uri)),
-              );
-              if (!await coverFile.exists()) {
-                // Cover evicted from disk but DB is stale — retry extraction.
-                coverOnly.add(file);
-              }
-            }
-            completed++;
-            onProgress?.call(completed, files.length);
-            continue;
-          }
-          toProcess.add(file);
-        }
+        final (:toProcess, :coverOnly) = await _separateNewFromCached(
+          chunk,
+          scanInfo,
+          coverCacheDir,
+        );
+        completed += chunk.length - toProcess.length;
+        onProgress?.call(completed, files.length);
 
         if (toProcess.isEmpty && coverOnly.isEmpty) continue;
 
@@ -150,22 +129,7 @@ class MetadataScanner {
         if (toProcess.isEmpty) continue;
 
         // Fire all metadata reads concurrently within this chunk.
-        final results = await Future.wait(
-          toProcess.map(
-            (f) => SafPicker.readMetadata(f.uri).then(
-              (m) => _ChunkResult(f, m),
-              onError: (Object e, StackTrace stack) {
-                afLog(
-                  'local',
-                  'metadata read failed for ${f.name}',
-                  error: e,
-                  stackTrace: stack,
-                );
-                return _ChunkResult(f, null);
-              },
-            ),
-          ),
-        );
+        final results = await _processChunk(toProcess);
 
         // Process results sequentially: cover art reads/writes + batch build.
         for (final result in results) {
@@ -177,55 +141,11 @@ class MetadataScanner {
                 ? meta.title!
                 : _titleFromFilename(file.name);
 
-            // Extract cover art (if not already cached)
-            String? coverPath;
-            final coverFile = File(
-              p.join(coverCacheDir, _coverFilename(file.uri)),
+            // Extract cover art + spectral hue
+            final (:coverPath, :spectralHue) = await _extractCoverArtForTrack(
+              file,
+              coverCacheDir,
             );
-            if (!await coverFile.exists()) {
-              try {
-                final artBytes = await SafPicker.readCoverArt(file.uri);
-                if (artBytes != null && artBytes.isNotEmpty) {
-                  await coverFile.writeAsBytes(artBytes);
-                  coverPath = coverFile.path;
-                  _coverCacheManager?.trackAccess(coverFile.path);
-                } else {
-                  // No embedded artwork — try folder artwork fallback
-                  coverPath = await _findFolderArtwork(file.uri, coverCacheDir);
-                  // If still no art, create marker to skip future retries
-                  if (coverPath == null) {
-                    _createNoArtMarker(file.uri, coverCacheDir);
-                  }
-                }
-              } on Exception catch (e, stack) {
-                afLog(
-                  'local',
-                  'readCoverArt failed for ${file.name}',
-                  error: e,
-                  stackTrace: stack,
-                );
-              }
-            } else {
-              coverPath = coverFile.path;
-              _coverCacheManager?.trackAccess(coverFile.path);
-            }
-
-            // Generate spectral hue from cover art for instant palette lookup
-            double? spectralHue;
-            if (coverPath != null) {
-              try {
-                spectralHue = await _spectralExtractor.extractHueFromArtwork(
-                  coverPath,
-                );
-              } on Exception catch (e, stack) {
-                afLog(
-                  'local',
-                  'spectral hue extraction failed for ${file.name}',
-                  error: e,
-                  stackTrace: stack,
-                );
-              }
-            }
 
             batch.add({
               'id': file.uri,
@@ -255,7 +175,7 @@ class MetadataScanner {
 
           // Flush batch every 50 tracks
           if (batch.length >= 50) {
-            await db.upsertTracks(batch);
+            await _flushBatch(batch);
             batch.clear();
           }
         }
@@ -263,7 +183,7 @@ class MetadataScanner {
 
       // Flush remaining
       if (batch.isNotEmpty) {
-        await db.upsertTracks(batch);
+        await _flushBatch(batch);
       }
 
       // Propagate album art: copy cover_path from tracks that have art
@@ -311,6 +231,124 @@ class MetadataScanner {
       afLog('local', 'pruned $pruned deleted tracks');
     }
     return pruned;
+  }
+
+  // ── Extracted helpers ─────────────────────────────────────────────────────
+
+  // ponytail: extracted from scanFolder for readability
+  Future<List<SafFile>> _listFiles(String treeUri) {
+    return SafPicker.listAudioFiles(treeUri);
+  }
+
+  // ponytail: extracted from scanFolder for readability
+  Future<({List<SafFile> toProcess, List<SafFile> coverOnly})>
+  _separateNewFromCached(
+    List<SafFile> chunk,
+    Map<String, ({int? lastModified, bool hasCover})> scanInfo,
+    String coverCacheDir,
+  ) async {
+    final toProcess = <SafFile>[];
+    final coverOnly = <SafFile>[];
+    for (final file in chunk) {
+      final info = scanInfo[file.uri];
+      if (info != null && info.lastModified == file.lastModified) {
+        if (!info.hasCover) {
+          // Check if we have a no-art marker (skip if track has no art)
+          if (!_hasNoArtMarker(file.uri, coverCacheDir)) {
+            coverOnly.add(file);
+          }
+        } else if (info.hasCover) {
+          // DB says cover exists — verify file is actually on disk.
+          final coverFile = File(
+            p.join(coverCacheDir, _coverFilename(file.uri)),
+          );
+          if (!await coverFile.exists()) {
+            // Cover evicted from disk but DB is stale — retry extraction.
+            coverOnly.add(file);
+          }
+        }
+      } else {
+        toProcess.add(file);
+      }
+    }
+    return (toProcess: toProcess, coverOnly: coverOnly);
+  }
+
+  // ponytail: extracted from scanFolder for readability
+  Future<List<_ChunkResult>> _processChunk(List<SafFile> toProcess) {
+    return Future.wait(
+      toProcess.map(
+        (f) => SafPicker.readMetadata(f.uri).then(
+          (m) => _ChunkResult(f, m),
+          onError: (Object e, StackTrace stack) {
+            afLog(
+              'local',
+              'metadata read failed for ${f.name}',
+              error: e,
+              stackTrace: stack,
+            );
+            return _ChunkResult(f, null);
+          },
+        ),
+      ),
+    );
+  }
+
+  // ponytail: extracted from scanFolder for readability
+  Future<({String? coverPath, double? spectralHue})> _extractCoverArtForTrack(
+    SafFile file,
+    String coverCacheDir,
+  ) async {
+    String? coverPath;
+    final coverFile = File(p.join(coverCacheDir, _coverFilename(file.uri)));
+    if (!await coverFile.exists()) {
+      try {
+        final artBytes = await SafPicker.readCoverArt(file.uri);
+        if (artBytes != null && artBytes.isNotEmpty) {
+          await coverFile.writeAsBytes(artBytes);
+          coverPath = coverFile.path;
+          _coverCacheManager?.trackAccess(coverFile.path);
+        } else {
+          // No embedded artwork — try folder artwork fallback
+          coverPath = await _findFolderArtwork(file.uri, coverCacheDir);
+          // If still no art, create marker to skip future retries
+          if (coverPath == null) {
+            _createNoArtMarker(file.uri, coverCacheDir);
+          }
+        }
+      } on Exception catch (e, stack) {
+        afLog(
+          'local',
+          'readCoverArt failed for ${file.name}',
+          error: e,
+          stackTrace: stack,
+        );
+      }
+    } else {
+      coverPath = coverFile.path;
+      _coverCacheManager?.trackAccess(coverFile.path);
+    }
+
+    // Generate spectral hue from cover art for instant palette lookup
+    double? spectralHue;
+    if (coverPath != null) {
+      try {
+        spectralHue = await _spectralExtractor.extractHueFromArtwork(coverPath);
+      } on Exception catch (e, stack) {
+        afLog(
+          'local',
+          'spectral hue extraction failed for ${file.name}',
+          error: e,
+          stackTrace: stack,
+        );
+      }
+    }
+    return (coverPath: coverPath, spectralHue: spectralHue);
+  }
+
+  // ponytail: extracted from scanFolder for readability
+  Future<void> _flushBatch(List<Map<String, dynamic>> batch) {
+    return db.upsertTracks(batch);
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────

@@ -457,6 +457,7 @@ class AfQueueEngine {
     for (var i = 0; i < _tracks.length; i++) {
       if (_tracks[i].id == trackId) {
         _tracks[i] = _tracks[i].copyWith(isFavorite: isFavorite);
+        break; // ponytail: IDs are unique, no reason to scan the rest
       }
     }
     _shuffledTracks = null;

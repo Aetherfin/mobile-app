@@ -45,6 +45,7 @@ class ProfileScreen extends ConsumerWidget {
         ? const AsyncValue<List<AfTrack>>.data([])
         : isLocal
         ? ref.watch(localTracksProvider)
+        // ponytail: summary stats screen — needs full list for count
         : ref.watch(allTracksProvider);
     final albumsAsync = isYouTubeMusic
         ? const AsyncValue<List<AfAlbum>>.data([])

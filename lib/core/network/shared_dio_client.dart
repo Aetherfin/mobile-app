@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import '../../utils/log.dart';
+import '../../utils/url.dart';
+import 'https_redirect_guard.dart';
 
 /// Shared Dio client with connection pooling and caching for all HTTP requests.
 ///
@@ -93,6 +95,10 @@ class SharedDioClient {
     final customDio = Dio(options);
     customDio.httpClientAdapter = _createAdapter();
 
+    // HTTPS redirect guard — prevent scheme downgrade from HTTPS to HTTP
+    // which could indicate a MITM attack on shared networks.
+    customDio.interceptors.add(HttpsRedirectGuard());
+
     // Short-lived cache (30s) for GET requests — reduces redundant navigation
     // refetches without stale data risk.
     customDio.interceptors.add(
@@ -164,7 +170,7 @@ class _RetryInterceptor extends Interceptor {
     final delay = _retryDelays[retryCount];
     afLog(
       'http',
-      'Retrying ${err.requestOptions.method} ${err.requestOptions.uri} '
+      'Retrying ${err.requestOptions.method} ${redactSensitiveQueryParams(err.requestOptions.uri)} '
           '(attempt ${retryCount + 1}/$_maxRetries) after ${delay.inSeconds}s',
     );
     await Future.delayed(delay);

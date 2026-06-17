@@ -180,8 +180,8 @@ class LastFmPlaybackReporter {
           }
         }
       }
-    } catch (_) {
-      // Ignored: container is likely already disposed.
+    } catch (e) {
+      afLog('audio', 'lastfm final scrobble dispose guard', error: e);
     }
   }
 }

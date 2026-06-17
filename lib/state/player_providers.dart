@@ -1,7 +1,6 @@
 import 'dart:async' show unawaited, Timer, StreamSubscription;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'state_holder.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart'
     show Loop, MpvPlayerError, FftFrame;
 
@@ -18,6 +17,7 @@ import '../core/jellyfin/models/items.dart';
 import '../core/local/local_db_tracks.dart';
 import '../core/youtube/youtube_music_client.dart';
 import 'app_mode_providers.dart';
+import 'state_holder.dart';
 import 'local_library_providers.dart';
 import 'music_backend_providers.dart';
 import 'settings_providers.dart';

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show File, Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -54,11 +55,41 @@ Future<void> main() async {
       WidgetsFlutterBinding.ensureInitialized();
       _boot('WidgetsFlutterBinding.ensureInitialized OK');
 
-      // Configure global image cache — default 50MB is too small for library
-      // views with 200+ artwork images. Increase to 100MB to prevent decode
-      // thrash when scrolling through album grids.
-      PaintingBinding.instance.imageCache.maximumSizeBytes = 100 * 1024 * 1024;
-      PaintingBinding.instance.imageCache.maximumSize = 500;
+      // Adaptive image cache — scale to device RAM to prevent decode thrash
+      // while avoiding OOM on low-memory devices.
+      int maxBytes;
+      int maxEntries;
+      if (Platform.isAndroid) {
+        try {
+          final meminfo = File('/proc/meminfo').readAsStringSync();
+          final match = RegExp(r'MemTotal:\s+(\d+) kB').firstMatch(meminfo);
+          if (match != null) {
+            final ramGb =
+                int.parse(match.group(1)!) * 1024 / (1024 * 1024 * 1024);
+            if (ramGb < 4) {
+              maxBytes = 40 * 1024 * 1024;
+              maxEntries = 200;
+            } else if (ramGb <= 8) {
+              maxBytes = 80 * 1024 * 1024;
+              maxEntries = 400;
+            } else {
+              maxBytes = 100 * 1024 * 1024;
+              maxEntries = 500;
+            }
+          } else {
+            maxBytes = 80 * 1024 * 1024;
+            maxEntries = 400;
+          }
+        } catch (_) {
+          maxBytes = 80 * 1024 * 1024;
+          maxEntries = 400;
+        }
+      } else {
+        maxBytes = 100 * 1024 * 1024;
+        maxEntries = 500;
+      }
+      PaintingBinding.instance.imageCache.maximumSizeBytes = maxBytes;
+      PaintingBinding.instance.imageCache.maximumSize = maxEntries;
 
       // PRIMARY error handlers — these catch the vast majority of errors.
       FlutterError.onError = (details) {
@@ -320,7 +351,7 @@ Future<void> main() async {
       // since `container` is the app's root provider scope). If the architecture
       // ever supports hot-restart of the provider tree, this subscription would
       // need to be disposed. Accept as-is for now.
-      // ignore: unused_local_variable
+      // ignore: unused_local_variable — kept alive intentionally for process lifetime
       final authSub = container.listen<JellyfinAuth?>(authProvider, (
         prev,
         next,
@@ -337,7 +368,7 @@ Future<void> main() async {
       // When mode is cleared to null (mode switch, clear app data), explicitly
       // reset the router snapshot via resetRouterMode().  setRouterAuthState's
       // null guard prevents clearing _appMode through that path.
-      // ignore: unused_local_variable
+      // ignore: unused_local_variable — kept alive intentionally for process lifetime
       final modeSub = container.listen<AppMode?>(appModeProvider, (prev, next) {
         setRouterAuthState(auth: container.read(authProvider), mode: next);
         if (next == null) {
@@ -347,7 +378,7 @@ Future<void> main() async {
       }, fireImmediately: false);
 
       // Wire local onboarding completion → router redirect.
-      // ignore: unused_local_variable
+      // ignore: unused_local_variable — kept alive intentionally for process lifetime
       final onboardingSub = container.listen<bool>(
         localOnboardingCompletedProvider,
         (prev, next) {

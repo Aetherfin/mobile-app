@@ -11,6 +11,7 @@ import '../../core/subsonic/client.dart';
 import '../../design_tokens/tokens.dart';
 import '../../widgets/af_loading_indicator.dart';
 import '../../state/providers.dart';
+import '../../utils/display_error.dart';
 import '../../utils/log.dart';
 import '../../utils/url.dart';
 import '../../widgets/server_pill.dart';
@@ -206,7 +207,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           return '${e.type.name}: ${e.message ?? e.error ?? "unknown"}';
       }
     }
-    return e.toString();
+    return displayError(e);
   }
 
   /// Aetherfin sends every byte (including the access token) over plain HTTP

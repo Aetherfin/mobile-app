@@ -47,6 +47,7 @@ final smartPlaylistTracksProvider = FutureProvider.autoDispose
         return engine.resolveLocal(playlist, localLib.db);
       }
 
+      // ponytail: needs full track list for server-side smart playlist filtering
       final allTracks = await ref.read(allTracksProvider.future);
       final appDb = ref.read(appDatabaseProvider);
       final historyRows = await appDb

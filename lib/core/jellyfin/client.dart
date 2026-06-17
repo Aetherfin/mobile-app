@@ -130,41 +130,6 @@ class JellyfinClient implements MusicBackend {
       ),
     );
 
-    // HTTPS redirect guard — prevent scheme downgrade from HTTPS to HTTP
-    // which could indicate a MITM attack on shared networks.
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          if (options.uri.scheme == 'https') {
-            options.extra['_originalScheme'] = 'https';
-          }
-          handler.next(options);
-        },
-        onResponse: (response, handler) {
-          // Check if we were redirected from HTTPS to HTTP
-          final originalScheme =
-              response.requestOptions.extra['_originalScheme'];
-          if (originalScheme == 'https' &&
-              response.requestOptions.uri.scheme == 'http') {
-            afLog(
-              'http',
-              'HTTPS→HTTP redirect blocked: ${response.requestOptions.uri}',
-            );
-            handler.reject(
-              DioException(
-                requestOptions: response.requestOptions,
-                response: response,
-                type: DioExceptionType.badResponse,
-                error: 'HTTPS to HTTP redirect detected — possible MITM',
-              ),
-            );
-            return;
-          }
-          handler.next(response);
-        },
-      ),
-    );
-
     // Debug-only HTTP trace. In release builds we skip these prints
     // entirely so URLs, headers, and bodies never reach logcat where
     // any app on the device with READ_LOGS could capture them.

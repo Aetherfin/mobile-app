@@ -118,39 +118,46 @@ class _SpringChipState extends State<SpringChip>
 
     final reduced = MediaQuery.of(context).disableAnimations;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: reduced ? null : _onTapDown,
-      onTapUp: reduced ? null : _onTapUp,
-      onTapCancel: reduced ? null : _onTapCancel,
-      onTap: widget.onTap,
-      child: AnimatedBuilder(
-        animation: _ctrl,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: reduced ? 1.0 : _ctrl.value,
-            child: child,
-          );
-        },
-        child: AnimatedContainer(
-          duration: AfDurations.quick,
-          curve: AfCurves.easeStandard,
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
-          decoration: BoxDecoration(
-            color: widget.isSelected
-                ? effectiveSelectedColor
-                : effectiveUnselectedColor,
-            borderRadius: AfRadii.borderPill,
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            widget.label,
-            style: AfTypography.bodyMedium.copyWith(
+    return Semantics(
+      button: true,
+      selected: widget.isSelected,
+      label: 'Filter: ${widget.label}',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: reduced ? null : _onTapDown,
+        onTapUp: reduced ? null : _onTapUp,
+        onTapCancel: reduced ? null : _onTapCancel,
+        onTap: widget.onTap,
+        child: AnimatedBuilder(
+          animation: _ctrl,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: reduced ? 1.0 : _ctrl.value,
+              child: child,
+            );
+          },
+          child: AnimatedContainer(
+            duration: AfDurations.quick,
+            curve: AfCurves.easeStandard,
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+            decoration: BoxDecoration(
               color: widget.isSelected
-                  ? effectiveSelectedTextColor
-                  : effectiveUnselectedTextColor,
-              fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ? effectiveSelectedColor
+                  : effectiveUnselectedColor,
+              borderRadius: AfRadii.borderPill,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              widget.label,
+              style: AfTypography.bodyMedium.copyWith(
+                color: widget.isSelected
+                    ? effectiveSelectedTextColor
+                    : effectiveUnselectedTextColor,
+                fontWeight: widget.isSelected
+                    ? FontWeight.w600
+                    : FontWeight.w400,
+              ),
             ),
           ),
         ),

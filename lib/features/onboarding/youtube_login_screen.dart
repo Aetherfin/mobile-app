@@ -9,6 +9,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../core/youtube/youtube_auth.dart';
 import '../../design_tokens/tokens.dart';
+import '../../utils/display_error.dart';
 import '../../utils/log.dart';
 import '../../widgets/af_loading_indicator.dart';
 import '../../state/youtube_music_providers.dart';
@@ -205,7 +206,7 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
       );
       if (mounted) {
         setState(() {
-          _error = 'Login failed: ${e.toString().substring(0, 100)}';
+          _error = 'Login failed: ${displayError(e)}';
           _isCompleting = false;
         });
       }
