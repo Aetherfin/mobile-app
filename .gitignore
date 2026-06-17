@@ -51,6 +51,7 @@ app.*.map.json
 .kiro/
 .aider*
 .env
+.env.secrets
 tool/build_local.sh
 AGENTS.md
 .antigravitycli/

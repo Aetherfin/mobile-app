@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# tool/build-local — Local build with secrets pulled from GitHub via gh CLI.
+# tool/build-local — Local build with secrets from .env.secrets.
 #
-# Wraps tool/build, injecting keystore secrets automatically.
-# Requires: gh CLI authenticated to this repo.
+# Wraps tool/build, injecting keystore secrets from a local file.
+# Secrets file is gitignored — never committed.
 #
 # Usage:
 #   bash tool/build-local                          # release, split-per-abi
@@ -10,39 +10,36 @@
 #   bash tool/build-local --install                # release + install on device
 #   bash tool/build-local --skip-test --skip-analyze  # fast local build
 #
+# First time? Create .env.secrets in repo root:
+#   KEYSTORE_B64=$(base64 -w0 /path/to/release.jks)
+#   STORE_PASSWORD=your_store_password
+#   KEY_ALIAS=your_key_alias
+#   KEY_PASSWORD=your_key_password
+#
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_ID_FILE="$ROOT/lib/build_id.dart"
+SECRETS_FILE="$ROOT/.env.secrets"
 
 # Restore build_id.dart after build (keeps working tree clean)
 if [ -f "$BUILD_ID_FILE" ]; then
   BUILD_ID_WAS_TRACKED=true
-  BUILD_ID_ORIG=$(git -C "$ROOT" show HEAD:lib/build_id.dart 2>/dev/null || echo "")
 else
   BUILD_ID_WAS_TRACKED=false
-  BUILD_ID_ORIG=""
 fi
 trap 'if [ "$BUILD_ID_WAS_TRACKED" = true ]; then git -C "$ROOT" checkout -- lib/build_id.dart 2>/dev/null; else rm -f "$BUILD_ID_FILE"; fi' EXIT
 
-REPO=$(git -C "$ROOT" remote get-url origin 2>/dev/null \
-  | sed 's/.*github.com[:/]\(.*\)\.git/\1/' \
-  | sed 's/.*github.com[:/]\(.*\)/\1/')
-
-if [ -z "$REPO" ]; then
-  echo "  ✕ Could not detect GitHub repo from git remote." 1>&2
-  exit 1
-fi
-
-echo "  Pulling secrets from $REPO ..."
-
-KEYSTORE_B64=$(gh secret get ANDROID_KEYSTORE_BASE64 -R "$REPO" 2>/dev/null || true)
-STORE_PASSWORD=$(gh secret get ANDROID_KEYSTORE_PASSWORD -R "$REPO" 2>/dev/null || true)
-KEY_ALIAS=$(gh secret get ANDROID_KEY_ALIAS -R "$REPO" 2>/dev/null || true)
-KEY_PASSWORD=$(gh secret get ANDROID_KEY_PASSWORD -R "$REPO" 2>/dev/null || true)
-
-if [ -z "$KEYSTORE_B64" ]; then
-  echo "  ⚠ Could not pull ANDROID_KEYSTORE_BASE64 — building unsigned." 1>&2
+# Load secrets from .env.secrets
+if [ -f "$SECRETS_FILE" ]; then
+  echo "  Loading secrets from .env.secrets ..."
+  set -a
+  # shellcheck disable=SC1090
+  source "$SECRETS_FILE"
+  set +a
+else
+  echo "  ⚠ No .env.secrets found — building unsigned." 1>&2
+  echo "  Create $SECRETS_FILE with KEYSTORE_B64, STORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD" 1>&2
 fi
 
 # Default to release + split-per-abi if no args given
@@ -50,8 +47,4 @@ if [ $# -eq 0 ]; then
   set -- --mode release --split-per-abi --no-universal
 fi
 
-KEYSTORE_B64="$KEYSTORE_B64" \
-STORE_PASSWORD="$STORE_PASSWORD" \
-KEY_ALIAS="$KEY_ALIAS" \
-KEY_PASSWORD="$KEY_PASSWORD" \
-  exec bash "$ROOT/tool/build" --sign "$@"
+exec bash "$ROOT/tool/build" --sign "$@"
