@@ -57,7 +57,7 @@ class _AfBottomNavState extends ConsumerState<AfBottomNav>
     _springAnim = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.2), weight: 40),
       TweenSequenceItem(tween: Tween(begin: 1.2, end: 1.0), weight: 60),
-    ]).animate(CurvedAnimation(parent: _springCtrl, curve: Curves.easeOut));
+    ]).animate(CurvedAnimation(parent: _springCtrl, curve: AfCurves.easeOut));
   }
 
   @override

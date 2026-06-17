@@ -388,7 +388,7 @@ class AfQueueEngine {
       }
 
       // Adjust _currentIndex (physical)
-      if (_currentIndex > physicalIdx) {
+      if (_currentIndex >= physicalIdx) {
         _currentIndex--;
       }
 
@@ -459,5 +459,6 @@ class AfQueueEngine {
         _tracks[i] = _tracks[i].copyWith(isFavorite: isFavorite);
       }
     }
+    _shuffledTracks = null;
   }
 }

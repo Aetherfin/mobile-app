@@ -542,6 +542,7 @@ Widget eqTextFieldRow(
     padding: const EdgeInsets.symmetric(vertical: AfSpacing.s4),
     child: Row(
       children: [
+        // ponytail: no matching AfSpacing token for 100
         SizedBox(width: 100, child: Text(label, style: AfTypography.bodySmall)),
         const SizedBox(width: AfSpacing.s8),
         Expanded(

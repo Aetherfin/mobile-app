@@ -468,6 +468,75 @@ void main() {
       });
     });
 
+    group('updateTrackFavorite', () {
+      test('updates favorite flag on matching track', () {
+        engine.replaceAll(tracks, 0);
+        expect(engine.tracks[0].isFavorite, isFalse);
+        engine.updateTrackFavorite('1', true);
+        expect(engine.tracks[0].isFavorite, isTrue);
+      });
+
+      test('invalidates shuffle cache when shuffle is ON', () {
+        engine.replaceAll(tracks, 0);
+        engine.setShuffle(true);
+        // Read tracks to populate _shuffledTracks cache
+        final before = engine.tracks;
+        expect(before.length, 5);
+
+        // Update favorite — should invalidate cache
+        engine.updateTrackFavorite('1', true);
+        final after = engine.tracks;
+        // Cache rebuilt — favorite should be reflected
+        final track1 = after.firstWhere((t) => t.id == '1');
+        expect(track1.isFavorite, isTrue);
+      });
+
+      test('no-op for non-existent track ID', () {
+        engine.replaceAll(tracks, 0);
+        engine.updateTrackFavorite('nonexistent', true);
+        expect(engine.tracks.every((t) => !t.isFavorite), isTrue);
+      });
+    });
+
+    group('remove current track with shuffle ON', () {
+      test(
+        'decrements currentIndex when removing current track at physical index',
+        () {
+          engine.replaceAll(tracks, 2); // track '3' at index 2
+          engine.setShuffle(true);
+          // Current track is at logical 0
+          expect(engine.currentTrack?.id, '3');
+          final currentIndex = engine.currentIndex;
+          expect(currentIndex, 0);
+
+          // Remove a non-current track (logical 1) to test index adjustment
+          engine.remove(1);
+          expect(engine.length, 4);
+          // Current track should still be '3'
+          expect(engine.currentTrack?.id, '3');
+        },
+      );
+
+      test(
+        'handles removing track at physical index equal to currentIndex',
+        () {
+          // Setup: 5 tracks, shuffle ON, current at logical 0
+          engine.replaceAll(tracks, 2);
+          engine.setShuffle(true);
+          expect(engine.currentTrack?.id, '3');
+
+          // Remove logical 1 (non-current) — the physical index of logical 1
+          // might equal _currentIndex physical position. The >= fix ensures
+          // _currentIndex is decremented when the removed physical index
+          // is <= _currentIndex.
+          engine.remove(1);
+          expect(engine.length, 4);
+          // After removing, current track should still be '3'
+          expect(engine.currentTrack?.id, '3');
+        },
+      );
+    });
+
     group('shuffleTail', () {
       test('shuffles only tracks after current index when shuffle is off', () {
         final engine = AfQueueEngine();

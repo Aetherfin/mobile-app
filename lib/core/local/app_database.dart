@@ -203,7 +203,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -238,6 +238,8 @@ class AppDatabase extends _$AppDatabase {
             'ON lastfm_similar_cache (track_id)',
         'CREATE INDEX IF NOT EXISTS idx_queue_history_created_at '
             'ON queue_history (created_at)',
+        'CREATE INDEX IF NOT EXISTS idx_playlist_entries_playlist_position '
+            'ON playlist_entries (playlist_id, position)',
       ]) {
         try {
           await db.customStatement(stmt);
@@ -362,6 +364,19 @@ class AppDatabase extends _$AppDatabase {
           } on Exception {
             // Table may not exist — skip index, no data loss.
           }
+        }
+      }
+      if (from < 15) {
+        // Composite index for playlist entry ordering: covers both WHERE
+        // playlist_id = ? and ORDER BY position in a single b-tree scan.
+        // Avoids filesort on playlists with 5000+ entries.
+        try {
+          await m.database.customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_playlist_entries_playlist_position '
+            'ON playlist_entries (playlist_id, position)',
+          );
+        } on Exception {
+          // Table may not exist — skip index, no data loss.
         }
       }
     },

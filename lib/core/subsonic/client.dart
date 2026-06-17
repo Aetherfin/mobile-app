@@ -62,6 +62,39 @@ class SubsonicClient implements MusicBackend {
   }
 
   void _configureInterceptors() {
+    // HTTPS redirect guard — prevent scheme downgrade from HTTPS to HTTP.
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          if (options.uri.scheme == 'https') {
+            options.extra['_originalScheme'] = 'https';
+          }
+          handler.next(options);
+        },
+        onResponse: (response, handler) {
+          final originalScheme =
+              response.requestOptions.extra['_originalScheme'];
+          if (originalScheme == 'https' &&
+              response.requestOptions.uri.scheme == 'http') {
+            afLog(
+              'http',
+              'HTTPS→HTTP redirect blocked: ${response.requestOptions.uri}',
+            );
+            handler.reject(
+              DioException(
+                requestOptions: response.requestOptions,
+                response: response,
+                type: DioExceptionType.badResponse,
+                error: 'HTTPS to HTTP redirect detected — possible MITM',
+              ),
+            );
+            return;
+          }
+          handler.next(response);
+        },
+      ),
+    );
+
     if (kDebugMode) {
       _dio.interceptors.add(
         InterceptorsWrapper(

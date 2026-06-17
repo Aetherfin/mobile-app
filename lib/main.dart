@@ -198,19 +198,20 @@ Future<void> main() async {
 
       // Initialize romanize dictionaries (kanji → romaji via kuromoji).
       // Runs in background — first lyrics request may be slower if not ready.
-      unawaited(
-        TextRomanizer.ensureInitialized()
-            .then((_) => _boot('TextRomanizer.ensureInitialized OK'))
-            .catchError((Object e, StackTrace stack) {
-              afLog(
-                'error',
-                'TextRomanizer.ensureInitialized failed',
-                error: e,
-                stackTrace: stack,
-              );
-              _boot('TextRomanizer.ensureInitialized FAILED (non-fatal)');
-            }),
-      );
+      unawaited(() async {
+        try {
+          await TextRomanizer.ensureInitialized();
+          _boot('TextRomanizer.ensureInitialized OK');
+        } on Exception catch (e, stack) {
+          afLog(
+            'error',
+            'TextRomanizer.ensureInitialized failed',
+            error: e,
+            stackTrace: stack,
+          );
+          _boot('TextRomanizer.ensureInitialized FAILED (non-fatal)');
+        }
+      }());
 
       // ── Phase 3: OS audio service ─────────────────────────────────────────
       final handler = AfPlayerService();
@@ -265,21 +266,19 @@ Future<void> main() async {
       // the first frame.  Failures are logged but do not crash the app.
       try {
         final cacheSvc = container.read(offlineCacheServiceProvider);
-        unawaited(
-          cacheSvc
-              .init()
-              .then((_) {
-                _boot('OfflineCacheService init OK');
-              })
-              .catchError((Object e, StackTrace stack) {
-                afLog(
-                  'error',
-                  'OfflineCacheService init failed',
-                  error: e,
-                  stackTrace: stack,
-                );
-              }),
-        );
+        unawaited(() async {
+          try {
+            await cacheSvc.init();
+            _boot('OfflineCacheService init OK');
+          } on Exception catch (e, stack) {
+            afLog(
+              'error',
+              'OfflineCacheService init failed',
+              error: e,
+              stackTrace: stack,
+            );
+          }
+        }());
       } on Exception catch (e, stack) {
         afLog(
           'error',

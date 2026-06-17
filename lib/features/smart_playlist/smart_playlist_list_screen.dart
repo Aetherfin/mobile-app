@@ -210,12 +210,12 @@ class _PlaylistTile extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => context.pop(),
                 child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context);
+                  context.pop();
                   onDelete();
                 },
                 child: Text(

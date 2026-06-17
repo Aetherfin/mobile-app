@@ -26,6 +26,11 @@ class MockPathProviderPlatform extends Fake
   Future<String?> getTemporaryPath() async {
     return Directory.systemTemp.path;
   }
+
+  @override
+  Future<String?> getApplicationSupportPath() async {
+    return Directory.systemTemp.path;
+  }
 }
 
 void main() {
@@ -43,7 +48,7 @@ void main() {
   setUp(() async {
     mockDio = MockDio();
     prefetcher = StreamPrefetcher(dio: mockDio);
-    tempDir = await getTemporaryDirectory();
+    tempDir = await getApplicationSupportDirectory();
   });
 
   tearDown(() async {

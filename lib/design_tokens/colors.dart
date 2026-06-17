@@ -63,6 +63,16 @@ abstract final class AfColors {
   static const semanticOffline = Color(0xFF706A64);
 
   // ---------------------------------------------------------------------------
+  // EQ band colors — frequency-coded for parametric EQ visualization.
+  // Used by frequency_response_painter and parametric_eq_curve.
+  // ---------------------------------------------------------------------------
+  static const eqBand1 = Color(0xFF2196F3); // blue
+  static const eqBand2 = Color(0xFF009688); // teal
+  static const eqBand3 = Color(0xFFFF9800); // orange
+  static const eqBand4 = Color(0xFF9C27B0); // purple
+  static const eqBand5 = Color(0xFFE91E63); // pink
+
+  // ---------------------------------------------------------------------------
   // Glass morphism — translucent white overlays for frosted surfaces.
   // Used by mini-player, now-playing top bar, cast button, track rows.
   // ---------------------------------------------------------------------------

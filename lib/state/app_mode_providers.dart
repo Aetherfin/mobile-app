@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/models/app_mode.dart';
 import 'state_holder.dart';
 
-enum AppMode { server, local, youtubeMusic }
+export '../core/models/app_mode.dart' show AppMode;
 
 final appModeProvider = NotifierProvider<StateHolder<AppMode?>, AppMode?>(
   () => StateHolder<AppMode?>((ref) => null),

@@ -193,7 +193,7 @@ class CompactAvatar extends ConsumerWidget {
                         ),
                       ),
                       onTap: () {
-                        Navigator.pop(context);
+                        context.pop();
                         onPickPhoto(ImageSource.camera);
                       },
                     ),
@@ -209,7 +209,7 @@ class CompactAvatar extends ConsumerWidget {
                         ),
                       ),
                       onTap: () {
-                        Navigator.pop(context);
+                        context.pop();
                         onPickPhoto(ImageSource.gallery);
                       },
                     ),
@@ -226,7 +226,7 @@ class CompactAvatar extends ConsumerWidget {
                           ),
                         ),
                         onTap: () {
-                          Navigator.pop(context);
+                          context.pop();
                           onRemovePhoto();
                         },
                       ),

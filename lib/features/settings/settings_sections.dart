@@ -155,6 +155,7 @@ class MusicFoldersCardState extends ConsumerState<MusicFoldersCard> {
               iconColor: spectralPrimary,
               title: folder.displayPath,
               trailing: IconButton(
+                tooltip: 'Remove folder',
                 icon: const Icon(
                   LucideIcons.circleMinus,
                   color: AfColors.semanticError,

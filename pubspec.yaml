@@ -48,13 +48,10 @@ dependencies:
   async: 2.13.1
   package_info_plus: ^10.1.0
   url_launcher: 6.3.2
-  collection: 1.19.1
-  intl: 0.20.2
   palette_generator_master: 1.1.0
   uuid: 4.5.3
   path: 1.9.1
   drift: 2.34.0
-  sqlite3_flutter_libs: 0.6.0+eol
   clock: 1.1.2
   lucide_icons_flutter: ^3.1.14+2
   flutter_shaders_ui: ^1.0.4

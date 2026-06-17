@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -13,7 +14,7 @@ import '../../../utils/display_error.dart';
 import '../../../utils/log.dart';
 import '../../../widgets/af_dialog.dart';
 import '../../../widgets/af_loading_indicator.dart';
-import '../parametric_eq_state.dart';
+import 'package:aetherfin/core/audio/models/parametric_eq_state.dart';
 import '../parametric_presets.dart';
 
 Color _bandColor(int index) =>
@@ -715,14 +716,14 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => context.pop(),
                 child: const Text('Cancel'),
               ),
               Focus(
                 autofocus: true,
                 child: TextButton(
                   onPressed: () {
-                    Navigator.pop(context);
+                    context.pop();
                     _performReset();
                   },
                   child: Text(
@@ -1076,7 +1077,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                     if (_eqState.bands.length > 1)
                       GestureDetector(
                         onTap: () {
-                          Navigator.pop(context);
+                          context.pop();
                           _removeBand(_selectedBand);
                         },
                         child: const Icon(
@@ -1148,7 +1149,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                         ],
                       ),
                       onTap: () {
-                        Navigator.pop(context);
+                        context.pop();
                         setState(() => _selectedBand = index);
                       },
                     );

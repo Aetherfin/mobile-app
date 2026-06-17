@@ -419,5 +419,62 @@ void main() {
         tracker.stop();
       });
     });
+
+    test('pollChain cleared when _executePoll throws non-Exception Error', () {
+      // Error types propagate as unhandled zone errors through fakeAsync.
+      // Use runZoned with handleUncaughtError to contain them.
+      Object? capturedError;
+      runZoned(
+        () {
+          fakeAsync((async) {
+            when(
+              () => player.state,
+            ).thenReturn(const PlayerState(playing: true));
+
+            const shouldAdvance = false;
+            final tracker = AfPositionTracker(
+              player: player,
+              shouldAdvancePosition: () => shouldAdvance,
+            );
+
+            subscription = tracker.positionStream.listen(emittedPositions.add);
+            tracker.start();
+
+            // Tick 1: _executePoll throws an Error (not Exception).
+            // On Exception catch doesn't catch Error — without the
+            // try/finally fix, _pollChain stays non-null forever.
+            when(() => player.getRawProperty('time-pos')).thenThrow(Error());
+
+            async.elapse(const Duration(milliseconds: 500));
+            async.flushMicrotasks();
+
+            // Tick 2: should succeed because try/finally cleared
+            // _pollChain even though tick 1 errored.
+            when(
+              () => player.getRawProperty('time-pos'),
+            ).thenAnswer((_) async => '2.0');
+            async.elapse(const Duration(milliseconds: 500));
+            async.flushMicrotasks();
+            // If _pollChain was NOT cleared, 2.0s is never emitted.
+            expect(emittedPositions, contains(const Duration(seconds: 2)));
+
+            tracker.stop();
+          });
+        },
+        zoneSpecification: ZoneSpecification(
+          handleUncaughtError:
+              (
+                Zone self,
+                ZoneDelegate parent,
+                Zone zone,
+                Object error,
+                StackTrace stack,
+              ) {
+                capturedError = error;
+              },
+        ),
+      );
+      expect(capturedError, isA<Error>());
+    });
   });
 }

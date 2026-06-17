@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../design_tokens/tokens.dart';
+
 /// Auto-scrolling marquee text that animates when content overflows.
 ///
 /// Measures text width via [LayoutBuilder], then scrolls a duplicated
@@ -134,7 +136,7 @@ class MarqueeTextState extends State<MarqueeText>
                                 maxLines: 1,
                                 style: widget.style,
                               ),
-                              const SizedBox(width: 32),
+                              const SizedBox(width: AfSpacing.s32),
                               Text(
                                 widget.text,
                                 maxLines: 1,

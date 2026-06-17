@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-import 'package:aetherfin/features/now_playing/graphic_eq_state.dart';
+import 'package:aetherfin/core/audio/models/graphic_eq_state.dart';
 
 void main() {
   group('GraphicEqState', () {

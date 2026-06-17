@@ -5,8 +5,8 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:aetherfin/core/audio/player_settings_store.dart';
-import 'package:aetherfin/features/now_playing/graphic_eq_state.dart';
-import 'package:aetherfin/features/now_playing/parametric_eq_state.dart';
+import 'package:aetherfin/core/audio/models/graphic_eq_state.dart';
+import 'package:aetherfin/core/audio/models/parametric_eq_state.dart';
 
 void main() {
   group('C2: Unified persistence', () {

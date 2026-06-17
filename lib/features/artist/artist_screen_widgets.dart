@@ -95,7 +95,7 @@ Future<void> startArtistRadio(
     final generator = ref.read(radioGeneratorProvider);
     final queue = await generator.generateArtistRadio(artistName, artistId);
 
-    if (context.mounted) Navigator.pop(context); // Close loading HUD
+    if (context.mounted) context.pop(); // Close loading HUD
 
     if (queue.isNotEmpty) {
       await ref.read(playActionsProvider).playQueue(queue, startIndex: 0);
@@ -109,7 +109,7 @@ Future<void> startArtistRadio(
       }
     }
   } on Exception catch (e) {
-    if (context.mounted) Navigator.pop(context); // Close loading HUD
+    if (context.mounted) context.pop(); // Close loading HUD
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,

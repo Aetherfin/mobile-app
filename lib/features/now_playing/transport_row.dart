@@ -139,7 +139,7 @@ class TransportRow extends StatelessWidget {
                       right: -6,
                       top: -4,
                       child: Container(
-                        padding: const EdgeInsets.all(2),
+                        padding: const EdgeInsets.all(AfSpacing.s2),
                         decoration: BoxDecoration(
                           color: muted,
                           shape: BoxShape.circle,

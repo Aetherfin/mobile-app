@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,7 +14,7 @@ import '../../../widgets/af_loading_indicator.dart';
 import '../eq_dsp_widgets.dart';
 import '../eq_preset.dart';
 import '../eq_preset_manager.dart';
-import '../graphic_eq_state.dart';
+import 'package:aetherfin/core/audio/models/graphic_eq_state.dart';
 
 /// Standalone 18-band graphic EQ screen.
 ///
@@ -155,14 +156,14 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => context.pop(),
                 child: const Text('Cancel'),
               ),
               Focus(
                 autofocus: true,
                 child: TextButton(
                   onPressed: () {
-                    Navigator.pop(context);
+                    context.pop();
                     _performReset();
                   },
                   child: Text(
@@ -340,6 +341,7 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
                   final barH = 4.0 + ((level + 12) / 24) * 76.0;
                   return Expanded(
                     child: Padding(
+                      // ponytail: no matching AfSpacing token for 1.5
                       padding: const EdgeInsets.symmetric(horizontal: 1.5),
                       child: AnimatedContainer(
                         duration: AfDurations.quick,

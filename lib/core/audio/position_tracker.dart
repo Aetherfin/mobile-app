@@ -233,8 +233,12 @@ class AfPositionTracker {
     // of falling back to extrapolation which can drift.
     if (_pollChain != null) return;
 
-    _pollChain = _executePoll().then((_) => _pollChain = null);
-    await _pollChain;
+    _pollChain = _executePoll();
+    try {
+      await _pollChain;
+    } finally {
+      _pollChain = null;
+    }
   }
 
   Future<void> _executePoll() async {

@@ -47,6 +47,7 @@ class OpacityAppBar extends StatelessWidget {
                   child: Row(
                     children: [
                       IconButton(
+                        tooltip: 'Go back',
                         icon: const Icon(
                           LucideIcons.arrowLeft,
                           color: AfColors.textPrimary,
@@ -68,6 +69,7 @@ class OpacityAppBar extends StatelessWidget {
                       ),
                       if (onMore != null)
                         IconButton(
+                          tooltip: 'More options',
                           icon: const Icon(
                             LucideIcons.ellipsis,
                             color: AfColors.textPrimary,
@@ -76,7 +78,7 @@ class OpacityAppBar extends StatelessWidget {
                           onPressed: onMore,
                         )
                       else
-                        const SizedBox(width: 48),
+                        const SizedBox(width: AfSpacing.s48),
                     ],
                   ),
                 ),
@@ -91,6 +93,7 @@ class OpacityAppBar extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
+                    tooltip: 'Go back',
                     icon: const Icon(
                       LucideIcons.arrowLeft,
                       color: AfColors.textPrimary,
@@ -112,6 +115,7 @@ class OpacityAppBar extends StatelessWidget {
                   ),
                   if (onMore != null)
                     IconButton(
+                      tooltip: 'More options',
                       icon: const Icon(
                         LucideIcons.ellipsis,
                         color: AfColors.textPrimary,
@@ -120,7 +124,7 @@ class OpacityAppBar extends StatelessWidget {
                       onPressed: onMore,
                     )
                   else
-                    const SizedBox(width: 48),
+                    const SizedBox(width: AfSpacing.s48),
                 ],
               ),
             ),

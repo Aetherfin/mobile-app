@@ -39,6 +39,10 @@ abstract final class AfCurves {
   /// `linear` — audio-coupled only.
   /// Waveform fill, progress ring sweep, lyric scroll position.
   static const Curve linear = Curves.linear;
+
+  /// `easeOutBack` — overshoot settle.
+  /// Stats card bounce-in, library tab indicator.
+  static const Curve easeOutBack = Curves.easeOutBack;
 }
 
 /// Aetherfin motion duration tiers — Dark Moody edition.

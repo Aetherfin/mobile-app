@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -369,7 +370,7 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
       appBar: AppBar(
         backgroundColor: AfColors.surfaceBase,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AfColors.textPrimary),
+          icon: const Icon(LucideIcons.arrowLeft, color: AfColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(

@@ -138,7 +138,9 @@ class SmartPlaylistDetailScreen extends ConsumerWidget {
                             ),
                             if (playlist != null)
                               Padding(
-                                padding: const EdgeInsets.only(top: 2),
+                                padding: const EdgeInsets.only(
+                                  top: AfSpacing.s2,
+                                ),
                                 child: Text(
                                   playlist.ruleSummary,
                                   style: AfTypography.bodySmall.copyWith(

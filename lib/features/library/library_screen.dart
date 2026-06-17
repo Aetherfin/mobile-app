@@ -411,7 +411,9 @@ class _PillBarState extends ConsumerState<_PillBar>
                   AnimatedBuilder(
                     animation: _ctrl,
                     builder: (context, _) {
-                      final curved = Curves.easeOutBack.transform(_ctrl.value);
+                      final curved = AfCurves.easeOutBack.transform(
+                        _ctrl.value,
+                      );
                       final damped = curved > 1.0
                           ? 1.0 + (curved - 1.0) * 0.15
                           : curved;

@@ -12,6 +12,8 @@ import 'play_actions_helpers.dart';
 class PlayActions {
   PlayActions(this.ref);
   final Ref ref;
+  int _mixQueueGen =
+      0; // B2/B3: generational guard prevents stale appends on concurrent playInstantMix calls
 
   /// Replace the queue with [tracks] and start playback at [startIndex].
   /// If shuffle mode is ON, the selected track plays first and the rest
@@ -129,6 +131,9 @@ class PlayActions {
   /// of similar songs. Falls back to playing the single track on
   /// signed-out / demo builds.
   Future<void> playInstantMix(AfTrack seed, {bool wait = false}) async {
+    final gen =
+        ++_mixQueueGen; // B2/B3: capture generation — stale if another call starts
+
     // 1. Play the seed track immediately so the user doesn't wait
     await playQueue([seed], startIndex: 0);
 
@@ -161,13 +166,25 @@ class PlayActions {
         }
 
         if (queue.isNotEmpty) {
+          // B2/B3: discard if a newer playInstantMix call invalidated this gen
+          if (gen != _mixQueueGen) return;
+
           final svc = ref.read(playerServiceProvider);
           // Only append if the active track is still the seed track
           if (svc.currentTrack?.id == seed.id) {
-            await svc.appendQueue(
-              queue,
-              resolveStreamUrl: (t) => resolveStreamUrl(t, ref),
-            );
+            try {
+              await svc.appendQueue(
+                queue,
+                resolveStreamUrl: (t) => resolveStreamUrl(t, ref),
+              );
+            } on Exception catch (e, stack) {
+              afLog(
+                'audio',
+                'appendQueue failed in playInstantMix',
+                error: e,
+                stackTrace: stack,
+              );
+            }
           }
         }
       } on Exception catch (e, stack) {

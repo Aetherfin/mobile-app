@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 import 'package:dio/dio.dart';
 import '../../utils/log.dart';
 import '../network/shared_dio_client.dart';
@@ -60,7 +61,7 @@ class StreamPrefetcher {
   Future<void> _init() async {
     try {
       // Timeouts and connection pooling are inherited from SharedDioClient.
-      final tempDir = await getTemporaryDirectory();
+      final tempDir = await getApplicationSupportDirectory();
       _cacheDir = tempDir.path;
       await clearStaleTempFiles();
     } on Exception catch (e, stack) {
@@ -169,7 +170,7 @@ class StreamPrefetcher {
   ) async {
     if (_cacheDir == null) {
       try {
-        final tempDir = await getTemporaryDirectory();
+        final tempDir = await getApplicationSupportDirectory();
         _cacheDir = tempDir.path;
       } on Exception catch (e, stack) {
         afLog(
@@ -183,10 +184,7 @@ class StreamPrefetcher {
     }
 
     final tempFile = File(
-      p.join(
-        _cacheDir!,
-        'prefetch_${trackId}_${DateTime.now().millisecondsSinceEpoch}.tmp',
-      ),
+      p.join(_cacheDir!, 'prefetch_${const Uuid().v4()}.tmp'),
     );
 
     afLog('audio', 'Starting prefetch for trackId=$trackId');

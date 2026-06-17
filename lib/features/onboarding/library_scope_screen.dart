@@ -67,7 +67,7 @@ class _LibraryScopeScreenState extends ConsumerState<LibraryScopeScreen> {
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),
           tooltip: 'Back',
-          onPressed: () => context.pop(),
+          onPressed: () => Navigator.maybePop(context),
         ),
         title: Text('Choose libraries', style: AfTypography.titleMedium),
       ),

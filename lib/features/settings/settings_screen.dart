@@ -158,7 +158,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                           children: [
                                             TextButton(
                                               onPressed: () =>
-                                                  Navigator.pop(context, false),
+                                                  context.pop(false),
                                               child: const Text('Cancel'),
                                             ),
                                             Focus(
@@ -462,7 +462,7 @@ class _LastFmSettingsBody extends ConsumerWidget {
                 final syncFn = ref.read(lastFmSyncProvider);
                 final result = await syncFn();
                 if (context.mounted) {
-                  Navigator.pop(context);
+                  context.pop();
                 } // Close dialog
 
                 if (context.mounted) {
@@ -477,7 +477,7 @@ class _LastFmSettingsBody extends ConsumerWidget {
                 }
               } on Exception catch (e) {
                 if (context.mounted) {
-                  Navigator.pop(context);
+                  context.pop();
                 } // Close dialog
                 if (context.mounted) {
                   ScaffoldMessenger.of(
@@ -569,13 +569,13 @@ class _YouTubeMusicAccountSection extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           TextButton(
-                            onPressed: () => Navigator.pop(context, false),
+                            onPressed: () => context.pop(false),
                             child: const Text('Cancel'),
                           ),
                           Focus(
                             autofocus: true,
                             child: ElevatedButton(
-                              onPressed: () => Navigator.pop(context, true),
+                              onPressed: () => context.pop(true),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AfColors.semanticError,
                                 foregroundColor: AfColors.textOnPrimary,

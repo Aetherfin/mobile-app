@@ -175,19 +175,21 @@ void _wireQueueSaving(Ref ref, AfPlayerService svc, _WireDisposables d) {
   }
 
   // Periodic save to ActiveQueueStore every 10 seconds while playing.
-  void startActiveQueuePeriodicTimer() {
-    d.activeQueuePeriodicTimer = Timer.periodic(const Duration(seconds: 10), (
-      _,
-    ) async {
-      if (!svc.isPlaying) return;
+  // Uses a serialized async loop instead of Timer.periodic to prevent
+  // overlapping saves (CLAUDE.md §15 item #35).
+  Future<void> activeQueueSaveLoop() async {
+    while (true) {
+      await Future<void>.delayed(const Duration(seconds: 10));
+      // Stop if timer was cancelled (playback paused/stopped).
+      if (d.activeQueuePeriodicTimer == null) return;
+      if (!svc.isPlaying) continue;
       final tracks = svc.currentQueue;
-      if (tracks.isEmpty) return;
+      if (tracks.isEmpty) continue;
 
       final store = d.activeQueueStore ?? ActiveQueueStore();
       d.activeQueueStore = store;
 
       try {
-        // Save track IDs in display order (shuffled order when shuffle is on).
         await store.save(
           trackIds: tracks.map((t) => t.id).toList(),
           currentIndex: svc.currentIndex >= 0 ? svc.currentIndex : 0,
@@ -197,7 +199,16 @@ void _wireQueueSaving(Ref ref, AfPlayerService svc, _WireDisposables d) {
       } on Exception catch (e) {
         afLog('audio', 'Failed to save active queue', error: e);
       }
-    });
+    }
+  }
+
+  void startActiveQueuePeriodicTimer() {
+    d.activeQueuePeriodicTimer?.cancel();
+    d.activeQueuePeriodicTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) {},
+    ); // non-null sentinel — actual work done by _activeQueueSaveLoop
+    activeQueueSaveLoop();
   }
 
   // Start/stop the periodic timer based on playback state.

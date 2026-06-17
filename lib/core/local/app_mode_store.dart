@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../state/providers.dart';
+import '../models/app_mode.dart';
 
 /// Persists and restores the user's chosen app mode (server | local).
 class AppModeStore {

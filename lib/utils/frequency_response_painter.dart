@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../features/now_playing/parametric_band.dart';
+import '../design_tokens/colors.dart';
 import '../design_tokens/pro_audio.dart';
 import 'glow_effects.dart';
 
@@ -187,11 +188,11 @@ class FrequencyResponsePainter extends CustomPainter {
 
   void _drawBandCurves(Canvas canvas, Size size) {
     final bandColors = [
-      Colors.blue,
-      Colors.teal,
-      Colors.orange,
-      Colors.purple,
-      Colors.pink,
+      AfColors.eqBand1,
+      AfColors.eqBand2,
+      AfColors.eqBand3,
+      AfColors.eqBand4,
+      AfColors.eqBand5,
     ];
 
     for (var i = 0; i < bands.length; i++) {
@@ -225,11 +226,11 @@ class FrequencyResponsePainter extends CustomPainter {
 
   void _drawBandHandles(Canvas canvas, Size size) {
     final bandColors = [
-      Colors.blue,
-      Colors.teal,
-      Colors.orange,
-      Colors.purple,
-      Colors.pink,
+      AfColors.eqBand1,
+      AfColors.eqBand2,
+      AfColors.eqBand3,
+      AfColors.eqBand4,
+      AfColors.eqBand5,
     ];
 
     for (var i = 0; i < bands.length; i++) {

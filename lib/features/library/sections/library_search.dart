@@ -89,12 +89,13 @@ class _LibrarySearchState extends ConsumerState<LibrarySearch> {
                     ),
                     // Close button
                     IconButton(
+                      tooltip: 'Close',
                       icon: const Icon(
                         LucideIcons.x,
                         color: AfColors.textTertiary,
                         size: 20,
                       ),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => context.pop(),
                     ),
                   ],
                 ),
@@ -134,6 +135,7 @@ class _LibrarySearchState extends ConsumerState<LibrarySearch> {
                     ),
                     suffixIcon: _query.isNotEmpty
                         ? IconButton(
+                            tooltip: 'Clear search',
                             icon: const Icon(
                               LucideIcons.x,
                               color: AfColors.textTertiary,
@@ -215,7 +217,7 @@ class _RecentAndSuggestions extends ConsumerWidget {
                 children: recent.map((a) {
                   return FocusPressScale(
                     onTap: () {
-                      Navigator.pop(context);
+                      context.pop();
                       context.push('/album/${a.id}');
                     },
                     child: Padding(
@@ -290,7 +292,7 @@ class _RecentAndSuggestions extends ConsumerWidget {
                   final tint = parseGenreTint(g.tint);
                   return FocusPressScale(
                     onTap: () {
-                      Navigator.pop(context);
+                      context.pop();
                       context.push('/genre/${g.name}');
                     },
                     child: Container(
@@ -363,7 +365,7 @@ class _LiveResults extends ConsumerWidget {
                   children: filtered.map((a) {
                     return FocusPressScale(
                       onTap: () {
-                        Navigator.pop(context);
+                        context.pop();
                         context.push('/album/${a.id}');
                       },
                       child: Padding(
@@ -425,7 +427,7 @@ class _LiveResults extends ConsumerWidget {
                   children: filtered.map((a) {
                     return FocusPressScale(
                       onTap: () {
-                        Navigator.pop(context);
+                        context.pop();
                         context.push('/artist/${a.id}');
                       },
                       child: Padding(
@@ -533,7 +535,7 @@ class _LiveResults extends ConsumerWidget {
             isBuffering: t.id == activeId && isBuffering,
             activeAccent: accent,
             onTap: () {
-              Navigator.pop(context);
+              context.pop();
               ref.read(playActionsProvider).playSmartQueue(t, filtered);
             },
             onLongPress: () => showTrackContextMenu(context, ref, t),

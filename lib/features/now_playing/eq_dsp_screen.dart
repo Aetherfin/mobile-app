@@ -94,14 +94,14 @@ class _EqDspScreenState extends ConsumerState<EqDspScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => context.pop(),
                 child: const Text('Cancel'),
               ),
               Focus(
                 autofocus: true,
                 child: TextButton(
                   onPressed: () {
-                    Navigator.pop(context);
+                    context.pop();
                     _performReset();
                   },
                   child: Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/audio/play_actions.dart';
 import '../../core/jellyfin/models/items.dart';
@@ -481,7 +482,8 @@ class ArtistAllSongsScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AfColors.textPrimary),
+          tooltip: 'Go back',
+          icon: const Icon(LucideIcons.arrowLeft, color: AfColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: artistAsync.when(
@@ -551,7 +553,8 @@ class ArtistAllAlbumsScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AfColors.textPrimary),
+          tooltip: 'Go back',
+          icon: const Icon(LucideIcons.arrowLeft, color: AfColors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: artistAsync.when(

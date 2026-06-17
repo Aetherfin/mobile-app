@@ -49,7 +49,7 @@ class _PlayingEqualizerState extends State<PlayingEqualizer>
       return Tween<double>(
         begin: 0.15,
         end: 1.0,
-      ).animate(CurvedAnimation(parent: controller, curve: Curves.easeInOut));
+      ).animate(CurvedAnimation(parent: controller, curve: AfCurves.easeInOut));
     }).toList();
   }
 

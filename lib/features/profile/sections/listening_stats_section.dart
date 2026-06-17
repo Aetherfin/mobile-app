@@ -280,7 +280,9 @@ class _StatsPillBarState extends ConsumerState<_StatsPillBar>
                   AnimatedBuilder(
                     animation: _ctrl,
                     builder: (context, _) {
-                      final curved = Curves.easeOutBack.transform(_ctrl.value);
+                      final curved = AfCurves.easeOutBack.transform(
+                        _ctrl.value,
+                      );
                       final damped = curved > 1.0
                           ? 1.0 + (curved - 1.0) * 0.15
                           : curved;
@@ -756,7 +758,7 @@ class TabButton extends ConsumerWidget {
       child: PressScale(
         onTap: () => ref.read(statsTabProvider.notifier).set(value),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: AfSpacing.s8),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: active ? AfColors.surfaceHigh : Colors.transparent,

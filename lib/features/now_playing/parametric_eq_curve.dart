@@ -157,11 +157,11 @@ class ParametricEqCurvePainter extends CustomPainter {
     int index,
   ) {
     final bandColors = [
-      Colors.blue,
-      Colors.teal,
-      Colors.orange,
-      Colors.purple,
-      Colors.pink,
+      AfColors.eqBand1,
+      AfColors.eqBand2,
+      AfColors.eqBand3,
+      AfColors.eqBand4,
+      AfColors.eqBand5,
     ];
     final color = bandColors[index % bandColors.length];
 
@@ -197,11 +197,11 @@ class ParametricEqCurvePainter extends CustomPainter {
     final y = _dbToY(band.gain, size.height);
 
     final bandColors = [
-      Colors.blue,
-      Colors.teal,
-      Colors.orange,
-      Colors.purple,
-      Colors.pink,
+      AfColors.eqBand1,
+      AfColors.eqBand2,
+      AfColors.eqBand3,
+      AfColors.eqBand4,
+      AfColors.eqBand5,
     ];
     final color = bandColors[index % bandColors.length];
 

@@ -1,7 +1,8 @@
+import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, visibleForTesting;
 
 import '../../utils/log.dart';
 import '../../utils/url.dart';
@@ -27,6 +28,8 @@ class JellyfinClient implements MusicBackend {
     this.accessToken,
     this.userId,
     SharedDioClient? sharedClient,
+    this.username,
+    String? password,
   }) : _sharedClient = sharedClient ?? SharedDioClient(),
        _urlBuilder = JellyfinUrlBuilder(
          baseUrl: server.baseUrl,
@@ -34,7 +37,8 @@ class JellyfinClient implements MusicBackend {
          clientVersion: clientVersion,
          accessToken: accessToken,
          userId: userId,
-       ) {
+       ),
+       _passwordBytes = password != null ? utf8.encode(password) : null {
     _dio = _createDioWithOptions(
       server,
       deviceId,
@@ -100,6 +104,67 @@ class JellyfinClient implements MusicBackend {
   }
 
   void _configureInterceptors() {
+    // 401 token rotation interceptor.
+    // Mirrors the Navidrome 401 retry pattern in navidrome_client.dart.
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401 &&
+              error.requestOptions.extra['_jf401Retry'] != true &&
+              !_isReauthenticating &&
+              _passwordBytes != null &&
+              username != null) {
+            _jellyfinToken = null;
+            error.requestOptions.extra['_jf401Retry'] = true;
+            try {
+              await _reauthenticate();
+              final response = await _dio.fetch(error.requestOptions);
+              handler.resolve(response);
+              return;
+            } on Exception catch (_) {
+              // Re-auth failed — pass original error to next handler
+            }
+          }
+          handler.next(error);
+        },
+      ),
+    );
+
+    // HTTPS redirect guard — prevent scheme downgrade from HTTPS to HTTP
+    // which could indicate a MITM attack on shared networks.
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          if (options.uri.scheme == 'https') {
+            options.extra['_originalScheme'] = 'https';
+          }
+          handler.next(options);
+        },
+        onResponse: (response, handler) {
+          // Check if we were redirected from HTTPS to HTTP
+          final originalScheme =
+              response.requestOptions.extra['_originalScheme'];
+          if (originalScheme == 'https' &&
+              response.requestOptions.uri.scheme == 'http') {
+            afLog(
+              'http',
+              'HTTPS→HTTP redirect blocked: ${response.requestOptions.uri}',
+            );
+            handler.reject(
+              DioException(
+                requestOptions: response.requestOptions,
+                response: response,
+                type: DioExceptionType.badResponse,
+                error: 'HTTPS to HTTP redirect detected — possible MITM',
+              ),
+            );
+            return;
+          }
+          handler.next(response);
+        },
+      ),
+    );
+
     // Debug-only HTTP trace. In release builds we skip these prints
     // entirely so URLs, headers, and bodies never reach logcat where
     // any app on the device with READ_LOGS could capture them.
@@ -148,6 +213,29 @@ class JellyfinClient implements MusicBackend {
     }
   }
 
+  Future<void> _reauthenticate() async {
+    if (username == null || _passwordBytes == null) {
+      throw StateError('Cannot re-authenticate: no stored credentials');
+    }
+    _isReauthenticating = true;
+    try {
+      final auth = await authenticate(
+        username: username!,
+        password: utf8.decode(_passwordBytes),
+      );
+      _jellyfinToken = auth.accessToken;
+      _dio.options.headers['Authorization'] =
+          JellyfinUrlBuilder.buildAuthHeader(
+            deviceId: deviceId,
+            token: _jellyfinToken,
+            userId: userId,
+            clientVersion: clientVersion,
+          );
+    } finally {
+      _isReauthenticating = false;
+    }
+  }
+
   final SharedDioClient _sharedClient;
   static final _genreSplitRe = RegExp(r'[,;]');
 
@@ -155,6 +243,10 @@ class JellyfinClient implements MusicBackend {
   final String? accessToken;
   final String? userId;
   final String deviceId;
+  final String? username;
+  final List<int>? _passwordBytes;
+  String? _jellyfinToken;
+  bool _isReauthenticating = false;
 
   /// Aetherfin's running app version (e.g. `0.2.3`). Sent verbatim in the
   /// `MediaBrowser` Authorization `Version="…"` field and in the
@@ -164,6 +256,10 @@ class JellyfinClient implements MusicBackend {
   final String clientVersion;
 
   late final Dio _dio;
+
+  @visibleForTesting
+  Dio get dio => _dio;
+
   final JellyfinUrlBuilder _urlBuilder;
   late final JellyfinResponseParser _parser;
 

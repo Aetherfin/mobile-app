@@ -32,8 +32,8 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart'
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/lastfm/lastfm_storage.dart';
-import '../../features/now_playing/graphic_eq_state.dart';
-import '../../features/now_playing/parametric_eq_state.dart';
+import 'models/graphic_eq_state.dart';
+import 'models/parametric_eq_state.dart';
 import '../../utils/log.dart';
 import 'player_service.dart';
 

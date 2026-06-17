@@ -286,7 +286,7 @@ class _LastFmBrowserAuthDialogState
           const SizedBox(height: AfSpacing.s16),
           if (_username != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: AfSpacing.s8),
               child: TextField(
                 decoration: const InputDecoration(
                   labelText: 'Last.fm Username (optional)',
