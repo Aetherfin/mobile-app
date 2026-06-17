@@ -5,7 +5,6 @@ import glob
 import subprocess
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
-from urllib.parse import urlencode
 
 # Read environment variables set by GitHub Actions
 BOT_TOKEN = os.environ.get('TG_BOT_TOKEN')
