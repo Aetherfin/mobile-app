@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# tool/build-local — Local build with secrets from .env.secrets.
+# tool/build-local — Local build with secrets + Telegram notifications.
 #
-# Wraps tool/build, injecting keystore secrets from a local file.
-# Secrets file is gitignored — never committed.
+# Wraps tool/build, injecting keystore secrets from .env.secrets
+# and sending Telegram notifications on build start/success/fail.
 #
 # Usage:
 #   bash tool/build-local                          # release, split-per-abi
@@ -10,19 +10,17 @@
 #   bash tool/build-local --install                # release + install on device
 #   bash tool/build-local --skip-test --skip-analyze  # fast local build
 #
-# First time? Create .env.secrets in repo root:
-#   KEYSTORE_B64=$(base64 -w0 /path/to/release.jks)
-#   STORE_PASSWORD=your_store_password
-#   KEY_ALIAS=your_key_alias
-#   KEY_PASSWORD=your_key_password
-#
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_ID_FILE="$ROOT/lib/build_id.dart"
 SECRETS_FILE="$ROOT/.env.secrets"
+PYTHON="python3"
+[ "$(command -v python3 2>/dev/null)" ] || PYTHON="python"
 
+# ---------------------------------------------------------------------------
 # Restore build_id.dart after build (keeps working tree clean)
+# ---------------------------------------------------------------------------
 if [ -f "$BUILD_ID_FILE" ]; then
   BUILD_ID_WAS_TRACKED=true
 else
@@ -30,7 +28,9 @@ else
 fi
 trap 'if [ "$BUILD_ID_WAS_TRACKED" = true ]; then git -C "$ROOT" checkout -- lib/build_id.dart 2>/dev/null; else rm -f "$BUILD_ID_FILE"; fi' EXIT
 
+# ---------------------------------------------------------------------------
 # Load secrets from .env.secrets
+# ---------------------------------------------------------------------------
 if [ -f "$SECRETS_FILE" ]; then
   echo "  Loading secrets from .env.secrets ..."
   set -a
@@ -38,13 +38,79 @@ if [ -f "$SECRETS_FILE" ]; then
   source "$SECRETS_FILE"
   set +a
 else
-  echo "  ⚠ No .env.secrets found — building unsigned." 1>&2
+  echo "  ⚠ No .env.secrets found — building unsigned, no Telegram." 1>&2
   echo "  Run: bash tool/setup-secrets /path/to/release.jks" 1>&2
 fi
 
+# ---------------------------------------------------------------------------
+# Telegram env vars (local context)
+# ---------------------------------------------------------------------------
+HAS_TG=false
+if [ -n "${TG_BOT_TOKEN:-}" ] && [ -n "${TG_CHAT_ID:-}" ]; then
+  HAS_TG=true
+fi
+
+if [ "$HAS_TG" = true ]; then
+  BRANCH=$(git -C "$ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+  SHORT_SHA=$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+  COMMIT_MSG=$(git -C "$ROOT" log -1 --pretty=format:"%s" 2>/dev/null | tr -d '_*`[]' || echo "")
+  BUILD_ID="unknown"
+  [ -f "$BUILD_ID_FILE" ] && BUILD_ID=$(grep "kBuildId" "$BUILD_ID_FILE" 2>/dev/null | sed "s/.*'\(.*\)'.*/\1/" || echo "unknown")
+  TIMESTAMP=$(TZ="Asia/Jakarta" date +"%Y-%m-%d %H:%M WIB")
+  MODE="release"
+  for arg in "$@"; do
+    [ "$arg" = "--mode" ] && continue
+    [[ "$arg" =~ ^(release|debug|profile)$ ]] && MODE="$arg"
+  done
+  # Detect mode from --mode <value> pattern
+  for i in $(seq 1 $#); do
+    eval "arg=\${$i}"
+    if [ "$arg" = "--mode" ]; then
+      next=$((i + 1))
+      eval "MODE=\${$next}"
+    fi
+  done
+
+  export TG_BRANCH="$BRANCH"
+  export TG_SHA="$SHORT_SHA"
+  export TG_COMMIT="$COMMIT_MSG"
+  export TG_BUILD_ID="$BUILD_ID"
+  export TG_MODE="$MODE"
+  export TG_ACTOR="$(whoami)@$(hostname)"
+  export TG_TIMESTAMP="$TIMESTAMP"
+fi
+
+# ---------------------------------------------------------------------------
 # Default to release + split-per-abi if no args given
+# ---------------------------------------------------------------------------
 if [ $# -eq 0 ]; then
   set -- --mode release --split-per-abi --no-universal
 fi
 
-exec bash "$ROOT/tool/build" --sign "$@"
+# ---------------------------------------------------------------------------
+# Notify: Build started
+# ---------------------------------------------------------------------------
+if [ "$HAS_TG" = true ]; then
+  echo ""
+  $PYTHON "$ROOT/tool/telegram_notifier.py" init 2>/dev/null || true
+fi
+
+# ---------------------------------------------------------------------------
+# Run build
+# ---------------------------------------------------------------------------
+BUILD_RC=0
+bash "$ROOT/tool/build" --sign "$@" || BUILD_RC=$?
+
+# ---------------------------------------------------------------------------
+# Notify: Success or Fail
+# ---------------------------------------------------------------------------
+if [ "$HAS_TG" = true ]; then
+  if [ "$BUILD_RC" -eq 0 ]; then
+    export TG_APK_DIR="$ROOT/build/app/outputs/flutter-apk"
+    $PYTHON "$ROOT/tool/telegram_notifier.py" success 2>/dev/null || true
+  else
+    $PYTHON "$ROOT/tool/telegram_notifier.py" fail 2>/dev/null || true
+  fi
+fi
+
+exit "$BUILD_RC"
