@@ -1,0 +1,30 @@
+-- FTS5 virtual table for track search
+-- Uses external content table to avoid duplicating data
+CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
+  title, artist, album,
+  content=tracks,
+  content_rowid=rowid,
+  tokenize='unicode61 remove_diacritics 2',
+  prefix='2 3'
+);
+
+-- Auto-sync triggers: keep FTS index in sync with tracks table
+CREATE TRIGGER IF NOT EXISTS tracks_ai AFTER INSERT ON tracks
+BEGIN
+  INSERT INTO tracks_fts(rowid, title, artist, album)
+  VALUES (new.rowid, new.title, new.artist, new.album);
+END;
+
+CREATE TRIGGER IF NOT EXISTS tracks_ad AFTER DELETE ON tracks
+BEGIN
+  INSERT INTO tracks_fts(tracks_fts, rowid, title, artist, album)
+  VALUES ('delete', old.rowid, old.title, old.artist, old.album);
+END;
+
+CREATE TRIGGER IF NOT EXISTS tracks_au AFTER UPDATE ON tracks
+BEGIN
+  INSERT INTO tracks_fts(tracks_fts, rowid, title, artist, album)
+  VALUES ('delete', old.rowid, old.title, old.artist, old.album);
+  INSERT INTO tracks_fts(rowid, title, artist, album)
+  VALUES (new.rowid, new.title, new.artist, new.album);
+END;

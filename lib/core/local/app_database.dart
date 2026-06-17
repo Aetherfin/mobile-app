@@ -180,6 +180,7 @@ class LastfmSimilarCache extends Table {
 }
 
 @DriftDatabase(
+  include: {'track_search.drift'},
   tables: [
     Tracks,
     Folders,
@@ -203,7 +204,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -245,6 +246,32 @@ class AppDatabase extends _$AppDatabase {
           await db.customStatement(stmt);
         } on Exception {
           // Table may not exist — skip index, no data loss.
+        }
+      }
+      // FTS5 virtual table + auto-sync triggers for instant search.
+      for (final stmt in const [
+        "CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5("
+            "title, artist, album, content=tracks, content_rowid=rowid, "
+            "tokenize='unicode61 remove_diacritics 2', prefix='2 3')",
+        "CREATE TRIGGER IF NOT EXISTS tracks_ai AFTER INSERT ON tracks "
+            "BEGIN INSERT INTO tracks_fts(rowid, title, artist, album) "
+            "VALUES (new.rowid, new.title, new.artist, new.album); END",
+        "CREATE TRIGGER IF NOT EXISTS tracks_ad AFTER DELETE ON tracks "
+            "BEGIN INSERT INTO tracks_fts(tracks_fts, rowid, title, artist, album) "
+            "VALUES ('delete', old.rowid, old.title, old.artist, old.album); END",
+        "CREATE TRIGGER IF NOT EXISTS tracks_au AFTER UPDATE ON tracks "
+            "BEGIN "
+            "INSERT INTO tracks_fts(tracks_fts, rowid, title, artist, album) "
+            "VALUES ('delete', old.rowid, old.title, old.artist, old.album); "
+            "INSERT INTO tracks_fts(rowid, title, artist, album) "
+            "VALUES (new.rowid, new.title, new.artist, new.album); END",
+        "INSERT INTO tracks_fts(rowid, title, artist, album) "
+            "SELECT rowid, title, artist, album FROM tracks",
+      ]) {
+        try {
+          await db.customStatement(stmt);
+        } on Exception {
+          // FTS table or triggers may already exist — skip.
         }
       }
     },
@@ -377,6 +404,36 @@ class AppDatabase extends _$AppDatabase {
           );
         } on Exception {
           // Table may not exist — skip index, no data loss.
+        }
+      }
+      if (from < 16) {
+        // FTS5 virtual table + auto-sync triggers for instant track search.
+        // Replaces LIKE '%query%' full-table-scan with inverted index.
+        final db = m.database;
+        for (final stmt in const [
+          "CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5("
+              "title, artist, album, content=tracks, content_rowid=rowid, "
+              "tokenize='unicode61 remove_diacritics 2', prefix='2 3')",
+          "CREATE TRIGGER IF NOT EXISTS tracks_ai AFTER INSERT ON tracks "
+              "BEGIN INSERT INTO tracks_fts(rowid, title, artist, album) "
+              "VALUES (new.rowid, new.title, new.artist, new.album); END",
+          "CREATE TRIGGER IF NOT EXISTS tracks_ad AFTER DELETE ON tracks "
+              "BEGIN INSERT INTO tracks_fts(tracks_fts, rowid, title, artist, album) "
+              "VALUES ('delete', old.rowid, old.title, old.artist, old.album); END",
+          "CREATE TRIGGER IF NOT EXISTS tracks_au AFTER UPDATE ON tracks "
+              "BEGIN "
+              "INSERT INTO tracks_fts(tracks_fts, rowid, title, artist, album) "
+              "VALUES ('delete', old.rowid, old.title, old.artist, old.album); "
+              "INSERT INTO tracks_fts(rowid, title, artist, album) "
+              "VALUES (new.rowid, new.title, new.artist, new.album); END",
+          "INSERT INTO tracks_fts(rowid, title, artist, album) "
+              "SELECT rowid, title, artist, album FROM tracks",
+        ]) {
+          try {
+            await db.customStatement(stmt);
+          } on Exception {
+            // FTS table or triggers may already exist — skip.
+          }
         }
       }
     },

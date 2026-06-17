@@ -406,27 +406,35 @@ class TrackRepository {
     return rows.map(rawRowToTrack).toList();
   }
 
-  // Performance note: leading % in LIKE prevents index usage → full table
-  // scan per keystroke. Add FTS5 virtual table + trigram tokenizer in a future
-  // migration to get prefix + infix search with index support.
-  // ponytail: LIKE %query% prevents index usage — full table scan on every
-  // keystroke. Acceptable for <10k tracks. If library grows beyond that,
-  // add FTS5 virtual table: CREATE VIRTUAL TABLE tracks_fts USING fts5(title, artist, album)
+  // FTS5 full-text search via tracks_fts virtual table.
+  // Auto-sync triggers keep the index in sync with the tracks table.
   Future<List<AfTrack>> searchTracks(String query) async {
-    final like = '%${escapeSqlLike(query)}%';
+    // Sanitize FTS5 query — remove special chars that could cause syntax errors
+    final sanitized = query
+        .replaceAll(RegExp(r'["*(){}\[\]^~\\\-]'), ' ')
+        .trim();
+    if (sanitized.length < 2) return [];
+
+    // Split into terms, add prefix matching for autocomplete
+    final ftsQuery = sanitized
+        .split(RegExp(r'\s+'))
+        .where((t) => t.isNotEmpty)
+        .map((t) => '$t*')
+        .join(' ');
+
     final rows = await db
         .customSelect(
           r'''
-        SELECT id, title, artist, album, album_artist, track_number,
-               duration_ms, year, genre, cover_path, codec, bitrate, sample_rate
-        FROM tracks
-        WHERE title  LIKE ?1 ESCAPE '\'
-           OR artist LIKE ?1 ESCAPE '\'
-           OR album  LIKE ?1 ESCAPE '\'
-        ORDER BY title COLLATE NOCASE ASC
-        LIMIT 50
-      ''',
-          variables: [Variable<String>(like)],
+      SELECT t.id, t.title, t.artist, t.album, t.album_artist,
+             t.track_number, t.duration_ms, t.year, t.genre,
+             t.cover_path, t.codec, t.bitrate, t.sample_rate
+      FROM tracks_fts f
+      JOIN tracks t ON t.rowid = f.rowid
+      WHERE tracks_fts MATCH ?1
+      ORDER BY bm25(tracks_fts, 10.0, 5.0, 5.0)
+      LIMIT 50
+    ''',
+          variables: [Variable<String>(ftsQuery)],
           readsFrom: {db.tracks},
         )
         .get();

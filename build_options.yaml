@@ -1,0 +1,2 @@
+options:
+  sqlite_module: [fts5]
