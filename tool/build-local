@@ -71,6 +71,9 @@ fi
 
 [[ "$QUICK" == true ]] && set -- --skip-analyze --skip-test --skip-codegen "$@"
 
+# --- Default args (before smart skip modifies $@) ---
+[[ $# -eq 0 ]] && set -- --mode release --split-per-abi --no-universal
+
 # --- Build ID tracking ---
 BUILD_ID_WAS_TRACKED=false
 [[ -f "$BUILD_ID_FILE" ]] && BUILD_ID_WAS_TRACKED=true
@@ -138,9 +141,6 @@ if [[ "$HAS_TG" == true ]]; then
   export TG_ACTOR
   TG_ACTOR="$(whoami)@$(hostname)"
 fi
-
-# --- Default args ---
-[[ $# -eq 0 ]] && set -- --mode release --split-per-abi --no-universal
 
 # --- Telegram: build started ---
 if [[ "$HAS_TG" == true ]]; then
