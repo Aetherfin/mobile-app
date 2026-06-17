@@ -190,13 +190,13 @@ STEPS=("Install dependencies" "Generate build ID" "Run code generation" "Static 
 STEP_COUNT=${#STEPS[@]}
 current_step=0
 last_step=""
-step_start=0
 
 > "$CACHE_DIR/step_times"
 FIFO=$(mktemp -u)
 mkfifo "$FIFO"
 
 BUILD_START_TS=$(date +%s)
+step_start=$BUILD_START_TS
 set +e
 
 "$ROOT/tool/build" --sign "$@" > "$FIFO" 2>&1 &
@@ -260,7 +260,9 @@ fi
 # --- Telegram: success/fail ---
 STEP_TIMING=""
 if [[ -f "$CACHE_DIR/step_times" ]]; then
-  while IFS=' ' read -r sname ssec; do
+  while IFS= read -r line; do
+    ssec="${line##* }"
+    sname="${line% $ssec}"
     STEP_TIMING+="  $sname: $((ssec / 60))m $((ssec % 60))s"$'\n'
   done < "$CACHE_DIR/step_times"
 fi
