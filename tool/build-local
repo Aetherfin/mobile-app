@@ -62,7 +62,6 @@ mkdir -p "$CACHE_DIR"
 smart_skip_codegen() {
   [ "$NO_SMART" = true ] && return 1
   [ ! -f "$CACHE_DIR/last_codegen" ] && return 1
-  # Check if app_database.dart changed since last codegen
   local db_file="$ROOT/lib/core/local/app_database.dart"
   local marker="$CACHE_DIR/last_codegen"
   [ -f "$db_file" ] && [ "$db_file" -ot "$marker" ] && return 0
@@ -72,7 +71,6 @@ smart_skip_codegen() {
 smart_skip_analyze() {
   [ "$NO_SMART" = true ] && return 1
   [ ! -f "$CACHE_DIR/last_analyze" ] && return 1
-  # Check if any .dart file changed since last analyze
   local marker="$CACHE_DIR/last_analyze"
   local changed
   changed=$(find "$ROOT/lib" -name "*.dart" -newer "$marker" 2>/dev/null | head -1)
@@ -80,10 +78,13 @@ smart_skip_analyze() {
   return 1
 }
 
-# Apply smart skip (only if user didn't manually override)
+# Track what was smart-skipped
+SMART_SKIPPED=""
+
 if ! echo "$@" | grep -q "\-\-skip-codegen"; then
   if smart_skip_codegen; then
     echo "  ⏭ Smart skip: codegen (no schema changes)"
+    SMART_SKIPPED+="codegen "
     set -- --skip-codegen "$@"
   fi
 fi
@@ -91,8 +92,13 @@ fi
 if ! echo "$@" | grep -q "\-\-skip-analyze"; then
   if smart_skip_analyze; then
     echo "  ⏭ Smart skip: analyze (no .dart changes)"
+    SMART_SKIPPED+="analyze "
     set -- --skip-analyze "$@"
   fi
+fi
+
+if [ "$QUICK" = true ]; then
+  SMART_SKIPPED+="analyze test codegen (quick) "
 fi
 
 # ---------------------------------------------------------------------------
@@ -173,7 +179,7 @@ if [ -d "$APK_DIR" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Run build with progress tracking
+# Run build with progress tracking + timing
 # ---------------------------------------------------------------------------
 BUILD_RC=0
 BUILD_LOG=$(mktemp)
@@ -197,23 +203,39 @@ progress_bar() {
   echo "[$bar] $pct%"
 }
 
-# Build steps to track (order matters)
+# Build steps to track
 STEPS=("Install dependencies" "Generate build ID" "Run code generation" "Static analysis" "Unit tests" "Configure signing" "Build universal" "Build per-ABI" "Rename APKs")
 STEP_COUNT=${#STEPS[@]}
 
-# Run build, capture output
+# Timing
+BUILD_START=$(date +%s%N)
+STEP_TIMES=()
+STEP_NAMES=()
+current_step=0
+last_step=""
+step_start=$BUILD_START
+
+# Run build
 set +e
 bash "$ROOT/tool/build" --sign "$@" 2>&1 | tee "$BUILD_LOG"
 BUILD_RC=${PIPESTATUS[0]}
 set -e
 
-# Parse build log for step changes and update Telegram
-current_step=0
-last_step=""
+BUILD_END=$(date +%s%N)
+BUILD_DURATION=$(( (BUILD_END - BUILD_START) / 1000000 ))
+
+# Parse build log for step changes + timing
 while IFS= read -r line; do
   for step in "${STEPS[@]}"; do
     if echo "$line" | grep -q "$step"; then
       if [ "$step" != "$last_step" ]; then
+        # Record previous step timing
+        if [ -n "$last_step" ]; then
+          now=$(date +%s%N)
+          STEP_TIMES+=($(( (now - step_start) / 1000000 )))
+          STEP_NAMES+=("$last_step")
+          step_start=$now
+        fi
         last_step="$step"
         current_step=$((current_step + 1))
         bar=$(progress_bar "$current_step" "$STEP_COUNT")
@@ -224,6 +246,12 @@ while IFS= read -r line; do
   done
 done < "$BUILD_LOG"
 
+# Record last step
+if [ -n "$last_step" ]; then
+  STEP_TIMES+=($(( (BUILD_END - step_start) / 1000000 )))
+  STEP_NAMES+=("$last_step")
+fi
+
 # ---------------------------------------------------------------------------
 # Update smart skip markers
 # ---------------------------------------------------------------------------
@@ -233,15 +261,83 @@ if [ "$BUILD_RC" -eq 0 ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Notify: Success or Fail
+# Collect APK sizes
+# ---------------------------------------------------------------------------
+APK_SIZES=""
+if [ "$BUILD_RC" -eq 0 ] && [ -d "$APK_DIR" ]; then
+  for apk in "$APK_DIR"/Aetherfin-v*.apk; do
+    [ -f "$apk" ] || continue
+    name=$(basename "$apk")
+    size=$(stat -c%s "$apk" 2>/dev/null || stat -f%z "$apk" 2>/dev/null || echo 0)
+    size_mb=$(echo "scale=1; $size / 1048576" | bc 2>/dev/null || echo "?")
+    APK_SIZES+="  • $name ($size_mb MB)"$'\n'
+  done
+fi
+
+# ---------------------------------------------------------------------------
+# Previous build size comparison
+# ---------------------------------------------------------------------------
+PREV_SIZES=""
+if [ -f "$CACHE_DIR/last_sizes" ]; then
+  PREV_SIZES=$(cat "$CACHE_DIR/last_sizes")
+fi
+
+# Save current sizes for next comparison
+if [ "$BUILD_RC" -eq 0 ] && [ -d "$APK_DIR" ]; then
+  > "$CACHE_DIR/last_sizes"
+  for apk in "$APK_DIR"/Aetherfin-v*.apk; do
+    [ -f "$apk" ] || continue
+    name=$(basename "$apk")
+    size=$(stat -c%s "$apk" 2>/dev/null || stat -f%z "$apk" 2>/dev/null || echo 0)
+    echo "$name=$size" >> "$CACHE_DIR/last_sizes"
+  done
+fi
+
+# ---------------------------------------------------------------------------
+# Notify: Success with detailed summary
 # ---------------------------------------------------------------------------
 if [ "$HAS_TG" = true ]; then
   if [ "$BUILD_RC" -eq 0 ]; then
     export TG_APK_DIR="$ROOT/build/app/outputs/flutter-apk"
+    export TG_BUILD_DURATION="$BUILD_DURATION"
+    export TG_SMART_SKIPPED="$SMART_SKIPPED"
+
+    # Build step timing string
+    STEP_TIMING=""
+    for i in "${!STEP_NAMES[@]}"; do
+      mins=$(( ${STEP_TIMES[$i]} / 1000 / 60 ))
+      secs=$(( ${STEP_TIMES[$i]} / 1000 % 60 ))
+      STEP_TIMING+="  ${STEP_NAMES[$i]}: ${mins}m ${secs}s"$'\n'
+    done
+    export TG_STEP_TIMING="$STEP_TIMING"
+    export TG_APK_SIZES="$APK_SIZES"
+
     $PYTHON "$ROOT/tool/telegram_notifier.py" success 2>/dev/null || true
   else
     $PYTHON "$ROOT/tool/telegram_notifier.py" fail 2>/dev/null || true
   fi
 fi
+
+# ---------------------------------------------------------------------------
+# Print summary to terminal
+# ---------------------------------------------------------------------------
+echo ""
+echo "────────────────────────────────────────"
+echo "  📊 Build Summary"
+echo ""
+echo "  Total: $(( BUILD_DURATION / 1000 / 60 ))m $(( BUILD_DURATION / 1000 % 60 ))s"
+echo ""
+if [ -n "$STEP_TIMING" ]; then
+  echo "  Steps:"
+  echo "$STEP_TIMING"
+fi
+if [ -n "$APK_SIZES" ]; then
+  echo "  APKs:"
+  echo "$APK_SIZES"
+fi
+if [ -n "$SMART_SKIPPED" ]; then
+  echo "  Smart skipped: $SMART_SKIPPED"
+fi
+echo "────────────────────────────────────────"
 
 exit "$BUILD_RC"

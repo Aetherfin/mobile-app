@@ -218,6 +218,10 @@ def success_message():
     sha = os.environ.get('TG_SHA', '')
     commit = os.environ.get('TG_COMMIT', '')
     timestamp = os.environ.get('TG_TIMESTAMP', '')
+    build_duration = os.environ.get('TG_BUILD_DURATION', '')
+    step_timing = os.environ.get('TG_STEP_TIMING', '')
+    apk_sizes = os.environ.get('TG_APK_SIZES', '')
+    smart_skipped = os.environ.get('TG_SMART_SKIPPED', '')
 
     apk_files = sorted(glob.glob(os.path.join(apk_dir, "Aetherfin-v*arm64*.apk")))
     apk_name = None
@@ -234,6 +238,15 @@ def success_message():
     status = "Release Successful!" if tag else "Build Successful!"
 
     lines = [f"{icon} <b>Aetherfin {status}</b>", ""]
+
+    if build_duration:
+        duration_s = int(build_duration) // 1000
+        mins = duration_s // 60
+        secs = duration_s % 60
+        lines.append(f"\u23f1 <b>Total:</b> {mins}m {secs}s")
+        lines.append("")
+
+    # APK info
     if apk_name:
         lines.append(f"<b>App:</b> <code>{apk_name}</code>")
     if apk_size:
@@ -241,6 +254,7 @@ def success_message():
         lines.append(f"<b>Size:</b> {size_mb:.1f}MB")
     lines.append(f"<b>Mode:</b> <code>{mode}</code>")
     lines.append("")
+
     lines.append(f"<b>Branch:</b> <code>{branch}</code>")
     lines.append(f"<b>Build ID:</b> <code>{build_id}</code>")
     lines.append(f"<b>Triggered by:</b> <code>{actor}</code>")
@@ -248,7 +262,22 @@ def success_message():
         lines.append("")
         lines.append(f"<b>Last Commit:</b>")
         lines.append(f"<code>{sha}</code> \u2014 {commit}")
-    lines.append("")
+    lines.append("\u2500" * 12)
+
+    if step_timing:
+        lines.append("\U0001f4c5 <b>Step Timing:</b>")
+        lines.append(f"<pre>{step_timing.strip()}</pre>")
+        lines.append("")
+
+    if apk_sizes:
+        lines.append("\U0001f4e6 <b>APKs:</b>")
+        lines.append(f"<pre>{apk_sizes.strip()}</pre>")
+        lines.append("")
+
+    if smart_skipped:
+        lines.append(f"\u23ed <b>Skipped:</b> <code>{smart_skipped.strip()}</code>")
+        lines.append("")
+
     if timestamp:
         lines.append(f"<i>{timestamp}</i>")
 
