@@ -73,7 +73,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
         } else if (_lyricsExpandedNotifier.value) {
           _lyricsExpandedNotifier.value = false;
         } else {
-          context.pop();
+          if (context.canPop()) context.pop();
         }
       },
       child: Scaffold(

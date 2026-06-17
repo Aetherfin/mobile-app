@@ -449,7 +449,9 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                       scrollOffset: offset,
                       threshold: heroHeight - kToolbarHeight,
                       title: artist.name,
-                      onBack: () => context.pop(),
+                      onBack: () {
+                        if (context.canPop()) context.pop();
+                      },
                     ),
                   ),
                 ),
@@ -484,7 +486,9 @@ class ArtistAllSongsScreen extends ConsumerWidget {
         leading: IconButton(
           tooltip: 'Go back',
           icon: const Icon(LucideIcons.arrowLeft, color: AfColors.textPrimary),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) context.pop();
+          },
         ),
         title: artistAsync.when(
           data: (artist) => Text(
@@ -556,7 +560,9 @@ class ArtistAllAlbumsScreen extends ConsumerWidget {
         leading: IconButton(
           tooltip: 'Go back',
           icon: const Icon(LucideIcons.arrowLeft, color: AfColors.textPrimary),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) context.pop();
+          },
         ),
         title: artistAsync.when(
           data: (artist) => Text(

@@ -248,7 +248,9 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen> {
                       scrollOffset: offset,
                       threshold: heroHeight - kToolbarHeight,
                       title: album.name,
-                      onBack: () => context.pop(),
+                      onBack: () {
+                        if (context.canPop()) context.pop();
+                      },
                       onMore: () =>
                           showAlbumMoreSheet(context, ref, album, tracks),
                     ),

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../utils/log.dart';
 import '../jellyfin/models/items.dart';
@@ -100,12 +99,17 @@ class NavidromeClient extends SubsonicClient {
   }
 
   Future<void> _loginNavidrome() async {
-    final pwd = utf8.decode(passwordBytes);
     afLog('subsonic', 'Logging in to Navidrome native REST API');
     try {
+      // Decode password inline — Dart Strings are immutable and cannot be
+      // zeroed after use. Inlining avoids holding the decoded value in a
+      // named variable that persists until GC collects the frame.
       final response = await _ndDio.post(
         'auth/login',
-        data: {'username': username, 'password': pwd},
+        data: {
+          'username': username,
+          'password': String.fromCharCodes(passwordBytes),
+        },
       );
       final token = response.data['token'] as String?;
       if (token == null || token.isEmpty) {

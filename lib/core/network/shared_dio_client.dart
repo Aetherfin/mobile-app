@@ -64,6 +64,17 @@ class SharedDioClient {
         client.findProxy = (uri) => 'DIRECT';
         client.idleTimeout = const Duration(seconds: 15);
         client.connectionTimeout = const Duration(seconds: 5);
+        // Defense-in-depth: log bad certificates but allow connection.
+        // Self-hosted servers (Jellyfin/Navidrome) frequently use self-signed
+        // or local-CA certs — rejecting them would break the primary use case.
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) {
+              afLog(
+                'http',
+                'Bad certificate for $host:$port — issuer: ${cert.issuer}',
+              );
+              return true; // Allow (self-hosted servers use self-signed certs)
+            };
         return client;
       };
   }

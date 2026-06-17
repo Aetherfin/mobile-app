@@ -92,9 +92,10 @@ class _FrostedTopBarState extends ConsumerState<FrostedTopBar>
     return AnimatedBuilder(
       animation: _expandAnim,
       builder: (context, _) {
+        // ponytail: interpolated radius, no matching AfRadii token
         final radius = BorderRadius.circular(
           ui.lerpDouble(AfRadii.xl, AfRadii.lg, _expandAnim.value)!,
-        ); // 36→24dp xl, closest token
+        );
 
         return Padding(
           padding: const EdgeInsets.symmetric(
@@ -134,7 +135,9 @@ class _FrostedTopBarState extends ConsumerState<FrostedTopBar>
                               size: AfIconSizes.sm,
                             ),
                             tooltip: 'Close',
-                            onPressed: () => context.pop(),
+                            onPressed: () {
+                              if (context.canPop()) context.pop();
+                            },
                           ),
                           const SizedBox(width: AfSpacing.s8),
                           Expanded(

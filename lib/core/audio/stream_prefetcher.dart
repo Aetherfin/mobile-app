@@ -148,9 +148,9 @@ class StreamPrefetcher {
     unawaited(
       future
           .then((file) {
+            _processPrefetchQueue();
             _prefetchFutures.remove(trackId);
             _cancelTokens.remove(trackId);
-            _processPrefetchQueue();
           })
           .catchError((_) {
             _prefetchFutures.remove(trackId);

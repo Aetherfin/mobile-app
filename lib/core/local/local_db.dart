@@ -292,10 +292,19 @@ class LocalDb {
       ));
     }
 
-    // Build: WHERE (played_at >= ?1 AND played_at < ?2) OR ...
-    final conditions = ranges
-        .map((r) => '(played_at >= ${r.start} AND played_at < ${r.end})')
-        .join(' OR ');
+    // Build: WHERE (played_at >= ? AND played_at < ?) OR ...
+    // Using parameterized queries to prevent SQL injection.
+    final placeholders = <String>[];
+    final variables = <Variable<int>>[];
+    for (var i = 0; i < ranges.length; i++) {
+      final startIdx = i * 2 + 1;
+      final endIdx = startIdx + 1;
+      placeholders.add('(played_at >= ?$startIdx AND played_at < ?$endIdx)');
+      variables.add(Variable<int>(ranges[i].start));
+      variables.add(Variable<int>(ranges[i].end));
+    }
+    final conditions = placeholders.join(' OR ');
+    final limitIdx = ranges.length * 2 + 1;
     final query =
         '''
       SELECT track_id, title, artist, album, duration_ms, image_url, MAX(played_at) as last_played
@@ -303,10 +312,10 @@ class LocalDb {
       WHERE $conditions
       GROUP BY track_id
       ORDER BY last_played DESC
-      LIMIT ?
+      LIMIT ?$limitIdx
     ''';
 
-    final variables = [Variable<int>(limit)];
+    variables.add(Variable<int>(limit));
 
     final rows = await db
         .customSelect(

@@ -84,6 +84,12 @@ class JellyfinAuth {
   /// For Subsonic/Navidrome: the user's plaintext password (stored in
   /// encrypted secure storage), needed to compute `md5(password + salt)`
   /// per-request auth tokens.
+  ///
+  /// **Important**: When [serverType] is [ServerType.subsonic], this field
+  /// holds the raw password, NOT a token. All Subsonic credential handling
+  /// (secure storage, password bytes, per-request hashing) must treat this
+  /// as a password. See `SubsonicClient._passwordBytes` and
+  /// `NavidromeClient._loginNavidrome()`.
   final String accessToken;
 
   /// Identifies the server backend. Defaults to [ServerType.jellyfin]

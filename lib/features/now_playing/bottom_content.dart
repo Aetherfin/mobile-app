@@ -119,9 +119,8 @@ class _BottomContentState extends ConsumerState<BottomContent>
               }
             },
             child: GlassCard(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AfRadii.lg),
-              ),
+              // ponytail: top-only corner, no matching AfRadii token
+              borderRadius: const BorderRadius.vertical(top: AfRadii.rLg),
               blurSigma: 30,
               color: AfColors.glassFillHeavy,
               padding: EdgeInsets.zero,

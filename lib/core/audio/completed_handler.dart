@@ -40,7 +40,20 @@ extension CompletedHandler on PlaybackController {
     if (current != null) {
       _queueManager.emitCurrentTrack(current);
       onTrackChanged?.call(current);
-      unawaited(Future.microtask(() => onTrackCompleted?.call(current)));
+      unawaited(
+        Future.microtask(() {
+          try {
+            onTrackCompleted?.call(current);
+          } catch (e, stack) {
+            afLog(
+              'error',
+              'onTrackCompleted microtask failed',
+              error: e,
+              stackTrace: stack,
+            );
+          }
+        }),
+      );
     }
     updateMediaSession();
     unawaited(_reconfigureSpectrumOnTrackChange());
@@ -195,10 +208,7 @@ extension CompletedHandler on PlaybackController {
               try {
                 final similar = await onGetSimilarTracks!(lastTrack);
                 if (similar.isNotEmpty) {
-                  for (final t in similar) {
-                    _queueManager.engine.append(t);
-                  }
-                  _queueManager.emitQueue();
+                  _queueManager.appendAll(similar);
 
                   await _advanceToNextTrack();
                   autoplayTriggered = true;

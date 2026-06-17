@@ -301,25 +301,33 @@ final allGenresProvider = FutureProvider.autoDispose<List<AfGenre>>((
   }
 
   if (needsEnrichment.isNotEmpty) {
-    final enrichments = await Future.wait(
-      needsEnrichment.map((g) async {
-        try {
-          final albums = await backend.albumsByGenre(g.name, limit: 1);
-          final imageUrl = albums.isNotEmpty ? albums.first.imageUrl : null;
-          return AfGenre(g.name, g.tint, imageUrl: imageUrl);
-        } catch (e, stack) {
-          afLog(
-            'error',
-            'Genre enrichment failed for ${g.name}',
-            error: e,
-            stackTrace: stack,
-          );
-          return g;
-        }
-      }),
-      eagerError: false,
-    );
-    enriched.addAll(enrichments);
+    // Process 4 genres at a time to avoid flooding the server
+    const chunkSize = 4;
+    for (var i = 0; i < needsEnrichment.length; i += chunkSize) {
+      final chunk = needsEnrichment.sublist(
+        i,
+        (i + chunkSize).clamp(0, needsEnrichment.length),
+      );
+      final enrichments = await Future.wait(
+        chunk.map((g) async {
+          try {
+            final albums = await backend.albumsByGenre(g.name, limit: 1);
+            final imageUrl = albums.isNotEmpty ? albums.first.imageUrl : null;
+            return AfGenre(g.name, g.tint, imageUrl: imageUrl);
+          } catch (e, stack) {
+            afLog(
+              'error',
+              'Genre enrichment failed for ${g.name}',
+              error: e,
+              stackTrace: stack,
+            );
+            return g;
+          }
+        }),
+        eagerError: false,
+      );
+      enriched.addAll(enrichments);
+    }
   }
 
   return enriched;

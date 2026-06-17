@@ -44,6 +44,7 @@ const _bottomSheetTheme = BottomSheetThemeData(
   surfaceTintColor: Colors.transparent,
   modalBackgroundColor: Colors.transparent,
   modalBarrierColor: AfColors.surfaceScrim,
+  // ponytail: top-only corner, no matching AfRadii token (add borderTopXl when needed)
   shape: RoundedRectangleBorder(
     borderRadius: BorderRadius.only(
       topLeft: AfRadii.rXl,

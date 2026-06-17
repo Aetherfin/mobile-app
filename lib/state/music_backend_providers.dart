@@ -37,7 +37,9 @@ final musicBackendProvider = Provider.autoDispose<MusicBackend?>((ref) {
     if (appMode == AppMode.local) {
       final lib = ref.watch(localLibraryProvider);
       logData('musicBackend', source: 'live', extra: 'type=local');
-      return LocalBackend(library: lib, db: lib.db);
+      final client = LocalBackend(library: lib, db: lib.db);
+      ref.onDispose(client.close);
+      return client;
     }
     logData('musicBackend', source: 'demo', extra: '(signed out)');
     return null;
@@ -79,8 +81,12 @@ final musicBackendProvider = Provider.autoDispose<MusicBackend?>((ref) {
         return client;
       }
     case ServerType.local:
-      final lib = ref.watch(localLibraryProvider);
-      return LocalBackend(library: lib, db: lib.db);
+      {
+        final lib = ref.watch(localLibraryProvider);
+        final client = LocalBackend(library: lib, db: lib.db);
+        ref.onDispose(client.close);
+        return client;
+      }
     case ServerType.youtubeMusic:
       {
         final youtubeAuth = ref.watch(youtubeAuthProvider);

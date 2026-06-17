@@ -346,21 +346,22 @@ extension QueueOperations on PlaybackController {
         );
         final resolved = _resolveStreamUrl?.call(nextTrack);
         if (resolved is Future<String>) {
-          resolved
-              .then((nextUrl) {
-                _cacheStreamUrl(nextTrackId, nextUrl);
-                _preResolvingTrackIds.remove(nextTrackId);
-                afLog('audio', 'Pre-resolution success for $nextTrackId');
-              })
-              .catchError((Object e, StackTrace stack) {
-                _preResolvingTrackIds.remove(nextTrackId);
-                afLog(
-                  'audio',
-                  'Pre-resolution failed for $nextTrackId',
-                  error: e,
-                  stackTrace: stack,
-                );
-              });
+          unawaited(() async {
+            try {
+              final nextUrl = await resolved;
+              _cacheStreamUrl(nextTrackId, nextUrl);
+              _preResolvingTrackIds.remove(nextTrackId);
+              afLog('audio', 'Pre-resolution success for $nextTrackId');
+            } catch (e, stack) {
+              _preResolvingTrackIds.remove(nextTrackId);
+              afLog(
+                'audio',
+                'Pre-resolution failed for $nextTrackId',
+                error: e,
+                stackTrace: stack,
+              );
+            }
+          }());
         } else if (resolved is String) {
           _cacheStreamUrl(nextTrackId, resolved);
           _preResolvingTrackIds.remove(nextTrackId);
@@ -385,25 +386,26 @@ extension QueueOperations on PlaybackController {
           } else {
             final resolved = _resolveStreamUrl?.call(nextTrack);
             if (resolved is Future<String>) {
-              resolved
-                  .then((nextUrl) {
-                    _cacheStreamUrl(nextTrackId, nextUrl);
-                    unawaited(
-                      _prefetcher.prefetch(
-                        nextUrl,
-                        _authHeaders,
-                        trackId: nextTrackId,
-                      ),
-                    );
-                  })
-                  .catchError((Object e, StackTrace stack) {
-                    afLog(
-                      'audio',
-                      'prefetch URL resolution failed for $nextTrackId',
-                      error: e,
-                      stackTrace: stack,
-                    );
-                  });
+              unawaited(() async {
+                try {
+                  final nextUrl = await resolved;
+                  _cacheStreamUrl(nextTrackId, nextUrl);
+                  unawaited(
+                    _prefetcher.prefetch(
+                      nextUrl,
+                      _authHeaders,
+                      trackId: nextTrackId,
+                    ),
+                  );
+                } catch (e, stack) {
+                  afLog(
+                    'audio',
+                    'prefetch URL resolution failed for $nextTrackId',
+                    error: e,
+                    stackTrace: stack,
+                  );
+                }
+              }());
             } else if (resolved is String) {
               _cacheStreamUrl(nextTrackId, resolved);
               unawaited(

@@ -398,10 +398,9 @@ class PlaybackController {
 
   Future<void> _reconfigureSpectrumOnTrackChange() async {
     if (_disposed) return;
+    // ponytail: skip if settings already match defaults (no-op after first call)
+    if (_lastSpectrumSettings == defaultSpectrumSettings) return;
     try {
-      await Future.delayed(AfDurations.bounce);
-      if (_disposed) return;
-      if (_lastSpectrumSettings == defaultSpectrumSettings) return;
       await _player.setSpectrum(defaultSpectrumSettings);
       _lastSpectrumSettings = defaultSpectrumSettings;
       afLog('audio', 'spectrum re-configured after track change');

@@ -54,6 +54,12 @@ Future<void> main() async {
       WidgetsFlutterBinding.ensureInitialized();
       _boot('WidgetsFlutterBinding.ensureInitialized OK');
 
+      // Configure global image cache — default 50MB is too small for library
+      // views with 200+ artwork images. Increase to 100MB to prevent decode
+      // thrash when scrolling through album grids.
+      PaintingBinding.instance.imageCache.maximumSizeBytes = 100 * 1024 * 1024;
+      PaintingBinding.instance.imageCache.maximumSize = 500;
+
       // PRIMARY error handlers — these catch the vast majority of errors.
       FlutterError.onError = (details) {
         FlutterError.presentError(details);

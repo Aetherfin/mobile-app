@@ -22,7 +22,10 @@ class SongsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeId = ref.watch(currentTrackProvider)?.id;
+    // ponytail: isBuffering is a bool — no narrower select possible.
+    // SliverChildBuilderDelegate rebuilds only visible items.
     final isBuffering = ref.watch(isBufferingProvider);
+    // ponytail: .select(s.energy) avoids full Spectral rebuilds.
     final accent = ref.watch(currentSpectralProvider.select((s) => s.energy));
 
     if (isLocal) {

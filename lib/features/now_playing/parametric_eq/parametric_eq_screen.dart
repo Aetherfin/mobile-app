@@ -1080,7 +1080,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                     if (_eqState.bands.length > 1)
                       GestureDetector(
                         onTap: () {
-                          context.pop();
+                          if (context.canPop()) context.pop();
                           _removeBand(_selectedBand);
                         },
                         child: const Icon(
@@ -1153,7 +1153,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                         ],
                       ),
                       onTap: () {
-                        context.pop();
+                        if (context.canPop()) context.pop();
                         setState(() => _selectedBand = index);
                       },
                     );

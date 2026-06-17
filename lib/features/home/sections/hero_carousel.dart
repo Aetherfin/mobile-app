@@ -21,11 +21,12 @@ class HeroAlbumCarousel extends ConsumerStatefulWidget {
 }
 
 class _HeroAlbumCarouselState extends ConsumerState<HeroAlbumCarousel> {
-  int _currentPage = 0;
+  final ValueNotifier<int> _currentPage = ValueNotifier<int>(0);
   final PageController _pageController = PageController(viewportFraction: 0.92);
 
   @override
   void dispose() {
+    _currentPage.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -49,7 +50,7 @@ class _HeroAlbumCarouselState extends ConsumerState<HeroAlbumCarousel> {
               child: PageView.builder(
                 controller: _pageController,
                 itemCount: albums.length,
-                onPageChanged: (i) => setState(() => _currentPage = i),
+                onPageChanged: (i) => _currentPage.value = i,
                 itemBuilder: (context, i) {
                   final album = albums[i];
                   return Semantics(
@@ -209,28 +210,31 @@ class _HeroAlbumCarouselState extends ConsumerState<HeroAlbumCarousel> {
             ),
             // Dot indicators
             if (albums.length > 1)
-              Padding(
-                padding: const EdgeInsets.only(top: AfSpacing.s12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    albums.length,
-                    (i) => AnimatedContainer(
-                      duration: AfDurations.quick,
-                      curve: AfCurves.easeStandard,
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: AfSpacing.s4,
-                      ),
-                      width: _currentPage == i ? 20 : 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        gradient: _currentPage == i
-                            ? LinearGradient(
-                                colors: [spectral.energy, spectral.shadow],
-                              )
-                            : null,
-                        color: _currentPage == i ? null : AfColors.surfaceMax,
-                        borderRadius: AfRadii.borderPill,
+              ValueListenableBuilder<int>(
+                valueListenable: _currentPage,
+                builder: (context, page, _) => Padding(
+                  padding: const EdgeInsets.only(top: AfSpacing.s12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      albums.length,
+                      (i) => AnimatedContainer(
+                        duration: AfDurations.quick,
+                        curve: AfCurves.easeStandard,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: AfSpacing.s4,
+                        ),
+                        width: page == i ? 20 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          gradient: page == i
+                              ? LinearGradient(
+                                  colors: [spectral.energy, spectral.shadow],
+                                )
+                              : null,
+                          color: page == i ? null : AfColors.surfaceMax,
+                          borderRadius: AfRadii.borderPill,
+                        ),
                       ),
                     ),
                   ),

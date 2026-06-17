@@ -406,6 +406,12 @@ class TrackRepository {
     return rows.map(rawRowToTrack).toList();
   }
 
+  // Performance note: leading % in LIKE prevents index usage → full table
+  // scan per keystroke. Add FTS5 virtual table + trigram tokenizer in a future
+  // migration to get prefix + infix search with index support.
+  // ponytail: LIKE %query% prevents index usage — full table scan on every
+  // keystroke. Acceptable for <10k tracks. If library grows beyond that,
+  // add FTS5 virtual table: CREATE VIRTUAL TABLE tracks_fts USING fts5(title, artist, album)
   Future<List<AfTrack>> searchTracks(String query) async {
     final like = '%${escapeSqlLike(query)}%';
     final rows = await db

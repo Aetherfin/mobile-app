@@ -276,6 +276,14 @@ class JellyfinClient implements MusicBackend {
 
   @override
   void close() {
+    // Best-effort zeroing of the password buffer (matches SubsonicClient).
+    // Dart's GC-managed heap means this is defense-in-depth, not a guarantee
+    // — the bytes may already have been copied to an older heap generation.
+    if (_passwordBytes != null) {
+      for (var i = 0; i < _passwordBytes.length; i++) {
+        _passwordBytes[i] = 0;
+      }
+    }
     // Note: We don't close the shared client here as it's shared across
     // all backend instances. The shared client should be closed by the
     // app lifecycle manager.

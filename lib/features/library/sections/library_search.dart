@@ -58,9 +58,8 @@ class _LibrarySearchState extends ConsumerState<LibrarySearch> {
         return Container(
           decoration: const BoxDecoration(
             color: AfColors.surfaceCanvas,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(AfRadii.xl),
-            ),
+            // ponytail: top-only corner, no matching AfRadii token
+            borderRadius: BorderRadius.vertical(top: AfRadii.rXl),
           ),
           child: Column(
             children: [
@@ -95,7 +94,9 @@ class _LibrarySearchState extends ConsumerState<LibrarySearch> {
                         color: AfColors.textTertiary,
                         size: 20,
                       ),
-                      onPressed: () => context.pop(),
+                      onPressed: () {
+                        if (context.canPop()) context.pop();
+                      },
                     ),
                   ],
                 ),
@@ -217,7 +218,7 @@ class _RecentAndSuggestions extends ConsumerWidget {
                 children: recent.map((a) {
                   return FocusPressScale(
                     onTap: () {
-                      context.pop();
+                      if (context.canPop()) context.pop();
                       context.push('/album/${a.id}');
                     },
                     child: Padding(
@@ -292,7 +293,7 @@ class _RecentAndSuggestions extends ConsumerWidget {
                   final tint = parseGenreTint(g.tint);
                   return FocusPressScale(
                     onTap: () {
-                      context.pop();
+                      if (context.canPop()) context.pop();
                       context.push('/genre/${g.name}');
                     },
                     child: Container(
@@ -365,7 +366,7 @@ class _LiveResults extends ConsumerWidget {
                   children: filtered.map((a) {
                     return FocusPressScale(
                       onTap: () {
-                        context.pop();
+                        if (context.canPop()) context.pop();
                         context.push('/album/${a.id}');
                       },
                       child: Padding(
@@ -427,7 +428,7 @@ class _LiveResults extends ConsumerWidget {
                   children: filtered.map((a) {
                     return FocusPressScale(
                       onTap: () {
-                        context.pop();
+                        if (context.canPop()) context.pop();
                         context.push('/artist/${a.id}');
                       },
                       child: Padding(
@@ -535,7 +536,7 @@ class _LiveResults extends ConsumerWidget {
             isBuffering: t.id == activeId && isBuffering,
             activeAccent: accent,
             onTap: () {
-              context.pop();
+              if (context.canPop()) context.pop();
               ref.read(playActionsProvider).playSmartQueue(t, filtered);
             },
             onLongPress: () => showTrackContextMenu(context, ref, t),

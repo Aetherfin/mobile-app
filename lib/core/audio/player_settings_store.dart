@@ -120,12 +120,6 @@ class PlayerSettingsStore {
   );
   static final kMaxBitrate = SettingsKey.intKey('af.max_bitrate_kbps');
   static final kShuffleEnabled = SettingsKey.boolKey('af.shuffle_enabled');
-  static final kLastFmApiKey = SettingsKey.stringKey('af.lastfm_api_key');
-  static final kLastFmApiSecret = SettingsKey.stringKey('af.lastfm_api_secret');
-  static final kLastFmSessionKey = SettingsKey.stringKey(
-    'af.lastfm_session_key',
-  );
-  static final kLastFmUsername = SettingsKey.stringKey('af.lastfm_username');
   static final kLastFmScrobbleEnabled = SettingsKey.boolKey(
     'af.lastfm_scrobble_enabled',
   );

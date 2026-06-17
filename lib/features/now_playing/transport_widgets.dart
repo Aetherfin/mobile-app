@@ -44,12 +44,15 @@ class ReactiveTransport extends ConsumerWidget {
       muted: spectral.muted,
       onShuffle: () {
         final svc = ref.read(playerServiceProvider);
+        final prevEnabled = svc.isShuffleEnabled;
         unawaited(
           svc.setAfShuffleMode(!svc.isShuffleEnabled).catchError((
             Object e,
             StackTrace s,
           ) {
             afLog('audio', 'setAfShuffleMode failed', error: e, stackTrace: s);
+            // Revert optimistic state change on failure.
+            unawaited(svc.setAfShuffleMode(prevEnabled));
           }),
         );
       },
@@ -67,6 +70,8 @@ class ReactiveTransport extends ConsumerWidget {
                 StackTrace s,
               ) {
                 afLog('audio', 'setAfLoopMode failed', error: e, stackTrace: s);
+                // Revert to Loop.off on failure.
+                unawaited(svc.setAfLoopMode(Loop.off));
               }),
             );
             break;
@@ -74,6 +79,8 @@ class ReactiveTransport extends ConsumerWidget {
             unawaited(
               svc.setAfLoopMode(Loop.file).catchError((Object e, StackTrace s) {
                 afLog('audio', 'setAfLoopMode failed', error: e, stackTrace: s);
+                // Revert to Loop.playlist on failure.
+                unawaited(svc.setAfLoopMode(Loop.playlist));
               }),
             );
             break;
@@ -87,6 +94,8 @@ class ReactiveTransport extends ConsumerWidget {
                   error: e,
                   stackTrace: s,
                 );
+                // Revert forNtimes provider on failure.
+                ref.read(forNtimesModeProvider.notifier).set(false);
               }),
             );
             break;
@@ -101,6 +110,9 @@ class ReactiveTransport extends ConsumerWidget {
                   error: e,
                   stackTrace: s,
                 );
+                // Revert forNtimes provider + restore loop mode on failure.
+                ref.read(forNtimesModeProvider.notifier).set(true);
+                unawaited(svc.setAfLoopMode(Loop.file));
               }),
             );
             break;

@@ -81,7 +81,9 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                     scrollOffset: offset,
                     threshold: 140,
                     title: widget.genre,
-                    onBack: () => context.pop(),
+                    onBack: () {
+                      if (context.canPop()) context.pop();
+                    },
                   ),
                 ),
               ),

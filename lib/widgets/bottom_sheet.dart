@@ -211,6 +211,7 @@ class _BlurBottomSheetOverlayState<T> extends State<_BlurBottomSheetOverlay<T>>
                         child: Padding(
                           padding: EdgeInsets.only(bottom: viewInsets.bottom),
                           child: ClipRRect(
+                            // ponytail: dynamic topRadius, no matching AfRadii token
                             borderRadius: BorderRadius.vertical(
                               top: Radius.circular(widget.topRadius),
                             ),
@@ -219,6 +220,7 @@ class _BlurBottomSheetOverlayState<T> extends State<_BlurBottomSheetOverlay<T>>
                                 color: AfColors.surfaceBase.withValues(
                                   alpha: 0.85,
                                 ),
+                                // ponytail: dynamic topRadius, no matching AfRadii token
                                 borderRadius: BorderRadius.vertical(
                                   top: Radius.circular(widget.topRadius),
                                 ),

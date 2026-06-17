@@ -32,6 +32,7 @@ import '../home_widget/home_widget_manager.dart';
 class _WireDisposables {
   Timer? saveQueueDebounce;
   Timer? activeQueuePeriodicTimer;
+  int saveLoopGen = 0; // ponytail: generation counter, cancels stale loops
   StreamSubscription<List<AfTrack>>? queueSub;
   StreamSubscription<AfTrack?>? trackSub;
   StreamSubscription<MpvPlayerError>? errorSub;
@@ -177,11 +178,11 @@ void _wireQueueSaving(Ref ref, AfPlayerService svc, _WireDisposables d) {
   // Periodic save to ActiveQueueStore every 10 seconds while playing.
   // Uses a serialized async loop instead of Timer.periodic to prevent
   // overlapping saves (CLAUDE.md §15 item #35).
-  Future<void> activeQueueSaveLoop() async {
+  Future<void> activeQueueSaveLoop(int gen) async {
     while (true) {
       await Future<void>.delayed(const Duration(seconds: 10));
-      // Stop if timer was cancelled (playback paused/stopped).
-      if (d.activeQueuePeriodicTimer == null) return;
+      // Stop if timer was cancelled or a new loop started (play/pause race).
+      if (d.activeQueuePeriodicTimer == null || gen != d.saveLoopGen) return;
       if (!svc.isPlaying) continue;
       final tracks = svc.currentQueue;
       if (tracks.isEmpty) continue;
@@ -208,7 +209,8 @@ void _wireQueueSaving(Ref ref, AfPlayerService svc, _WireDisposables d) {
       const Duration(seconds: 1),
       (_) {},
     ); // non-null sentinel — actual work done by _activeQueueSaveLoop
-    activeQueueSaveLoop();
+    d.saveLoopGen++;
+    unawaited(activeQueueSaveLoop(d.saveLoopGen));
   }
 
   // Start/stop the periodic timer based on playback state.
@@ -744,11 +746,13 @@ final hasActivePlaybackProvider = Provider<bool>((ref) {
   return ref.watch(currentTrackProvider) != null;
 });
 
-/// Shared FFT frame provider — wraps the player's spectrum stream as a
-/// broadcast stream so visualizer and artwork pulse share one subscription.
+/// Shared FFT frame provider — wraps the player's spectrum stream.
+/// ponytail: removed .asBroadcastStream() — StreamProvider already manages
+/// a single subscription. The extra broadcast wrapper buffered unread events
+/// when now-playing was obscured, leaking memory.
 final fftFrameProvider = StreamProvider.autoDispose<FftFrame?>((ref) {
   final svc = ref.watch(playerServiceProvider);
-  return svc.spectrumStream.asBroadcastStream().map((f) => f as FftFrame?);
+  return svc.spectrumStream.map((f) => f as FftFrame?);
 });
 
 /// Sub-bass energy derived from the first 7 post-DC FFT bands.

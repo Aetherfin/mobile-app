@@ -126,104 +126,100 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return YouTubeHomeView(scrollController: _ytScrollController);
     }
 
-    final spectral = ref.watch(currentSpectralProvider);
+    // ponytail: select only the two fields used in this build — avoids
+    // rebuilding the full home tree when other spectral fields change.
+    final (primary, secondary) = ref.watch(
+      currentSpectralProvider.select((s) => (s.primary, s.secondary)),
+    );
 
     return FocusTraversalGroup(
       child: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: AfLayout.maxContentWidth,
+        // ponytail: LayoutBuilder removed — constraints param was never read.
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AfLayout.maxContentWidth,
+            ),
+            child: RefreshIndicator(
+              onRefresh: _onRefresh,
+              color: primary,
+              backgroundColor: AfColors.surfaceBase,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: ClampingScrollPhysics(),
                 ),
-                child: RefreshIndicator(
-                  onRefresh: _onRefresh,
-                  color: spectral.primary,
-                  backgroundColor: AfColors.surfaceBase,
-                  child: CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(
-                      parent: ClampingScrollPhysics(),
+                slivers: [
+                  // Header — "Listen" with amber gradient + cast button
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AfSpacing.s16,
+                        AfSpacing.s16,
+                        AfSpacing.s16,
+                        AfSpacing.s32,
+                      ),
+                      child: Row(
+                        children: [
+                          ShaderMask(
+                            shaderCallback: (bounds) => LinearGradient(
+                              colors: [primary, secondary],
+                            ).createShader(bounds),
+                            child: Text(
+                              'Listen',
+                              style: AfTypography.display.copyWith(
+                                color: AfColors.textOnPrimary,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          _GlassCastButton(onTap: () => context.push('/cast')),
+                        ],
+                      ),
                     ),
-                    slivers: [
-                      // Header — "Listen" with amber gradient + cast button
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AfSpacing.s16,
-                            AfSpacing.s16,
-                            AfSpacing.s16,
-                            AfSpacing.s32,
-                          ),
-                          child: Row(
-                            children: [
-                              ShaderMask(
-                                shaderCallback: (bounds) => LinearGradient(
-                                  colors: [
-                                    spectral.primary,
-                                    spectral.secondary,
-                                  ],
-                                ).createShader(bounds),
-                                child: Text(
-                                  'Listen',
-                                  style: AfTypography.display.copyWith(
-                                    color: AfColors.textOnPrimary,
-                                  ),
-                                ),
-                              ),
-                              const Spacer(),
-                              _GlassCastButton(
-                                onTap: () => context.push('/cast'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Hero album carousel.
-                      SliverToBoxAdapter(
-                        child: albumsAsync.when(
-                          data: (albums) => albums.isEmpty
-                              ? const SizedBox.shrink()
-                              : HeroAlbumCarousel(albums: albums),
-                          loading: () => const HomeCarouselSkeleton(),
-                          error: (e, _) => AsyncErrorView.compact(
-                            label: 'Couldn\u2019t load recent albums',
-                            error: e,
-                            height: 240,
-                            onRetry: () =>
-                                ref.invalidate(recentlyAddedAlbumsProvider),
-                          ),
-                        ),
-                      ),
-
-                      RecentTracksSection(isLocal: isLocal),
-
-                      const LostMemoriesSection(),
-
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: AfSpacing.sectionGap),
-                      ),
-
-                      ArtistsSection(isLocal: isLocal),
-
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: AfSpacing.sectionGap),
-                      ),
-
-                      GenresSection(isLocal: isLocal),
-
-                      const SliverToBoxAdapter(
-                        child: SizedBox(
-                          height: AfSpacing.bottomInsetWithMiniAndNav,
-                        ),
-                      ),
-                    ],
                   ),
-                ),
+
+                  // Hero album carousel.
+                  SliverToBoxAdapter(
+                    child: albumsAsync.when(
+                      data: (albums) => albums.isEmpty
+                          ? const SizedBox.shrink()
+                          : HeroAlbumCarousel(albums: albums),
+                      loading: () => const HomeCarouselSkeleton(),
+                      error: (e, _) => AsyncErrorView.compact(
+                        label: 'Couldn\u2019t load recent albums',
+                        error: e,
+                        height: 240,
+                        onRetry: () =>
+                            ref.invalidate(recentlyAddedAlbumsProvider),
+                      ),
+                    ),
+                  ),
+
+                  RecentTracksSection(isLocal: isLocal),
+
+                  const LostMemoriesSection(),
+
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AfSpacing.sectionGap),
+                  ),
+
+                  ArtistsSection(isLocal: isLocal),
+
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AfSpacing.sectionGap),
+                  ),
+
+                  GenresSection(isLocal: isLocal),
+
+                  const SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: AfSpacing.bottomInsetWithMiniAndNav,
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
