@@ -18,7 +18,7 @@ dependencies:
   flutter_riverpod: 3.3.2
 
   # Routing
-  go_router: 14.8.1
+  go_router: ^17.3.0
 
   # Networking
   dio: 5.9.2
