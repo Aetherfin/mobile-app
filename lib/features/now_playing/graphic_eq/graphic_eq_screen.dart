@@ -129,11 +129,14 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
     unawaited(_save());
   }
 
-  void _onBandChanged(int index, double value) {
+  void _updateBandLocal(int index, double value) {
     setState(() {
       _state.levels[index] = value;
       _activePreset = null;
     });
+  }
+
+  void _onDragEnd() {
     unawaited(_apply());
     unawaited(_save());
   }
@@ -379,8 +382,8 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
             freq: freqLabels[i],
             value: _state.levels[i],
             activeColor: _bandColor(_state.levels[i], spectral),
-            onChanged: (v) => _onBandChanged(i, v),
-            onChangeEnd: () {},
+            onChanged: (v) => _updateBandLocal(i, v),
+            onChangeEnd: _onDragEnd,
           ),
         );
       },

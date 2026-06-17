@@ -302,12 +302,14 @@ class _ParametricEqCurveView extends StatefulWidget {
     required this.selectedBand,
     required this.onBandChanged,
     required this.onBandSelected,
+    this.onPanEnd,
   });
 
   final List<ParametricEqBand> bands;
   final int? selectedBand;
   final void Function(int index, ParametricEqBand band) onBandChanged;
   final void Function(int? index) onBandSelected;
+  final VoidCallback? onPanEnd;
 
   @override
   State<_ParametricEqCurveView> createState() => _ParametricEqCurveViewState();
@@ -324,7 +326,10 @@ class _ParametricEqCurveViewState extends State<_ParametricEqCurveView> {
       child: GestureDetector(
         onPanStart: _handlePanStart,
         onPanUpdate: _handlePanUpdate,
-        onPanEnd: (_) => setState(() => _draggingBand = null),
+        onPanEnd: (_) {
+          setState(() => _draggingBand = null);
+          widget.onPanEnd?.call();
+        },
         onTapUp: _handleTap,
         child: Focus(
           onKeyEvent: (node, event) {
@@ -573,7 +578,6 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
     setState(() {
       _eqState.setBand(index, band);
     });
-    _saveAndApply();
   }
 
   void _onBandSelected(int? index) {
@@ -603,7 +607,6 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
         ),
       );
     });
-    _saveAndApply();
   }
 
   void _onGainChanged(double value) {
@@ -620,7 +623,6 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
         ),
       );
     });
-    _saveAndApply();
   }
 
   void _onQChanged(double value) {
@@ -637,7 +639,6 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
         ),
       );
     });
-    _saveAndApply();
   }
 
   void _onTypeChanged(BandType type) {
@@ -894,6 +895,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                   selectedBand: _selectedBand,
                   onBandChanged: _onBandChanged,
                   onBandSelected: _onBandSelected,
+                  onPanEnd: _saveAndApply,
                 ),
               ),
             ),
@@ -1231,6 +1233,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
               display: _formatFrequency(band.frequency),
               color: color,
               onChanged: _onFrequencyChanged,
+              onChangeEnd: (_) => _saveAndApply(),
             ),
             const SizedBox(height: AfSpacing.s4),
 
@@ -1244,6 +1247,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                 display: '${_formatGain(band.gain)} dB',
                 color: color,
                 onChanged: _onGainChanged,
+                onChangeEnd: (_) => _saveAndApply(),
               ),
             if (isCutType) const SizedBox(height: AfSpacing.s4),
 
@@ -1256,6 +1260,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
               display: band.q.toStringAsFixed(1),
               color: color,
               onChanged: _onQChanged,
+              onChangeEnd: (_) => _saveAndApply(),
             ),
           ],
         ),
@@ -1271,6 +1276,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
     required String display,
     required Color color,
     required ValueChanged<double> onChanged,
+    ValueChanged<double>? onChangeEnd,
   }) {
     // For frequency, use logarithmic slider
     final isLogarithmic = label == 'Freq';
@@ -1325,6 +1331,20 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                 onChanged(actual.clamp(min, max));
               }
             },
+            onChangeEnd: onChangeEnd != null
+                ? (v) {
+                    if (isLogarithmic) {
+                      final logMin = math.log(min) / math.log(10);
+                      final logMax = math.log(max) / math.log(10);
+                      final logVal = logMin + v * (logMax - logMin);
+                      final freq = math.pow(10, logVal).toDouble();
+                      onChangeEnd(freq.clamp(min, max));
+                    } else {
+                      final actual = min + v * (max - min);
+                      onChangeEnd(actual.clamp(min, max));
+                    }
+                  }
+                : null,
           ),
         ),
       ],

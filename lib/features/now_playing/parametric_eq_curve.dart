@@ -275,12 +275,14 @@ class ParametricEqCurveView extends StatefulWidget {
     required this.onBandChanged,
     required this.onBandSelected,
     required this.accentColor,
+    this.onPanEnd,
   });
 
   final List<ParametricBand> bands;
   final void Function(int index, ParametricBand band) onBandChanged;
   final void Function(int? index) onBandSelected;
   final Color accentColor;
+  final VoidCallback? onPanEnd;
 
   @override
   State<ParametricEqCurveView> createState() => _ParametricEqCurveViewState();
@@ -294,7 +296,10 @@ class _ParametricEqCurveViewState extends State<ParametricEqCurveView> {
     return GestureDetector(
       onPanStart: _handlePanStart,
       onPanUpdate: _handlePanUpdate,
-      onPanEnd: (_) => setState(() => _draggingBand = null),
+      onPanEnd: (_) {
+        setState(() => _draggingBand = null);
+        widget.onPanEnd?.call();
+      },
       child: RepaintBoundary(
         child: CustomPaint(
           painter: ParametricEqCurvePainter(

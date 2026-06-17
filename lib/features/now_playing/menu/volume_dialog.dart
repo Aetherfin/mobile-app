@@ -57,9 +57,9 @@ void showVolumeDialog(BuildContext context, WidgetRef ref) {
               label: '${volume.round()}%',
               onChanged: (v) {
                 volume = v;
-                svc.setVolume(v);
                 setDialogState(() {});
               },
+              onChangeEnd: svc.setVolume,
             ),
           ),
           Text(
@@ -111,9 +111,10 @@ void showAudioDelayDialog(BuildContext context, WidgetRef ref) {
               label: '${delayMs.round()} ms',
               onChanged: (v) {
                 delayMs = v;
-                svc.setAudioDelay(Duration(milliseconds: v.round()));
                 setDialogState(() {});
               },
+              onChangeEnd: (v) =>
+                  svc.setAudioDelay(Duration(milliseconds: v.round())),
             ),
           ),
           Text(

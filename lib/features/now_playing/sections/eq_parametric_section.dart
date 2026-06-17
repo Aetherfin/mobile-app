@@ -248,9 +248,9 @@ class _EqParametricSectionState extends ConsumerState<EqParametricSection> {
           setState(() => _bands[index] = band);
           _set('parametricBand${index}Freq', band.frequency);
           _set('parametricBand${index}Gain', band.gain);
-          unawaited(widget.onApply());
         },
         onBandSelected: (_) {}, // Selection handled internally by curve view
+        onPanEnd: widget.onApply,
       ),
     );
   }
