@@ -65,7 +65,11 @@ while [[ $# -gt 0 ]]; do
     *)           EXTRA_ARGS+=("$1"); shift ;;
   esac
 done
-set -- "${EXTRA_ARGS[@]:-}"
+if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
+  set -- "${EXTRA_ARGS[@]}"
+else
+  set --
+fi
 
 [[ "$QUICK" == true ]] && set -- --skip-analyze --skip-test --skip-codegen "$@"
 
