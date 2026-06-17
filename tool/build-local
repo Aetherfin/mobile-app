@@ -257,7 +257,7 @@ if [[ "$BUILD_RC" -eq 0 && -d "$APK_DIR" ]]; then
   done
 fi
 
-# --- Telegram: success/fail ---
+# --- Step timing ---
 STEP_TIMING=""
 if [[ -f "$CACHE_DIR/step_times" ]]; then
   while IFS= read -r line; do
@@ -267,13 +267,12 @@ if [[ -f "$CACHE_DIR/step_times" ]]; then
   done < "$CACHE_DIR/step_times"
 fi
 
+# --- Telegram: success/fail ---
 if [[ "$HAS_TG" == true ]]; then
   if [[ "$BUILD_RC" -eq 0 ]]; then
     export TG_APK_DIR="$APK_DIR"
     export TG_BUILD_DURATION="$BUILD_DURATION"
     export TG_SMART_SKIPPED="$SMART_SKIPPED"
-    export TG_STEP_TIMING="$STEP_TIMING"
-    export TG_APK_SIZES="$APK_SIZES"
     "$PYTHON" "$ROOT/tool/telegram_notifier.py" success 2>/dev/null || true
   else
     "$PYTHON" "$ROOT/tool/telegram_notifier.py" fail 2>/dev/null || true

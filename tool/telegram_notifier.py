@@ -219,8 +219,6 @@ def success_message():
     commit = os.environ.get('TG_COMMIT', '')
     timestamp = os.environ.get('TG_TIMESTAMP', '')
     build_duration = os.environ.get('TG_BUILD_DURATION', '')
-    step_timing = os.environ.get('TG_STEP_TIMING', '')
-    apk_sizes = os.environ.get('TG_APK_SIZES', '')
     smart_skipped = os.environ.get('TG_SMART_SKIPPED', '')
 
     apk_files = sorted(glob.glob(os.path.join(apk_dir, "Aetherfin-v*arm64*.apk")))
@@ -263,16 +261,6 @@ def success_message():
         lines.append(f"<b>Last Commit:</b>")
         lines.append(f"<code>{sha}</code> \u2014 {commit}")
     lines.append("\u2500" * 12)
-
-    if step_timing:
-        lines.append("\U0001f4c5 <b>Step Timing:</b>")
-        lines.append(f"<pre>{step_timing.strip()}</pre>")
-        lines.append("")
-
-    if apk_sizes:
-        lines.append("\U0001f4e6 <b>APKs:</b>")
-        lines.append(f"<pre>{apk_sizes.strip()}</pre>")
-        lines.append("")
 
     if smart_skipped:
         lines.append(f"\u23ed <b>Skipped:</b> <code>{smart_skipped.strip()}</code>")
