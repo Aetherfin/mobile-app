@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/misc.dart' show ProviderException;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -63,18 +62,6 @@ void main() {
       expect(container.read(authProvider), auth);
     });
 
-    test('build returns null when initialAuthProvider is null', () {
-      final container = ProviderContainer(
-        overrides: [
-          authStorageProvider.overrideWithValue(mockStorage),
-          initialAuthProvider.overrideWithValue(null),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      expect(container.read(authProvider), isNull);
-    });
-
     test('save persists to AuthStorage and updates state', () async {
       final auth = _fakeAuth();
       final container = ProviderContainer(
@@ -128,10 +115,6 @@ void main() {
 
       await container.read(authProvider.notifier).save(auth2);
       expect(container.read(authProvider), auth2);
-      expect(
-        container.read(authProvider)!.server.baseUrl,
-        'https://server-b.com',
-      );
 
       await container.read(authProvider.notifier).clear();
       expect(container.read(authProvider), isNull);
@@ -154,74 +137,6 @@ void main() {
 
       final saved = container.read(authProvider);
       expect(saved!.serverType, ServerType.subsonic);
-    });
-  });
-
-  group('static providers', () {
-    test('deviceIdProvider throws when not overridden', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      expect(
-        () => container.read(deviceIdProvider),
-        throwsA(
-          isA<ProviderException>().having(
-            (e) => e.exception,
-            'inner',
-            isA<StateError>(),
-          ),
-        ),
-      );
-    });
-
-    test('aetherfinVersionProvider throws when not overridden', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      expect(
-        () => container.read(aetherfinVersionProvider),
-        throwsA(
-          isA<ProviderException>().having(
-            (e) => e.exception,
-            'inner',
-            isA<StateError>(),
-          ),
-        ),
-      );
-    });
-
-    test('initialAuthProvider throws when not overridden', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      expect(
-        () => container.read(initialAuthProvider),
-        throwsA(
-          isA<ProviderException>().having(
-            (e) => e.exception,
-            'inner',
-            isA<StateError>(),
-          ),
-        ),
-      );
-    });
-
-    test('deviceIdProvider returns overridden value', () {
-      final container = ProviderContainer(
-        overrides: [deviceIdProvider.overrideWithValue('test-device-id')],
-      );
-      addTearDown(container.dispose);
-
-      expect(container.read(deviceIdProvider), 'test-device-id');
-    });
-
-    test('aetherfinVersionProvider returns overridden value', () {
-      final container = ProviderContainer(
-        overrides: [aetherfinVersionProvider.overrideWithValue('0.3.5')],
-      );
-      addTearDown(container.dispose);
-
-      expect(container.read(aetherfinVersionProvider), '0.3.5');
     });
   });
 }

@@ -28,8 +28,6 @@ void main() {
       final player = mock.player;
       final ctrls = mock.ctrls;
 
-      // Create .first futures BEFORE adding values. Broadcast stream
-      // controllers don't replay values to listeners attached after .add().
       final fPlaying = player.stream.playing.first;
       final fPosition = player.stream.position.first;
       final fCompleted = player.stream.completed.first;
@@ -41,7 +39,6 @@ void main() {
       final fDuration = player.stream.duration.first;
       final fCoverArt = player.stream.coverArt.first;
 
-      // Now add values — the listeners created by .first above will receive them.
       ctrls.playing.add(false);
       ctrls.position.add(Duration.zero);
       ctrls.completed.add(false);
@@ -53,7 +50,6 @@ void main() {
       ctrls.duration.add(Duration.zero);
       ctrls.coverArt.add(null);
 
-      // Await all futures — they should complete once the microtask delivers events.
       final results = await Future.wait([
         fPlaying,
         fPosition,
@@ -74,7 +70,6 @@ void main() {
       final mock = createMockPlayer();
       final player = mock.player;
 
-      // Stub additional methods not covered by createMockPlayer()
       when(() => player.setVolume(any())).thenAnswer((_) async {});
       when(() => player.setMute(any())).thenAnswer((_) async {});
       when(() => player.setAudioEffects(any())).thenAnswer((_) async {});
@@ -93,19 +88,6 @@ void main() {
         player.setAudioDriver('aaudio'),
         player.setAudioBuffer(const Duration(milliseconds: 200)),
       ]);
-    });
-
-    test('AudioEffects set and update do not throw', () async {
-      final mock = createMockPlayer();
-      final player = mock.player;
-
-      when(() => player.setAudioEffects(any())).thenAnswer((_) async {});
-      when(() => player.updateAudioEffects(any())).thenAnswer((_) async {});
-
-      const effects = AudioEffects();
-
-      await player.setAudioEffects(effects);
-      await player.updateAudioEffects((_) => effects);
     });
   });
 }

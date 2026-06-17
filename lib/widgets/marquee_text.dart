@@ -110,8 +110,7 @@ class MarqueeTextState extends State<MarqueeText>
 
         final totalWidth = _offset + textWidth;
         final lineHeight =
-            (widget.style.fontSize ?? 14) *
-            (widget.style.height ?? 1.4);
+            (widget.style.fontSize ?? 14) * (widget.style.height ?? 1.4);
         return RepaintBoundary(
           child: ClipRect(
             child: SizedBox(

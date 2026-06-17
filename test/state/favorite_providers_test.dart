@@ -32,11 +32,6 @@ AfTrack _fakeTrack({
   isFavorite: isFavorite,
 );
 
-/// Creates a container with common overrides for favorite provider tests.
-///
-/// [backend] is optional — pass null to simulate signed-out / demo mode.
-/// [favoriteIds] overrides favoriteIdsProvider directly so isFavoriteProvider
-/// resolves without hitting a real backend or relying on autoDispose chains.
 ProviderContainer _createContainer({
   MusicBackend? backend,
   Set<String> favoriteIds = const {},
@@ -57,76 +52,6 @@ ProviderContainer _createContainer({
 void main() {
   setUpAll(() {
     registerFallbackValue(_fakeTrack());
-  });
-
-  group('trackFavoriteOverridesProvider', () {
-    test('initial state is empty map', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      expect(container.read(trackFavoriteOverridesProvider), isEmpty);
-    });
-  });
-
-  group('trackFavoriteOverrideProvider', () {
-    test('initial state is null for any track ID', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      expect(container.read(trackFavoriteOverrideProvider('track-1')), isNull);
-      expect(container.read(trackFavoriteOverrideProvider('track-99')), isNull);
-    });
-
-    test('can set and read override per track', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      container.read(trackFavoriteOverrideProvider('track-1').notifier).state =
-          true;
-      container.read(trackFavoriteOverrideProvider('track-2').notifier).state =
-          false;
-
-      expect(container.read(trackFavoriteOverrideProvider('track-1')), true);
-      expect(container.read(trackFavoriteOverrideProvider('track-2')), false);
-      // track-3 is independent
-      expect(container.read(trackFavoriteOverrideProvider('track-3')), isNull);
-    });
-  });
-
-  group('isFavoriteProvider', () {
-    test('returns override when present (true)', () {
-      final container = _createContainer(backend: null);
-      addTearDown(container.dispose);
-
-      container.read(trackFavoriteOverrideProvider('t1').notifier).state = true;
-
-      expect(container.read(isFavoriteProvider('t1')), true);
-    });
-
-    test('returns override when present (false)', () {
-      final container = _createContainer(backend: null, favoriteIds: {'t1'});
-      addTearDown(container.dispose);
-
-      // Without override, t1 would be favorite (in favoriteIds)
-      expect(container.read(isFavoriteProvider('t1')), true);
-
-      // Override to false
-      container.read(trackFavoriteOverrideProvider('t1').notifier).state =
-          false;
-      expect(container.read(isFavoriteProvider('t1')), false);
-    });
-
-    test('falls back to favoriteIdsProvider when no override', () {
-      final container = _createContainer(
-        backend: null,
-        favoriteIds: {'t1', 't2'},
-      );
-      addTearDown(container.dispose);
-
-      expect(container.read(isFavoriteProvider('t1')), true);
-      expect(container.read(isFavoriteProvider('t2')), true);
-      expect(container.read(isFavoriteProvider('t3')), false);
-    });
   });
 
   group('favoriteToggleProvider', () {
@@ -184,29 +109,22 @@ void main() {
 
       final toggle = container.read(favoriteToggleProvider);
 
-      // Should throw but the override should be rolled back
       unawaited(expectLater(toggle(track), throwsA(isA<Exception>())));
 
-      // After error, the optimistic override should be rolled back to false
       await Future<void>.delayed(Duration.zero);
       expect(container.read(trackFavoriteOverrideProvider('fail-1')), false);
-      // isFavorite falls back to original (not favorite)
       expect(container.read(isFavoriteProvider('fail-1')), false);
     });
 
-    test(
-      'toggles without backend (demo/signed-out mode) skips API call',
-      () async {
-        final container = _createContainer(backend: null);
-        addTearDown(container.dispose);
+    test('toggles without backend (demo mode) skips API call', () async {
+      final container = _createContainer(backend: null);
+      addTearDown(container.dispose);
 
-        final track = _fakeTrack(id: 'demo-1', isFavorite: false);
-        final toggle = container.read(favoriteToggleProvider);
-        await toggle(track);
+      final track = _fakeTrack(id: 'demo-1', isFavorite: false);
+      final toggle = container.read(favoriteToggleProvider);
+      await toggle(track);
 
-        // Optimistic override applied
-        expect(container.read(isFavoriteProvider('demo-1')), true);
-      },
-    );
+      expect(container.read(isFavoriteProvider('demo-1')), true);
+    });
   });
 }

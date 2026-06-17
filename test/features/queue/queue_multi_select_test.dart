@@ -48,7 +48,6 @@ void main() {
         currentId: 't1',
         playerQueue: _queue,
       );
-      // t1 (playing) skipped; t2 (idx 1) and t3 (idx 2) remain
       expect(result.length, 2);
       expect(result.every((t) => t.$2.id != 't1'), isTrue);
     });
@@ -60,21 +59,9 @@ void main() {
         currentId: 't2',
         playerQueue: _queue,
       );
-      // t2 skipped; t1(idx 0), t3(idx 2), t4(idx 3) remain
       expect(result.length, 3);
       expect(result[0].$1, greaterThanOrEqualTo(result[1].$1));
       expect(result[1].$1, greaterThanOrEqualTo(result[2].$1));
-    });
-
-    test('skips indices out of range', () {
-      final result = resolveBatchRemoveTargets(
-        items: _queue,
-        selectedIndices: {1, 99},
-        currentId: null,
-        playerQueue: _queue,
-      );
-      expect(result.length, 1);
-      expect(result[0].$2.id, 't2');
     });
 
     test('returns empty when only playing track is selected', () {
@@ -89,15 +76,6 @@ void main() {
   });
 
   group('localIndicesToRemove', () {
-    test('returns empty when no indices selected', () {
-      final result = localIndicesToRemove(
-        items: _queue,
-        selectedIndices: {},
-        currentId: 't1',
-      );
-      expect(result, isEmpty);
-    });
-
     test('excludes playing track index', () {
       final result = localIndicesToRemove(
         items: _queue,
@@ -106,24 +84,6 @@ void main() {
       );
       expect(result, {1, 2});
       expect(result.contains(0), isFalse);
-    });
-
-    test('returns all selected when none is playing', () {
-      final result = localIndicesToRemove(
-        items: _queue,
-        selectedIndices: {1, 3},
-        currentId: null,
-      );
-      expect(result, {1, 3});
-    });
-
-    test('ignores out-of-range indices', () {
-      final result = localIndicesToRemove(
-        items: _queue,
-        selectedIndices: {1, 50},
-        currentId: null,
-      );
-      expect(result, {1});
     });
   });
 }

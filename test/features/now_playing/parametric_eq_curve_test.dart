@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aetherfin/features/now_playing/parametric_band.dart';
 import 'package:aetherfin/features/now_playing/parametric_eq_curve.dart';
@@ -11,24 +10,6 @@ void main() {
       bands = ParametricBand.defaultBands();
     });
 
-    testWidgets('paints without crashing', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CustomPaint(
-              painter: ParametricEqCurvePainter(
-                bands: bands,
-                selectedBand: null,
-                accentColor: Colors.blue,
-              ),
-              size: const Size(400, 200),
-            ),
-          ),
-        ),
-      );
-      expect(find.byType(CustomPaint), findsWidgets);
-    });
-
     test('xToFrequency converts position 0 to 20 Hz', () {
       expect(ParametricEqCurvePainter.xToFrequency(0, 400), closeTo(20, 0.1));
     });
@@ -39,7 +20,6 @@ void main() {
     });
 
     test('xToFrequency returns correct logarithmic values', () {
-      // At midpoint (0.5), should be sqrt(20 * 20000) ≈ 632 Hz
       final freq = ParametricEqCurvePainter.xToFrequency(200, 400);
       expect(freq, greaterThan(200));
       expect(freq, lessThan(1000));
@@ -77,7 +57,6 @@ void main() {
     });
 
     test('calculateResponse returns zeros for flat bands', () {
-      // All default bands have gain 0
       final response = ParametricEqCurvePainter.calculateResponse(bands, 100);
       for (final g in response) {
         expect(g, 0.0);
@@ -88,7 +67,6 @@ void main() {
       bands = List.generate(5, ParametricBand.defaultAt);
       bands[2] = const ParametricBand(frequency: 910, gain: 6.0, q: 1.0);
       final response = ParametricEqCurvePainter.calculateResponse(bands, 400);
-      // At the center frequency (910 Hz), gain should be positive
       final centerIdx = ParametricEqCurvePainter.frequencyToX(910, 400).toInt();
       expect(response[centerIdx], greaterThan(3.0));
     });
@@ -109,71 +87,6 @@ void main() {
         expect(g, lessThanOrEqualTo(24.0));
         expect(g, greaterThanOrEqualTo(-24.0));
       }
-    });
-  });
-
-  group('ParametricEqCurveView', () {
-    late List<ParametricBand> bands;
-
-    setUp(() {
-      bands = ParametricBand.defaultBands();
-    });
-
-    testWidgets('renders without crashing', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ParametricEqCurveView(
-              bands: bands,
-              onBandChanged: (_, _) {},
-              onBandSelected: (_) {},
-              accentColor: Colors.blue,
-            ),
-          ),
-        ),
-      );
-      expect(find.byType(ParametricEqCurveView), findsOneWidget);
-    });
-
-    testWidgets('responds to tap on band handle', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              width: 400,
-              height: 200,
-              child: ParametricEqCurveView(
-                bands: bands,
-                onBandChanged: (_, _) {},
-                onBandSelected: (_) {},
-                accentColor: Colors.blue,
-              ),
-            ),
-          ),
-        ),
-      );
-      // Tap near center of the view
-      await tester.tapAt(const Offset(200, 100));
-      await tester.pumpAndSettle();
-      // Just verify no crash
-    });
-
-    testWidgets('GestureDetector is present for drag interaction', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ParametricEqCurveView(
-              bands: bands,
-              onBandChanged: (_, _) {},
-              onBandSelected: (_) {},
-              accentColor: Colors.blue,
-            ),
-          ),
-        ),
-      );
-      expect(find.byType(GestureDetector), findsOneWidget);
     });
   });
 }

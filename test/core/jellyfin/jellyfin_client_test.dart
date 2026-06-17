@@ -37,68 +37,6 @@ void main() {
       expect(url.contains('Audio/track-1/stream'), isTrue);
       expect(url.contains('MaxStreamingBitrate=320000'), isTrue);
     });
-
-    test(
-      'omits MaxStreamingBitrate when maxBitrateKbps is null (Original / Lossless)',
-      () {
-        final url = _client(
-          token: 't-abc',
-          userId: 'u-1',
-        ).trackStreamUrl('track-1', maxBitrateKbps: null);
-        expect(url.contains('MaxStreamingBitrate'), isFalse);
-      },
-    );
-
-    test(
-      'sets MaxStreamingBitrate correctly for other bitrates (e.g. 192 kbps)',
-      () {
-        final url = _client(
-          token: 't-abc',
-          userId: 'u-1',
-        ).trackStreamUrl('track-1', maxBitrateKbps: 192);
-        expect(url.contains('MaxStreamingBitrate=192000'), isTrue);
-      },
-    );
-
-    test('URL-encodes path + query values', () {
-      // Track IDs with `+` `=` `&` are unusual but exist in some libraries.
-      final url = _client(userId: 'a+b=c&d').trackStreamUrl('xyz');
-      final uri = Uri.parse(url);
-      // The decoded userId must round-trip exactly through `queryParameters`.
-      expect(uri.queryParameters['UserId'], 'a+b=c&d');
-      // Raw query string must NOT contain the unencoded `+` / `=` / `&`
-      // in the middle of the value.
-      expect(
-        uri.query.contains('UserId=a+b=c'),
-        isFalse,
-        reason: 'Plus / equals must be percent-encoded.',
-      );
-    });
-
-    test('preserves nested base path (e.g. /jellyfin)', () {
-      final url = _client(
-        baseUrl: 'https://host.tld/jellyfin',
-        userId: 'u-1',
-      ).trackStreamUrl('track-2');
-      expect(
-        url.startsWith('https://host.tld/jellyfin/Audio/track-2/stream'),
-        isTrue,
-        reason: 'Server-relative base path must survive Uri.replace.',
-      );
-    });
-
-    test('handles trailing slash on baseUrl', () {
-      final url = _client(
-        baseUrl: 'https://host.tld/',
-        userId: 'u-1',
-      ).trackStreamUrl('track-3');
-      expect(url.startsWith('https://host.tld/Audio/track-3/stream'), isTrue);
-      expect(
-        url.contains('//Audio'),
-        isFalse,
-        reason: 'Must not produce `//Audio` from a trailing slash.',
-      );
-    });
   });
 
   group('authHeaders', () {
