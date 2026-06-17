@@ -92,7 +92,10 @@ fi
 # ---------------------------------------------------------------------------
 if [ "$HAS_TG" = true ]; then
   echo ""
-  $PYTHON "$ROOT/tool/telegram_notifier.py" init 2>/dev/null || true
+  TG_INIT_OUTPUT=$($PYTHON "$ROOT/tool/telegram_notifier.py" init 2>/dev/null || true)
+  echo "$TG_INIT_OUTPUT"
+  TG_MESSAGE_ID=$(echo "$TG_INIT_OUTPUT" | grep "TG_MESSAGE_ID=" | cut -d= -f2)
+  export TG_MESSAGE_ID
 fi
 
 # ---------------------------------------------------------------------------
