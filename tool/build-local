@@ -107,7 +107,10 @@ fi
 # --- Load secrets ---
 if [[ -f "$SECRETS_FILE" ]]; then
   log_info "Loading secrets from .env.secrets ..."
-  set -a; # shellcheck disable=SC1090; source "$SECRETS_FILE"; set +a
+  set -a
+  # shellcheck disable=SC1090
+  source "$SECRETS_FILE"
+  set +a
 else
   log_warn "No .env.secrets — unsigned build, no Telegram."
   log_warn "Run: bash tool/setup-secrets /path/to/release.jks"
