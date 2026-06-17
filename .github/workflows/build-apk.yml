@@ -11,11 +11,6 @@ on:
           - release
           - debug
           - profile
-      split_per_abi:
-        description: "Split APK per ABI (smaller per-device APKs)"
-        type: boolean
-        default: false
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -105,9 +100,7 @@ jobs:
           if [ "${{ inputs.build_mode }}" = "release" ]; then
             args="$args --sign"
           fi
-          if [ "${{ inputs.split_per_abi }}" = "true" ]; then
-            args="$args --split-per-abi --no-universal"
-          fi
+          args="$args --split-per-abi --no-universal"
           bash tool/build $args
 
       - name: Upload APK artifact
