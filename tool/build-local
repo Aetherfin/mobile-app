@@ -207,10 +207,11 @@ STEPS=("Install dependencies" "Generate build ID" "Run code generation" "Static 
 STEP_COUNT=${#STEPS[@]}
 
 # Timing
-BUILD_START=$(date +%s%N)
 current_step=0
 last_step=""
-step_start=$BUILD_START_TS
+BUILD_START_TS=0
+step_start=0
+FIFO=""
 
 # Run build with real-time progress
 set +e
