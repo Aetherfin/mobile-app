@@ -173,10 +173,56 @@ if [ -d "$APK_DIR" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Run build
+# Run build with progress tracking
 # ---------------------------------------------------------------------------
 BUILD_RC=0
-bash "$ROOT/tool/build" --sign "$@" || BUILD_RC=$?
+BUILD_LOG=$(mktemp)
+trap 'rm -f "$BUILD_LOG"' EXIT
+
+tg_update() {
+  [ "$HAS_TG" = true ] && [ -n "${TG_MESSAGE_ID:-}" ] || return 0
+  export TG_STATUS_TEXT="$1"
+  export TG_ICON="${2:-🔨}"
+  $PYTHON "$ROOT/tool/telegram_notifier.py" update 2>/dev/null || true
+}
+
+progress_bar() {
+  local current=$1 total=$2
+  local pct=$((current * 100 / total))
+  local filled=$((current * 20 / total))
+  local empty=$((20 - filled))
+  local bar=""
+  for ((i=0; i<filled; i++)); do bar+="█"; done
+  for ((i=0; i<empty; i++)); do bar+="░"; done
+  echo "[$bar] $pct%"
+}
+
+# Build steps to track (order matters)
+STEPS=("Install dependencies" "Generate build ID" "Run code generation" "Static analysis" "Unit tests" "Configure signing" "Build universal" "Build per-ABI" "Rename APKs")
+STEP_COUNT=${#STEPS[@]}
+
+# Run build, capture output
+set +e
+bash "$ROOT/tool/build" --sign "$@" 2>&1 | tee "$BUILD_LOG"
+BUILD_RC=${PIPESTATUS[0]}
+set -e
+
+# Parse build log for step changes and update Telegram
+current_step=0
+last_step=""
+while IFS= read -r line; do
+  for step in "${STEPS[@]}"; do
+    if echo "$line" | grep -q "$step"; then
+      if [ "$step" != "$last_step" ]; then
+        last_step="$step"
+        current_step=$((current_step + 1))
+        bar=$(progress_bar "$current_step" "$STEP_COUNT")
+        tg_update "$bar $step"
+      fi
+      break
+    fi
+  done
+done < "$BUILD_LOG"
 
 # ---------------------------------------------------------------------------
 # Update smart skip markers
