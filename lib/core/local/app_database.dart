@@ -180,7 +180,10 @@ class LastfmSimilarCache extends Table {
 }
 
 @DriftDatabase(
-  include: {'track_search.drift'},
+  // ponytail: track_search.drift defines FTS5 triggers, but including it
+  // via Drift's codegen causes m.createAll() to run trigger creation before
+  // the virtual table exists. FTS5 creation is handled via raw SQL in
+  // onCreate and onUpgrade instead.
   tables: [
     Tracks,
     Folders,
