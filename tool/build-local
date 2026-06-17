@@ -67,8 +67,6 @@ while [[ $# -gt 0 ]]; do
 done
 if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
   set -- "${EXTRA_ARGS[@]}"
-else
-  set --
 fi
 
 [[ "$QUICK" == true ]] && set -- --skip-analyze --skip-test --skip-codegen "$@"
