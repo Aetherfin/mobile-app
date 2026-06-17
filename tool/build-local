@@ -81,7 +81,7 @@ smart_skip_analyze() {
 # Track what was smart-skipped
 SMART_SKIPPED=""
 
-if ! echo "$@" | grep -q "\-\-skip-codegen"; then
+if ! echo "$@" | grep -qF -- "--skip-codegen"; then
   if smart_skip_codegen; then
     echo "  ⏭ Smart skip: codegen (no schema changes)"
     SMART_SKIPPED+="codegen "
@@ -89,7 +89,7 @@ if ! echo "$@" | grep -q "\-\-skip-codegen"; then
   fi
 fi
 
-if ! echo "$@" | grep -q "\-\-skip-analyze"; then
+if ! echo "$@" | grep -qF -- "--skip-analyze"; then
   if smart_skip_analyze; then
     echo "  ⏭ Smart skip: analyze (no .dart changes)"
     SMART_SKIPPED+="analyze "
