@@ -40,7 +40,7 @@ object LauncherIconController {
             pm.setComponentEnabledSetting(
                 componentName,
                 state,
-                PackageManager.DONT_KILL_APP or PackageManager.FLAG_IMMUTABLE
+                PackageManager.DONT_KILL_APP
             )
         }
     }
