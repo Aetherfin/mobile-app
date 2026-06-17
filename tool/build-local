@@ -96,6 +96,18 @@ if [ "$HAS_TG" = true ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Clean old APKs
+# ---------------------------------------------------------------------------
+APK_DIR="$ROOT/build/app/outputs/flutter-apk"
+if [ -d "$APK_DIR" ]; then
+  OLD_APKS=$(find "$APK_DIR" -name "Aetherfin-v*.apk" 2>/dev/null | wc -l)
+  if [ "$OLD_APKS" -gt 0 ]; then
+    echo "  Cleaning $OLD_APKS old APK(s) ..."
+    rm -f "$APK_DIR"/Aetherfin-v*.apk
+  fi
+fi
+
+# ---------------------------------------------------------------------------
 # Run build
 # ---------------------------------------------------------------------------
 BUILD_RC=0
