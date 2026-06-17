@@ -231,8 +231,6 @@ def success_message():
         print(f"Uploading {apk_name} to gofile...")
         download_url = _upload_to_gofile(apk_path)
 
-    _delete_message(msg_id)
-
     icon = "\U0001f680" if tag else "\u2705"
     status = "Release Successful!" if tag else "Build Successful!"
 
@@ -283,13 +281,12 @@ def success_message():
     reply_markup = {"inline_keyboard": buttons} if buttons else {}
     _send_text(text, reply_markup)
 
+    _delete_message(msg_id)
+
 
 def fail_message():
-    """Delete progress message, then send NEW fail message."""
+    """Send fail message, then clean up progress message."""
     msg_id = os.environ.get('TG_MESSAGE_ID')
-
-    # Delete the progress message first
-    _delete_message(msg_id)
 
     tag = os.environ.get('TG_TAG', '')
     branch = os.environ.get('TG_BRANCH', 'unknown')
@@ -323,6 +320,8 @@ def fail_message():
     reply_markup = {"inline_keyboard": [buttons]} if buttons else {}
 
     _send_text(text, reply_markup)
+
+    _delete_message(msg_id)
 
 
 def main():
