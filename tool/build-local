@@ -13,6 +13,18 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BUILD_ID_FILE="$ROOT/lib/build_id.dart"
+
+# Restore build_id.dart after build (keeps working tree clean)
+if [ -f "$BUILD_ID_FILE" ]; then
+  BUILD_ID_WAS_TRACKED=true
+  BUILD_ID_ORIG=$(git -C "$ROOT" show HEAD:lib/build_id.dart 2>/dev/null || echo "")
+else
+  BUILD_ID_WAS_TRACKED=false
+  BUILD_ID_ORIG=""
+fi
+trap 'if [ "$BUILD_ID_WAS_TRACKED" = true ]; then git -C "$ROOT" checkout -- lib/build_id.dart 2>/dev/null; else rm -f "$BUILD_ID_FILE"; fi' EXIT
+
 REPO=$(git -C "$ROOT" remote get-url origin 2>/dev/null \
   | sed 's/.*github.com[:/]\(.*\)\.git/\1/' \
   | sed 's/.*github.com[:/]\(.*\)/\1/')
