@@ -152,6 +152,7 @@ class _LyricsListState extends ConsumerState<LyricsList> {
           final isActive = i == active;
           final line = widget.lrc.lines[i];
           return PressScale(
+            key: ValueKey('lyrics-$i'),
             onTap: widget.isSynced
                 ? () {
                     unawaited(HapticFeedback.selectionClick());

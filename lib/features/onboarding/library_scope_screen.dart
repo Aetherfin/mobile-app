@@ -105,6 +105,7 @@ class _LibraryScopeScreenState extends ConsumerState<LibraryScopeScreen> {
                           final v = _views[i];
                           final selected = _selected.contains(v.id);
                           return Container(
+                            key: ValueKey(_views[i].id),
                             decoration: BoxDecoration(
                               color: AfColors.surfaceRaised,
                               borderRadius: AfRadii.borderMd,

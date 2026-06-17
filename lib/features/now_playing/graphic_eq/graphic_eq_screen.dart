@@ -373,6 +373,7 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
       itemCount: 18,
       itemBuilder: (context, i) {
         return SizedBox(
+          key: ValueKey('eq-band-$i'),
           width: 44,
           child: _BandSlider(
             freq: freqLabels[i],

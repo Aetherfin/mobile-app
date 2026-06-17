@@ -109,7 +109,7 @@ void main() {
       });
     });
 
-    test('isSeeking flag resets after 300ms seek reset timer', () {
+    test('isSeeking flag resets after standard duration seek reset timer', () {
       fakeAsync((async) {
         final tracker = AfPositionTracker(
           player: player,
@@ -122,13 +122,13 @@ void main() {
         tracker.onSeek(const Duration(seconds: 5));
         expect(tracker.isSeeking, isTrue);
 
-        // Elapse 150ms: still seeking
-        async.elapse(const Duration(milliseconds: 150));
+        // Elapse 200ms: still seeking
+        async.elapse(const Duration(milliseconds: 200));
         async.flushMicrotasks();
         expect(tracker.isSeeking, isTrue);
 
-        // Elapse another 150ms: 300ms total, seeking resets to false
-        async.elapse(const Duration(milliseconds: 150));
+        // Elapse another 200ms: 400ms total, seeking resets to false
+        async.elapse(const Duration(milliseconds: 200));
         async.flushMicrotasks();
         expect(tracker.isSeeking, isFalse);
       });

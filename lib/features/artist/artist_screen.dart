@@ -519,6 +519,7 @@ class ArtistAllSongsScreen extends ConsumerWidget {
               itemBuilder: (context, i) {
                 final track = topTracks[i];
                 return TrackRow(
+                  key: ValueKey(track.id),
                   track: track,
                   leadingNumber: i + 1,
                   isActive: track.id == activeId,

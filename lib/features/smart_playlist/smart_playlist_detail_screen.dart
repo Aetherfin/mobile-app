@@ -197,6 +197,7 @@ class SmartPlaylistDetailScreen extends ConsumerWidget {
                   itemBuilder: (context, i) {
                     final t = tracks[i];
                     return Column(
+                      key: ValueKey(t.id),
                       children: [
                         TrackRow(
                           track: t,

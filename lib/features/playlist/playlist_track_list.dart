@@ -85,6 +85,7 @@ class PlaylistTrackList extends StatelessWidget {
     final isActive = t.id == activeId;
 
     Widget tile = Container(
+      key: ValueKey(t.id),
       decoration: BoxDecoration(
         color: isActive ? spectral.withValues(alpha: 0.08) : null,
       ),

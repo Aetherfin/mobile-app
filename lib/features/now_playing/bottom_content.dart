@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -183,10 +185,13 @@ class _BottomContentState extends ConsumerState<BottomContent>
                         itemBuilder: (context, index) {
                           final t = upNext[index];
                           return PressScale(
+                            key: ValueKey(t.id),
                             onTap: () {
-                              ref
-                                  .read(playerServiceProvider)
-                                  .skipToQueueItem(queue.indexOf(t));
+                              unawaited(
+                                ref
+                                    .read(playerServiceProvider)
+                                    .skipToQueueItem(queue.indexOf(t)),
+                              );
                             },
                             child: ListTile(
                               dense: true,

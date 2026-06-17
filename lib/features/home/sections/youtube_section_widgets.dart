@@ -60,6 +60,7 @@ class YouTubeSongGrid extends ConsumerWidget {
           final isActive = item.id == currentTrack?.id;
 
           return FocusPressScale(
+            key: ValueKey(item.id),
             ensureHitTarget: true,
             onTap: () => ref.read(playActionsProvider).playSingle(track),
             onLongPress: () => showTrackContextMenu(context, ref, track),

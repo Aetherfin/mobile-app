@@ -295,6 +295,7 @@ class _SaveToPlaylistSheetState extends ConsumerState<SaveToPlaylistSheet> {
                     itemBuilder: (context, i) {
                       final p = _playlists![i];
                       return ListTile(
+                        key: ValueKey(p.id),
                         leading: const Icon(
                           LucideIcons.listMusic,
                           color: AfColors.indigo300,

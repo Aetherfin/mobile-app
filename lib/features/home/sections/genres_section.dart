@@ -110,6 +110,7 @@ class GenresSection extends ConsumerWidget {
                       _genreIcons[g.name.toLowerCase()] ?? LucideIcons.music;
 
                   return _ExpressiveGenreCard(
+                    key: ValueKey(g.name),
                     label: g.name,
                     icon: icon,
                     gradient: gradient,
@@ -132,7 +133,8 @@ class GenresSection extends ConsumerWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: 6,
-              itemBuilder: (_, _) => const SkeletonBlock(
+              itemBuilder: (_, i) => SkeletonBlock(
+                key: ValueKey('genre-skel-$i'),
                 width: 160,
                 height: 80,
                 borderRadius: AfRadii.borderMd,
@@ -156,6 +158,7 @@ class GenresSection extends ConsumerWidget {
 /// Expressive genre card with bold gradient and icon.
 class _ExpressiveGenreCard extends StatelessWidget {
   const _ExpressiveGenreCard({
+    super.key,
     required this.label,
     required this.icon,
     required this.gradient,

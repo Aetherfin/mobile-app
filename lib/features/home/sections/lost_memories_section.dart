@@ -53,6 +53,7 @@ class LostMemoriesSection extends ConsumerWidget {
                 itemBuilder: (context, i) {
                   final t = tracks[i];
                   return _LostMemoryTile(
+                    key: ValueKey(t.id),
                     track: t,
                     onTap: () => ref.read(playActionsProvider).playSingle(t),
                     onLongPress: () => showTrackContextMenu(context, ref, t),
@@ -81,6 +82,7 @@ class LostMemoriesSection extends ConsumerWidget {
 /// Lost memory tile with vignette edges.
 class _LostMemoryTile extends ConsumerWidget {
   const _LostMemoryTile({
+    super.key,
     required this.track,
     required this.onTap,
     required this.onLongPress,

@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -413,10 +415,13 @@ class _QueuePane extends ConsumerWidget {
                 final t = upNext[index];
                 final isCurrent = t.id == track.id;
                 return PressScale(
+                  key: ValueKey(t.id),
                   onTap: () {
-                    ref
-                        .read(playerServiceProvider)
-                        .skipToQueueItem(queue.indexOf(t));
+                    unawaited(
+                      ref
+                          .read(playerServiceProvider)
+                          .skipToQueueItem(queue.indexOf(t)),
+                    );
                   },
                   child: ListTile(
                     dense: true,

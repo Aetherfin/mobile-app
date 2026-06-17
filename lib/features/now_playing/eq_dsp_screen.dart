@@ -10,6 +10,7 @@ import '../../core/audio/player_settings_store.dart';
 import '../../design_tokens/tokens.dart';
 import '../../utils/display_error.dart';
 import '../../widgets/af_dialog.dart';
+import '../../widgets/press_scale.dart';
 import '../../state/providers.dart';
 import 'eq_band_logic.dart';
 import 'eq_dsp_sections.dart';
@@ -438,58 +439,60 @@ class _EqDspScreenState extends ConsumerState<EqDspScreen> {
   }) {
     return Material(
       color: Colors.transparent,
-      child: InkWell(
+      child: PressScale(
         onTap: onTap,
-        borderRadius: AfRadii.borderSm,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AfSpacing.s16,
-            vertical: AfSpacing.s12,
-          ),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AfColors.accentPrimary.withValues(alpha: 0.15),
-                AfColors.accentPrimary.withValues(alpha: 0.05),
-              ],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
+        child: InkWell(
+          borderRadius: AfRadii.borderSm,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AfSpacing.s16,
+              vertical: AfSpacing.s12,
             ),
-            borderRadius: AfRadii.borderSm,
-            border: Border.all(
-              color: AfColors.accentPrimary.withValues(alpha: 0.3),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AfColors.accentPrimary.withValues(alpha: 0.15),
+                  AfColors.accentPrimary.withValues(alpha: 0.05),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: AfRadii.borderSm,
+              border: Border.all(
+                color: AfColors.accentPrimary.withValues(alpha: 0.3),
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: AfColors.accentPrimary),
-              const SizedBox(width: AfSpacing.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AfTypography.titleSmall.copyWith(
-                        color: AfColors.accentPrimary,
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: AfColors.accentPrimary),
+                const SizedBox(width: AfSpacing.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AfTypography.titleSmall.copyWith(
+                          color: AfColors.accentPrimary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: AfSpacing.s2),
-                    Text(
-                      subtitle,
-                      style: AfTypography.bodySmall.copyWith(
-                        color: AfColors.textTertiary,
+                      const SizedBox(height: AfSpacing.s2),
+                      Text(
+                        subtitle,
+                        style: AfTypography.bodySmall.copyWith(
+                          color: AfColors.textTertiary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(
-                LucideIcons.chevronRight,
-                size: 16,
-                color: AfColors.textTertiary,
-              ),
-            ],
+                const Icon(
+                  LucideIcons.chevronRight,
+                  size: 16,
+                  color: AfColors.textTertiary,
+                ),
+              ],
+            ),
           ),
         ),
       ),

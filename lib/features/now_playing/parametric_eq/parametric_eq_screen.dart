@@ -14,6 +14,7 @@ import '../../../utils/display_error.dart';
 import '../../../utils/log.dart';
 import '../../../widgets/af_dialog.dart';
 import '../../../widgets/af_loading_indicator.dart';
+import '../../../widgets/press_scale.dart';
 import 'package:aetherfin/core/audio/models/parametric_eq_state.dart';
 import '../parametric_presets.dart';
 
@@ -945,96 +946,98 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
     return Material(
       color: AfColors.surfaceBase,
       borderRadius: AfRadii.borderSm,
-      child: InkWell(
-        borderRadius: AfRadii.borderSm,
+      child: PressScale(
         onTap: _showBandPicker,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AfSpacing.s12,
-            vertical: AfSpacing.s8,
-          ),
-          child: Row(
-            children: [
-              // Color indicator
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: _bandColor(_selectedBand),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: AfSpacing.s8),
-              Text(
-                'Band ${_selectedBand + 1}',
-                style: AfTypography.bodyMedium.copyWith(
-                  color: AfColors.textPrimary,
-                ),
-              ),
-              const SizedBox(width: AfSpacing.s4),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AfSpacing.s8,
-                  vertical: AfSpacing.s2,
-                ),
-                decoration: BoxDecoration(
-                  color: _bandColor(_selectedBand).withValues(alpha: 0.15),
-                  borderRadius: AfRadii.borderPill,
-                ),
-                child: Text(
-                  _formatFrequency(selected.frequency),
-                  style: AfTypography.caption.copyWith(
+        child: InkWell(
+          borderRadius: AfRadii.borderSm,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AfSpacing.s12,
+              vertical: AfSpacing.s8,
+            ),
+            child: Row(
+              children: [
+                // Color indicator
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
                     color: _bandColor(_selectedBand),
+                    shape: BoxShape.circle,
                   ),
                 ),
-              ),
-              const Spacer(),
-              // Enable/disable toggle
-              Semantics(
-                toggled: selected.enabled,
-                label:
-                    'Band ${_selectedBand + 1}: ${selected.enabled ? "on" : "off"}',
-                child: GestureDetector(
-                  onTap: () => _onToggleBand(_selectedBand),
-                  child: AnimatedContainer(
-                    duration: AfDurations.quick,
-                    curve: AfCurves.easeStandard,
-                    width: 48,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: selected.enabled
-                          ? _bandColor(_selectedBand)
-                          : AfColors.surfaceHigh,
-                      borderRadius: AfRadii.borderPill,
+                const SizedBox(width: AfSpacing.s8),
+                Text(
+                  'Band ${_selectedBand + 1}',
+                  style: AfTypography.bodyMedium.copyWith(
+                    color: AfColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(width: AfSpacing.s4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AfSpacing.s8,
+                    vertical: AfSpacing.s2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _bandColor(_selectedBand).withValues(alpha: 0.15),
+                    borderRadius: AfRadii.borderPill,
+                  ),
+                  child: Text(
+                    _formatFrequency(selected.frequency),
+                    style: AfTypography.caption.copyWith(
+                      color: _bandColor(_selectedBand),
                     ),
-                    child: AnimatedAlign(
+                  ),
+                ),
+                const Spacer(),
+                // Enable/disable toggle
+                Semantics(
+                  toggled: selected.enabled,
+                  label:
+                      'Band ${_selectedBand + 1}: ${selected.enabled ? "on" : "off"}',
+                  child: GestureDetector(
+                    onTap: () => _onToggleBand(_selectedBand),
+                    child: AnimatedContainer(
                       duration: AfDurations.quick,
-                      alignment: selected.enabled
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
                       curve: AfCurves.easeStandard,
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: AfSpacing.s2,
-                        ),
-                        decoration: const BoxDecoration(
-                          color: AfColors.textPrimary,
-                          shape: BoxShape.circle,
+                      width: 48,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: selected.enabled
+                            ? _bandColor(_selectedBand)
+                            : AfColors.surfaceHigh,
+                        borderRadius: AfRadii.borderPill,
+                      ),
+                      child: AnimatedAlign(
+                        duration: AfDurations.quick,
+                        alignment: selected.enabled
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        curve: AfCurves.easeStandard,
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: AfSpacing.s2,
+                          ),
+                          decoration: const BoxDecoration(
+                            color: AfColors.textPrimary,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: AfSpacing.s8),
-              const Icon(
-                LucideIcons.chevronDown,
-                size: 16,
-                color: AfColors.textTertiary,
-              ),
-            ],
+                const SizedBox(width: AfSpacing.s8),
+                const Icon(
+                  LucideIcons.chevronDown,
+                  size: 16,
+                  color: AfColors.textTertiary,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1098,6 +1101,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                     final b = _eqState.bands[index];
                     final isSelected = index == _selectedBand;
                     return ListTile(
+                      key: ValueKey('peq-band-$index'),
                       dense: true,
                       leading: Container(
                         width: 12,

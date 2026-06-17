@@ -111,6 +111,7 @@ class ArtistsSection extends ConsumerWidget {
                       itemBuilder: (context, i) {
                         final a = rest[i];
                         return Semantics(
+                          key: ValueKey(a.id),
                           button: true,
                           label: 'Artist: ${a.name}',
                           hint: 'Double tap to open artist',
@@ -412,19 +413,21 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return PressScale(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AfSpacing.gutterGenerous,
-          vertical: AfSpacing.s12,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: AfColors.textPrimary),
-            const SizedBox(width: AfSpacing.s12),
-            Text(label, style: AfTypography.bodyMedium),
-          ],
+      child: InkWell(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AfSpacing.gutterGenerous,
+            vertical: AfSpacing.s12,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: AfColors.textPrimary),
+              const SizedBox(width: AfSpacing.s12),
+              Text(label, style: AfTypography.bodyMedium),
+            ],
+          ),
         ),
       ),
     );
