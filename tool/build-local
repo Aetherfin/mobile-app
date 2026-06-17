@@ -1,195 +1,170 @@
 #!/usr/bin/env bash
 # tool/build-local — Local build with secrets + Telegram + smart features.
-#
-# Wraps tool/build, injecting keystore secrets from .env.secrets
-# and sending Telegram notifications on build start/success/fail.
-#
-# Usage:
-#   bash tool/build-local                          # release, split-per-abi
-#   bash tool/build-local --quick                  # skip analyze+test+codegen
-#   bash tool/build-local --mode debug             # debug, skip signing
-#   bash tool/build-local --install                # release + install on device
-#   bash tool/build-local --skip-test --skip-analyze  # manual skip
-#
-# Smart skip: codegen & analyze auto-skip if no relevant files changed.
-# Use --no-smart to disable.
-#
-set -euo pipefail
+set -Eeuo pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+
+# --- Structured Logging ---
+log_info()  { echo "  $*"; }
+log_warn()  { echo "  ⚠ $*" >&2; }
+log_error() { echo "  ✕ $*" >&2; }
+
+# --- Error Trap ---
+on_error() {
+  log_error "Error on line ${1:-unknown}"
+  cleanup
+  exit 1
+}
+trap 'on_error $LINENO' ERR
+
+# --- Cleanup ---
+FIFO=""
+BUILD_PID=""
+TAIL_PID=""
+cleanup() {
+  [[ -n "${FIFO:-}" ]] && rm -f "$FIFO"
+  [[ -n "${TAIL_PID:-}" ]] && kill "$TAIL_PID" 2>/dev/null || true
+  if [[ "${BUILD_ID_WAS_TRACKED:-false}" == true ]]; then
+    git -C "$ROOT" checkout -- lib/build_id.dart 2>/dev/null || true
+  elif [[ -f "$ROOT/lib/build_id.dart" ]]; then
+    rm -f "$ROOT/lib/build_id.dart"
+  fi
+}
+trap cleanup EXIT
+
+# --- Dependency Check ---
+check_deps() {
+  local -a missing=()
+  command -v python3 &>/dev/null || missing+=("python3")
+  command -v git &>/dev/null || missing+=("git")
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    log_error "Missing: ${missing[*]}"
+    exit 1
+  fi
+}
+check_deps
+
+# --- Constants ---
 BUILD_ID_FILE="$ROOT/lib/build_id.dart"
 SECRETS_FILE="$ROOT/.env.secrets"
 CACHE_DIR="$ROOT/.build-cache"
+APK_DIR="$ROOT/build/app/outputs/flutter-apk"
 PYTHON="python3"
-[ "$(command -v python3 2>/dev/null)" ] || PYTHON="python"
+command -v python3 &>/dev/null || PYTHON="python"
 
-# ---------------------------------------------------------------------------
-# Flags
-# ---------------------------------------------------------------------------
+# --- Flags ---
 QUICK=false
 NO_SMART=false
 EXTRA_ARGS=()
 
-for arg in "$@"; do
-  case "$arg" in
-    --quick)      QUICK=true; shift ;;
-    --no-smart)   NO_SMART=true; shift ;;
-    *)            EXTRA_ARGS+=("$arg") ;;
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --quick)     QUICK=true; shift ;;
+    --no-smart)  NO_SMART=true; shift ;;
+    --)          shift; EXTRA_ARGS+=("$@"); break ;;
+    *)           EXTRA_ARGS+=("$1"); shift ;;
   esac
 done
-set -- "${EXTRA_ARGS[@]}"
+set -- "${EXTRA_ARGS[@]:-}"
 
-# --quick = skip analyze + test + codegen
-if [ "$QUICK" = true ]; then
-  set -- --skip-analyze --skip-test --skip-codegen "$@"
-fi
+[[ "$QUICK" == true ]] && set -- --skip-analyze --skip-test --skip-codegen "$@"
 
-# ---------------------------------------------------------------------------
-# Restore build_id.dart after build (keeps working tree clean)
-# ---------------------------------------------------------------------------
-if [ -f "$BUILD_ID_FILE" ]; then
-  BUILD_ID_WAS_TRACKED=true
-else
-  BUILD_ID_WAS_TRACKED=false
-fi
-trap 'if [ "$BUILD_ID_WAS_TRACKED" = true ]; then git -C "$ROOT" checkout -- lib/build_id.dart 2>/dev/null; else rm -f "$BUILD_ID_FILE"; fi' EXIT
+# --- Build ID tracking ---
+BUILD_ID_WAS_TRACKED=false
+[[ -f "$BUILD_ID_FILE" ]] && BUILD_ID_WAS_TRACKED=true
 
-# ---------------------------------------------------------------------------
-# Smart skip detection
-# ---------------------------------------------------------------------------
+# --- Smart skip ---
 mkdir -p "$CACHE_DIR"
 
-smart_skip_codegen() {
-  [ "$NO_SMART" = true ] && return 1
-  [ ! -f "$CACHE_DIR/last_codegen" ] && return 1
-  local db_file="$ROOT/lib/core/local/app_database.dart"
-  local marker="$CACHE_DIR/last_codegen"
-  [ -f "$db_file" ] && [ "$db_file" -ot "$marker" ] && return 0
-  return 1
-}
-
-smart_skip_analyze() {
-  [ "$NO_SMART" = true ] && return 1
-  [ ! -f "$CACHE_DIR/last_analyze" ] && return 1
-  local marker="$CACHE_DIR/last_analyze"
-  local changed
-  changed=$(find "$ROOT/lib" -name "*.dart" -newer "$marker" 2>/dev/null | head -1)
-  [ -z "$changed" ] && return 0
-  return 1
-}
-
-# Track what was smart-skipped
 SMART_SKIPPED=""
-
-if ! echo "$@" | grep -qF -- "--skip-codegen"; then
-  if smart_skip_codegen; then
-    echo "  ⏭ Smart skip: codegen (no schema changes)"
-    SMART_SKIPPED+="codegen "
-    set -- --skip-codegen "$@"
+if [[ "$NO_SMART" != true ]] && ! echo "$*" | grep -qF -- "--skip-codegen"; then
+  if [[ -f "$CACHE_DIR/last_codegen" ]] && [[ -f "$ROOT/lib/core/local/app_database.dart" ]]; then
+    if [[ "$ROOT/lib/core/local/app_database.dart" -ot "$CACHE_DIR/last_codegen" ]]; then
+      log_info "⏭ Smart skip: codegen (no schema changes)"
+      SMART_SKIPPED+="codegen "
+      set -- --skip-codegen "$@"
+    fi
   fi
 fi
 
-if ! echo "$@" | grep -qF -- "--skip-analyze"; then
-  if smart_skip_analyze; then
-    echo "  ⏭ Smart skip: analyze (no .dart changes)"
-    SMART_SKIPPED+="analyze "
-    set -- --skip-analyze "$@"
+if [[ "$NO_SMART" != true ]] && ! echo "$*" | grep -qF -- "--skip-analyze"; then
+  if [[ -f "$CACHE_DIR/last_analyze" ]]; then
+    if ! find "$ROOT/lib" -name "*.dart" -newer "$CACHE_DIR/last_analyze" 2>/dev/null | head -1 | grep -q .; then
+      log_info "⏭ Smart skip: analyze (no .dart changes)"
+      SMART_SKIPPED+="analyze "
+      set -- --skip-analyze "$@"
+    fi
   fi
 fi
 
-if [ "$QUICK" = true ]; then
-  SMART_SKIPPED+="analyze test codegen (quick) "
-fi
+[[ "$QUICK" == true ]] && SMART_SKIPPED+="analyze test codegen (quick) "
 
-# ---------------------------------------------------------------------------
-# Load secrets from .env.secrets
-# ---------------------------------------------------------------------------
-if [ -f "$SECRETS_FILE" ]; then
-  echo "  Loading secrets from .env.secrets ..."
-  set -a
-  # shellcheck disable=SC1090
-  source "$SECRETS_FILE"
-  set +a
+# --- Load secrets ---
+if [[ -f "$SECRETS_FILE" ]]; then
+  log_info "Loading secrets from .env.secrets ..."
+  set -a; # shellcheck disable=SC1090; source "$SECRETS_FILE"; set +a
 else
-  echo "  ⚠ No .env.secrets found — building unsigned, no Telegram." 1>&2
-  echo "  Run: bash tool/setup-secrets /path/to/release.jks" 1>&2
+  log_warn "No .env.secrets — unsigned build, no Telegram."
+  log_warn "Run: bash tool/setup-secrets /path/to/release.jks"
 fi
 
-# ---------------------------------------------------------------------------
-# Telegram env vars (local context)
-# ---------------------------------------------------------------------------
+# --- Telegram env ---
 HAS_TG=false
-if [ -n "${TG_BOT_TOKEN:-}" ] && [ -n "${TG_CHAT_ID:-}" ]; then
-  HAS_TG=true
-fi
+[[ -n "${TG_BOT_TOKEN:-}" && -n "${TG_CHAT_ID:-}" ]] && HAS_TG=true
 
-if [ "$HAS_TG" = true ]; then
-  BRANCH=$(git -C "$ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-  SHORT_SHA=$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-  COMMIT_MSG=$(git -C "$ROOT" log -1 --pretty=format:"%s" 2>/dev/null | tr -d '_*`[]' || echo "")
-  BUILD_ID="unknown"
-  [ -f "$BUILD_ID_FILE" ] && BUILD_ID=$(grep "kBuildId" "$BUILD_ID_FILE" 2>/dev/null | sed "s/.*'\(.*\)'.*/\1/" || echo "unknown")
-  TIMESTAMP=$(TZ="Asia/Jakarta" date +"%Y-%m-%d %H:%M WIB")
-  MODE="release"
+if [[ "$HAS_TG" == true ]]; then
+  export TG_BRANCH
+  TG_BRANCH=$(git -C "$ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+  export TG_SHA
+  TG_SHA=$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+  export TG_COMMIT
+  TG_COMMIT=$(git -C "$ROOT" log -1 --pretty=format:"%s" 2>/dev/null | tr -d '_*`[]' || echo "")
+  export TG_BUILD_ID
+  TG_BUILD_ID="unknown"
+  [[ -f "$BUILD_ID_FILE" ]] && TG_BUILD_ID=$(grep "kBuildId" "$BUILD_ID_FILE" 2>/dev/null | sed "s/.*'\(.*\)'.*/\1/" || echo "unknown")
+  export TG_TIMESTAMP
+  TG_TIMESTAMP=$(TZ="Asia/Jakarta" date +"%Y-%m-%d %H:%M WIB")
+  export TG_MODE
+  TG_MODE="release"
   for i in $(seq 1 $#); do
     eval "arg=\${$i}"
-    if [ "$arg" = "--mode" ]; then
+    if [[ "$arg" == "--mode" ]]; then
       next=$((i + 1))
-      eval "MODE=\${$next}"
+      eval "TG_MODE=\${$next}"
     fi
   done
-
-  export TG_BRANCH="$BRANCH"
-  export TG_SHA="$SHORT_SHA"
-  export TG_COMMIT="$COMMIT_MSG"
-  export TG_BUILD_ID="$BUILD_ID"
-  export TG_MODE="$MODE"
-  export TG_ACTOR="$(whoami)@$(hostname)"
-  export TG_TIMESTAMP="$TIMESTAMP"
+  export TG_ACTOR
+  TG_ACTOR="$(whoami)@$(hostname)"
 fi
 
-# ---------------------------------------------------------------------------
-# Default to release + split-per-abi if no args given
-# ---------------------------------------------------------------------------
-if [ $# -eq 0 ]; then
-  set -- --mode release --split-per-abi --no-universal
-fi
+# --- Default args ---
+[[ $# -eq 0 ]] && set -- --mode release --split-per-abi --no-universal
 
-# ---------------------------------------------------------------------------
-# Notify: Build started
-# ---------------------------------------------------------------------------
-if [ "$HAS_TG" = true ]; then
+# --- Telegram: build started ---
+if [[ "$HAS_TG" == true ]]; then
   echo ""
-  TG_INIT_OUTPUT=$($PYTHON "$ROOT/tool/telegram_notifier.py" init 2>/dev/null || true)
+  TG_INIT_OUTPUT=$("$PYTHON" "$ROOT/tool/telegram_notifier.py" init 2>/dev/null || true)
   echo "$TG_INIT_OUTPUT"
-  TG_MESSAGE_ID=$(echo "$TG_INIT_OUTPUT" | grep "TG_MESSAGE_ID=" | cut -d= -f2)
+  TG_MESSAGE_ID=$(echo "$TG_INIT_OUTPUT" | grep "TG_MESSAGE_ID=" | cut -d= -f2 || echo "")
   export TG_MESSAGE_ID
 fi
 
-# ---------------------------------------------------------------------------
-# Clean old APKs
-# ---------------------------------------------------------------------------
-APK_DIR="$ROOT/build/app/outputs/flutter-apk"
-if [ -d "$APK_DIR" ]; then
-  OLD_APKS=$(find "$APK_DIR" -name "Aetherfin-v*.apk" 2>/dev/null | wc -l)
-  if [ "$OLD_APKS" -gt 0 ]; then
-    echo "  Cleaning $OLD_APKS old APK(s) ..."
+# --- Clean old APKs ---
+if [[ -d "$APK_DIR" ]]; then
+  OLD_COUNT=$(find "$APK_DIR" -name "Aetherfin-v*.apk" 2>/dev/null | wc -l)
+  if [[ "$OLD_COUNT" -gt 0 ]]; then
+    log_info "Cleaning $OLD_COUNT old APK(s) ..."
     rm -f "$APK_DIR"/Aetherfin-v*.apk
   fi
 fi
 
-# ---------------------------------------------------------------------------
-# Run build with progress tracking + timing
-# ---------------------------------------------------------------------------
-BUILD_RC=0
-trap 'rm -f "$FIFO"' EXIT
-
+# --- Build helpers ---
 tg_update() {
-  [ "$HAS_TG" = true ] && [ -n "${TG_MESSAGE_ID:-}" ] || return 0
+  [[ "$HAS_TG" == true && -n "${TG_MESSAGE_ID:-}" ]] || return 0
   (
     export TG_STATUS_TEXT="$1"
     export TG_ICON="${2:-🔨}"
-    $PYTHON "$ROOT/tool/telegram_notifier.py" update 2>/dev/null || true
+    "$PYTHON" "$ROOT/tool/telegram_notifier.py" update 2>/dev/null || true
   ) &
   disown
 }
@@ -205,76 +180,62 @@ progress_bar() {
   echo "[$bar] $pct%"
 }
 
-# Build steps to track
+# --- Run build ---
 STEPS=("Install dependencies" "Generate build ID" "Run code generation" "Static analysis" "Unit tests" "Configure signing" "Build universal" "Build per-ABI" "Rename APKs")
 STEP_COUNT=${#STEPS[@]}
-
-# Timing
 current_step=0
 last_step=""
-BUILD_START_TS=0
 step_start=0
-FIFO=""
 
-# Run build with real-time progress
-set +e
-BUILD_START_TS=$(date +%s)
+> "$CACHE_DIR/step_times"
 FIFO=$(mktemp -u)
 mkfifo "$FIFO"
-> "$CACHE_DIR/step_times"
 
-# Build writes to FIFO
-bash "$ROOT/tool/build" --sign "$@" > "$FIFO" 2>&1 &
+BUILD_START_TS=$(date +%s)
+set +e
+
+"$ROOT/tool/build" --sign "$@" > "$FIFO" 2>&1 &
 BUILD_PID=$!
 
-# Read FIFO in real-time, process + display
 while IFS= read -r line; do
   echo "$line"
   for step in "${STEPS[@]}"; do
     if echo "$line" | grep -q "$step"; then
-      if [ "$step" != "$last_step" ]; then
-        if [ -n "$last_step" ]; then
+      if [[ "$step" != "$last_step" ]]; then
+        if [[ -n "$last_step" ]]; then
           now=$(date +%s)
           echo "$last_step $(( now - step_start ))" >> "$CACHE_DIR/step_times"
           step_start=$now
         fi
         last_step="$step"
         current_step=$((current_step + 1))
-        bar=$(progress_bar "$current_step" "$STEP_COUNT")
-        tg_update "$bar $step"
+        tg_update "$(progress_bar "$current_step" "$STEP_COUNT") $step"
       fi
       break
     fi
   done
 done < "$FIFO"
 
-wait $BUILD_PID
+wait "$BUILD_PID"
 BUILD_RC=$?
-rm -f "$FIFO"
 set -e
 
+rm -f "$FIFO"
 BUILD_END_TS=$(date +%s)
 BUILD_DURATION=$(( (BUILD_END_TS - BUILD_START_TS) * 1000 ))
 
-if [ -n "$last_step" ]; then
-  echo "$last_step $(( BUILD_END_TS - step_start ))" >> "$CACHE_DIR/step_times"
+[[ -n "$last_step" ]] && echo "$last_step $(( BUILD_END_TS - step_start ))" >> "$CACHE_DIR/step_times"
+
+# --- Update smart skip markers ---
+if [[ "$BUILD_RC" -eq 0 ]]; then
+  touch "$CACHE_DIR/last_codegen" "$CACHE_DIR/last_analyze" 2>/dev/null || true
 fi
 
-# ---------------------------------------------------------------------------
-# Update smart skip markers
-# ---------------------------------------------------------------------------
-if [ "$BUILD_RC" -eq 0 ]; then
-  touch "$CACHE_DIR/last_codegen" 2>/dev/null || true
-  touch "$CACHE_DIR/last_analyze" 2>/dev/null || true
-fi
-
-# ---------------------------------------------------------------------------
-# Collect APK sizes
-# ---------------------------------------------------------------------------
+# --- Collect APK sizes ---
 APK_SIZES=""
-if [ "$BUILD_RC" -eq 0 ] && [ -d "$APK_DIR" ]; then
+if [[ "$BUILD_RC" -eq 0 && -d "$APK_DIR" ]]; then
   for apk in "$APK_DIR"/Aetherfin-v*.apk; do
-    [ -f "$apk" ] || continue
+    [[ -f "$apk" ]] || continue
     name=$(basename "$apk")
     size=$(stat -c%s "$apk" 2>/dev/null || stat -f%z "$apk" 2>/dev/null || echo 0)
     size_mb=$(echo "scale=1; $size / 1048576" | bc 2>/dev/null || echo "?")
@@ -282,71 +243,45 @@ if [ "$BUILD_RC" -eq 0 ] && [ -d "$APK_DIR" ]; then
   done
 fi
 
-# ---------------------------------------------------------------------------
-# Previous build size comparison
-# ---------------------------------------------------------------------------
-PREV_SIZES=""
-if [ -f "$CACHE_DIR/last_sizes" ]; then
-  PREV_SIZES=$(cat "$CACHE_DIR/last_sizes")
-fi
-
-# Save current sizes for next comparison
-if [ "$BUILD_RC" -eq 0 ] && [ -d "$APK_DIR" ]; then
-  > "$CACHE_DIR/last_sizes"
+# --- Save sizes for next comparison ---
+if [[ "$BUILD_RC" -eq 0 && -d "$APK_DIR" ]]; then
+  : > "$CACHE_DIR/last_sizes"
   for apk in "$APK_DIR"/Aetherfin-v*.apk; do
-    [ -f "$apk" ] || continue
-    name=$(basename "$apk")
-    size=$(stat -c%s "$apk" 2>/dev/null || stat -f%z "$apk" 2>/dev/null || echo 0)
-    echo "$name=$size" >> "$CACHE_DIR/last_sizes"
+    [[ -f "$apk" ]] || continue
+    echo "$(basename "$apk")=$(stat -c%s "$apk" 2>/dev/null || echo 0)" >> "$CACHE_DIR/last_sizes"
   done
 fi
 
-# ---------------------------------------------------------------------------
-# Notify: Success with detailed summary
-# ---------------------------------------------------------------------------
-if [ "$HAS_TG" = true ]; then
-  if [ "$BUILD_RC" -eq 0 ]; then
-    export TG_APK_DIR="$ROOT/build/app/outputs/flutter-apk"
+# --- Telegram: success/fail ---
+STEP_TIMING=""
+if [[ -f "$CACHE_DIR/step_times" ]]; then
+  while IFS=' ' read -r sname ssec; do
+    STEP_TIMING+="  $sname: $((ssec / 60))m $((ssec % 60))s"$'\n'
+  done < "$CACHE_DIR/step_times"
+fi
+
+if [[ "$HAS_TG" == true ]]; then
+  if [[ "$BUILD_RC" -eq 0 ]]; then
+    export TG_APK_DIR="$APK_DIR"
     export TG_BUILD_DURATION="$BUILD_DURATION"
     export TG_SMART_SKIPPED="$SMART_SKIPPED"
-
-    STEP_TIMING=""
-    if [ -f "$CACHE_DIR/step_times" ]; then
-      while IFS=' ' read -r sname ssec; do
-        mins=$(( ssec / 60 ))
-        secs=$(( ssec % 60 ))
-        STEP_TIMING+="  $sname: ${mins}m ${secs}s"$'\n'
-      done < "$CACHE_DIR/step_times"
-    fi
     export TG_STEP_TIMING="$STEP_TIMING"
     export TG_APK_SIZES="$APK_SIZES"
-
-    $PYTHON "$ROOT/tool/telegram_notifier.py" success 2>/dev/null || true
+    "$PYTHON" "$ROOT/tool/telegram_notifier.py" success 2>/dev/null || true
   else
-    $PYTHON "$ROOT/tool/telegram_notifier.py" fail 2>/dev/null || true
+    "$PYTHON" "$ROOT/tool/telegram_notifier.py" fail 2>/dev/null || true
   fi
 fi
 
-# ---------------------------------------------------------------------------
-# Print summary to terminal
-# ---------------------------------------------------------------------------
+# --- Terminal summary ---
 echo ""
 echo "────────────────────────────────────────"
 echo "  📊 Build Summary"
 echo ""
 echo "  Total: $(( BUILD_DURATION / 1000 / 60 ))m $(( BUILD_DURATION / 1000 % 60 ))s"
-echo ""
-if [ -n "$STEP_TIMING" ]; then
-  echo "  Steps:"
-  echo "$STEP_TIMING"
-fi
-if [ -n "$APK_SIZES" ]; then
-  echo "  APKs:"
-  echo "$APK_SIZES"
-fi
-if [ -n "$SMART_SKIPPED" ]; then
-  echo "  Smart skipped: $SMART_SKIPPED"
-fi
+[[ -n "$STEP_TIMING" ]] && echo -e "\n  Steps:\n$STEP_TIMING"
+[[ -n "$APK_SIZES" ]] && echo -e "\n  APKs:\n$APK_SIZES"
+[[ -n "$SMART_SKIPPED" ]] && echo "  Smart skipped: $SMART_SKIPPED"
 echo "────────────────────────────────────────"
 
 exit "$BUILD_RC"
