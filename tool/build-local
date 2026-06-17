@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# tool/build-local — Local build with secrets pulled from GitHub via gh CLI.
+#
+# Wraps tool/build, injecting keystore secrets automatically.
+# Requires: gh CLI authenticated to this repo.
+#
+# Usage:
+#   bash tool/build-local                          # release, split-per-abi
+#   bash tool/build-local --mode debug             # debug, skip signing
+#   bash tool/build-local --install                # release + install on device
+#   bash tool/build-local --skip-test --skip-analyze  # fast local build
+#
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO=$(git -C "$ROOT" remote get-url origin 2>/dev/null \
+  | sed 's/.*github.com[:/]\(.*\)\.git/\1/' \
+  | sed 's/.*github.com[:/]\(.*\)/\1/')
+
+if [ -z "$REPO" ]; then
+  echo "  ✕ Could not detect GitHub repo from git remote." 1>&2
+  exit 1
+fi
+
+echo "  Pulling secrets from $REPO ..."
+
+KEYSTORE_B64=$(gh secret get ANDROID_KEYSTORE_BASE64 -R "$REPO" 2>/dev/null || true)
+STORE_PASSWORD=$(gh secret get ANDROID_KEYSTORE_PASSWORD -R "$REPO" 2>/dev/null || true)
+KEY_ALIAS=$(gh secret get ANDROID_KEY_ALIAS -R "$REPO" 2>/dev/null || true)
+KEY_PASSWORD=$(gh secret get ANDROID_KEY_PASSWORD -R "$REPO" 2>/dev/null || true)
+
+if [ -z "$KEYSTORE_B64" ]; then
+  echo "  ⚠ Could not pull ANDROID_KEYSTORE_BASE64 — building unsigned." 1>&2
+fi
+
+# Default to release + split-per-abi if no args given
+if [ $# -eq 0 ]; then
+  set -- --mode release --split-per-abi --no-universal
+fi
+
+KEYSTORE_B64="$KEYSTORE_B64" \
+STORE_PASSWORD="$STORE_PASSWORD" \
+KEY_ALIAS="$KEY_ALIAS" \
+KEY_PASSWORD="$KEY_PASSWORD" \
+  exec bash "$ROOT/tool/build" --sign "$@"
