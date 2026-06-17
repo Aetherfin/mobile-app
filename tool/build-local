@@ -39,7 +39,7 @@ if [ -f "$SECRETS_FILE" ]; then
   set +a
 else
   echo "  ⚠ No .env.secrets found — building unsigned." 1>&2
-  echo "  Create $SECRETS_FILE with KEYSTORE_B64, STORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD" 1>&2
+  echo "  Run: bash tool/setup-secrets /path/to/release.jks" 1>&2
 fi
 
 # Default to release + split-per-abi if no args given
