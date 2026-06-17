@@ -34,32 +34,13 @@ void main() {
     return (container: container);
   }
 
-  /// Scrolls past the hero and drains AfScrollbar assertion errors.
+  /// Scrolls past the hero artwork.
   Future<void> scrollPastHero(WidgetTester tester) async {
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
     await tester.pumpAndSettle();
-    // AfScrollbar fires assertion errors asynchronously — drain them.
-    for (var i = 0; i < 5; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-      while (tester.takeException() != null) {}
-    }
   }
 
   group('AlbumScreen', () {
-    setUp(() {
-      // Suppress AfScrollbar's ScrollController assertion. Pre-existing issue:
-      // AfScrollbar uses PrimaryScrollController but AlbumScreen's
-      // CustomScrollView has its own ScrollController.
-      final prev = FlutterError.onError;
-      FlutterError.onError = (details) {
-        if (details.toString().contains('Scrollbar')) return;
-        prev?.call(details);
-      };
-    });
-
-    tearDown(() {
-      FlutterError.onError = null;
-    });
 
     // Run non-scroll tests first.
     testWidgets('null album shows "Album not found"', (tester) async {

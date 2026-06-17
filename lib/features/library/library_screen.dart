@@ -102,6 +102,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   maxWidth: AfLayout.maxContentWidth,
                 ),
                 child: AfScrollbar(
+                  controller: _scroll,
                   child: CustomScrollView(
                     controller: _scroll,
                     physics: const ClampingScrollPhysics(),

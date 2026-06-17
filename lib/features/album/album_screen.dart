@@ -99,6 +99,7 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen> {
                 ),
 
                 AfScrollbar(
+                  controller: _scroll,
                   child: CustomScrollView(
                     controller: _scroll,
                     physics: const ClampingScrollPhysics(),
