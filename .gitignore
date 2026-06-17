@@ -52,6 +52,7 @@ app.*.map.json
 .aider*
 .env
 .env.secrets
+.build-cache/
 tool/build_local.sh
 AGENTS.md
 .antigravitycli/

@@ -1,22 +1,48 @@
 #!/usr/bin/env bash
-# tool/build-local — Local build with secrets + Telegram notifications.
+# tool/build-local — Local build with secrets + Telegram + smart features.
 #
 # Wraps tool/build, injecting keystore secrets from .env.secrets
 # and sending Telegram notifications on build start/success/fail.
 #
 # Usage:
 #   bash tool/build-local                          # release, split-per-abi
+#   bash tool/build-local --quick                  # skip analyze+test+codegen
 #   bash tool/build-local --mode debug             # debug, skip signing
 #   bash tool/build-local --install                # release + install on device
-#   bash tool/build-local --skip-test --skip-analyze  # fast local build
+#   bash tool/build-local --skip-test --skip-analyze  # manual skip
+#
+# Smart skip: codegen & analyze auto-skip if no relevant files changed.
+# Use --no-smart to disable.
 #
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_ID_FILE="$ROOT/lib/build_id.dart"
 SECRETS_FILE="$ROOT/.env.secrets"
+CACHE_DIR="$ROOT/.build-cache"
 PYTHON="python3"
 [ "$(command -v python3 2>/dev/null)" ] || PYTHON="python"
+
+# ---------------------------------------------------------------------------
+# Flags
+# ---------------------------------------------------------------------------
+QUICK=false
+NO_SMART=false
+EXTRA_ARGS=()
+
+for arg in "$@"; do
+  case "$arg" in
+    --quick)      QUICK=true; shift ;;
+    --no-smart)   NO_SMART=true; shift ;;
+    *)            EXTRA_ARGS+=("$arg") ;;
+  esac
+done
+set -- "${EXTRA_ARGS[@]}"
+
+# --quick = skip analyze + test + codegen
+if [ "$QUICK" = true ]; then
+  set -- --skip-analyze --skip-test --skip-codegen "$@"
+fi
 
 # ---------------------------------------------------------------------------
 # Restore build_id.dart after build (keeps working tree clean)
@@ -27,6 +53,47 @@ else
   BUILD_ID_WAS_TRACKED=false
 fi
 trap 'if [ "$BUILD_ID_WAS_TRACKED" = true ]; then git -C "$ROOT" checkout -- lib/build_id.dart 2>/dev/null; else rm -f "$BUILD_ID_FILE"; fi' EXIT
+
+# ---------------------------------------------------------------------------
+# Smart skip detection
+# ---------------------------------------------------------------------------
+mkdir -p "$CACHE_DIR"
+
+smart_skip_codegen() {
+  [ "$NO_SMART" = true ] && return 1
+  [ ! -f "$CACHE_DIR/last_codegen" ] && return 1
+  # Check if app_database.dart changed since last codegen
+  local db_file="$ROOT/lib/core/local/app_database.dart"
+  local marker="$CACHE_DIR/last_codegen"
+  [ -f "$db_file" ] && [ "$db_file" -ot "$marker" ] && return 0
+  return 1
+}
+
+smart_skip_analyze() {
+  [ "$NO_SMART" = true ] && return 1
+  [ ! -f "$CACHE_DIR/last_analyze" ] && return 1
+  # Check if any .dart file changed since last analyze
+  local marker="$CACHE_DIR/last_analyze"
+  local changed
+  changed=$(find "$ROOT/lib" -name "*.dart" -newer "$marker" 2>/dev/null | head -1)
+  [ -z "$changed" ] && return 0
+  return 1
+}
+
+# Apply smart skip (only if user didn't manually override)
+if ! echo "$@" | grep -q "\-\-skip-codegen"; then
+  if smart_skip_codegen; then
+    echo "  ⏭ Smart skip: codegen (no schema changes)"
+    set -- --skip-codegen "$@"
+  fi
+fi
+
+if ! echo "$@" | grep -q "\-\-skip-analyze"; then
+  if smart_skip_analyze; then
+    echo "  ⏭ Smart skip: analyze (no .dart changes)"
+    set -- --skip-analyze "$@"
+  fi
+fi
 
 # ---------------------------------------------------------------------------
 # Load secrets from .env.secrets
@@ -58,11 +125,6 @@ if [ "$HAS_TG" = true ]; then
   [ -f "$BUILD_ID_FILE" ] && BUILD_ID=$(grep "kBuildId" "$BUILD_ID_FILE" 2>/dev/null | sed "s/.*'\(.*\)'.*/\1/" || echo "unknown")
   TIMESTAMP=$(TZ="Asia/Jakarta" date +"%Y-%m-%d %H:%M WIB")
   MODE="release"
-  for arg in "$@"; do
-    [ "$arg" = "--mode" ] && continue
-    [[ "$arg" =~ ^(release|debug|profile)$ ]] && MODE="$arg"
-  done
-  # Detect mode from --mode <value> pattern
   for i in $(seq 1 $#); do
     eval "arg=\${$i}"
     if [ "$arg" = "--mode" ]; then
@@ -115,6 +177,14 @@ fi
 # ---------------------------------------------------------------------------
 BUILD_RC=0
 bash "$ROOT/tool/build" --sign "$@" || BUILD_RC=$?
+
+# ---------------------------------------------------------------------------
+# Update smart skip markers
+# ---------------------------------------------------------------------------
+if [ "$BUILD_RC" -eq 0 ]; then
+  touch "$CACHE_DIR/last_codegen" 2>/dev/null || true
+  touch "$CACHE_DIR/last_analyze" 2>/dev/null || true
+fi
 
 # ---------------------------------------------------------------------------
 # Notify: Success or Fail
