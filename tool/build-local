@@ -182,8 +182,7 @@ fi
 # Run build with progress tracking + timing
 # ---------------------------------------------------------------------------
 BUILD_RC=0
-BUILD_LOG=$(mktemp)
-trap 'rm -f "$BUILD_LOG"' EXIT
+trap 'rm -f "$FIFO"' EXIT
 
 tg_update() {
   [ "$HAS_TG" = true ] && [ -n "${TG_MESSAGE_ID:-}" ] || return 0
@@ -209,31 +208,30 @@ STEP_COUNT=${#STEPS[@]}
 
 # Timing
 BUILD_START=$(date +%s%N)
-STEP_TIMES=()
-STEP_NAMES=()
 current_step=0
 last_step=""
-step_start=$BUILD_START
+step_start=$BUILD_START_TS
 
-# Run build
+# Run build with real-time progress
 set +e
-bash "$ROOT/tool/build" --sign "$@" 2>&1 | tee "$BUILD_LOG"
-BUILD_RC=${PIPESTATUS[0]}
-set -e
+BUILD_START_TS=$(date +%s)
+FIFO=$(mktemp -u)
+mkfifo "$FIFO"
+> "$CACHE_DIR/step_times"
 
-BUILD_END=$(date +%s%N)
-BUILD_DURATION=$(( (BUILD_END - BUILD_START) / 1000000 ))
+# Build writes to FIFO
+bash "$ROOT/tool/build" --sign "$@" > "$FIFO" 2>&1 &
+BUILD_PID=$!
 
-# Parse build log for step changes + timing
+# Read FIFO in real-time, process + display
 while IFS= read -r line; do
+  echo "$line"
   for step in "${STEPS[@]}"; do
     if echo "$line" | grep -q "$step"; then
       if [ "$step" != "$last_step" ]; then
-        # Record previous step timing
         if [ -n "$last_step" ]; then
-          now=$(date +%s%N)
-          STEP_TIMES+=($(( (now - step_start) / 1000000 )))
-          STEP_NAMES+=("$last_step")
+          now=$(date +%s)
+          echo "$last_step $(( now - step_start ))" >> "$CACHE_DIR/step_times"
           step_start=$now
         fi
         last_step="$step"
@@ -244,12 +242,18 @@ while IFS= read -r line; do
       break
     fi
   done
-done < "$BUILD_LOG"
+done < "$FIFO"
 
-# Record last step
+wait $BUILD_PID
+BUILD_RC=$?
+rm -f "$FIFO"
+set -e
+
+BUILD_END_TS=$(date +%s)
+BUILD_DURATION=$(( (BUILD_END_TS - BUILD_START_TS) * 1000 ))
+
 if [ -n "$last_step" ]; then
-  STEP_TIMES+=($(( (BUILD_END - step_start) / 1000000 )))
-  STEP_NAMES+=("$last_step")
+  echo "$last_step $(( BUILD_END_TS - step_start ))" >> "$CACHE_DIR/step_times"
 fi
 
 # ---------------------------------------------------------------------------
@@ -302,13 +306,14 @@ if [ "$HAS_TG" = true ]; then
     export TG_BUILD_DURATION="$BUILD_DURATION"
     export TG_SMART_SKIPPED="$SMART_SKIPPED"
 
-    # Build step timing string
     STEP_TIMING=""
-    for i in "${!STEP_NAMES[@]}"; do
-      mins=$(( ${STEP_TIMES[$i]} / 1000 / 60 ))
-      secs=$(( ${STEP_TIMES[$i]} / 1000 % 60 ))
-      STEP_TIMING+="  ${STEP_NAMES[$i]}: ${mins}m ${secs}s"$'\n'
-    done
+    if [ -f "$CACHE_DIR/step_times" ]; then
+      while IFS=' ' read -r sname ssec; do
+        mins=$(( ssec / 60 ))
+        secs=$(( ssec % 60 ))
+        STEP_TIMING+="  $sname: ${mins}m ${secs}s"$'\n'
+      done < "$CACHE_DIR/step_times"
+    fi
     export TG_STEP_TIMING="$STEP_TIMING"
     export TG_APK_SIZES="$APK_SIZES"
 
