@@ -1,13 +1,19 @@
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aetherfin/core/jellyfin/models/items.dart';
 import 'package:aetherfin/core/jellyfin/models/server.dart';
+import 'package:aetherfin/core/local/app_database.dart';
 import 'package:aetherfin/design_tokens/colors.dart';
 import 'package:aetherfin/features/profile/profile_screen.dart';
 import 'package:aetherfin/state/providers.dart';
 import 'package:aetherfin/state/state_holder.dart';
+
+// Shared in-memory database for all profile tests — prevents Drift
+// "multiple database instances" warning.
+AppDatabase? _sharedDb;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +25,7 @@ void main() {
     List<AfAlbum> albums = const [],
     List<AfArtist> artists = const [],
   }) {
+    _sharedDb ??= AppDatabase.forTesting(NativeDatabase.memory());
     return ProviderContainer(
       overrides: [
         currentSpectralProvider.overrideWith((ref) => Spectral.fallback),
@@ -27,6 +34,7 @@ void main() {
           () => StateHolder<AppMode?>((ref) => mode),
         ),
         musicBackendProvider.overrideWith((ref) => null),
+        appDatabaseProvider.overrideWithValue(_sharedDb!),
         localTracksProvider.overrideWith((ref) => tracks),
         localAlbumsProvider.overrideWith((ref) => albums),
         localArtistsProvider.overrideWith((ref) => artists),
