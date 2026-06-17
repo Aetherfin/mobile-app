@@ -3,9 +3,12 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
+import 'package:flutter/material.dart';
 import '../../utils/log.dart';
 import '../../utils/url.dart';
+import 'certificate_pinning_store.dart';
 import 'https_redirect_guard.dart';
+import 'tls_trust_interceptor.dart';
 
 /// Shared Dio client with connection pooling and caching for all HTTP requests.
 ///
@@ -33,7 +36,7 @@ class SharedDioClient {
         ),
       ) {
     // Configure connection pooling via HttpClientAdapter
-    _dio.httpClientAdapter = _createAdapter();
+    _dio.httpClientAdapter = _createAdapter(badCertCallback: _badCertCallback);
 
     // Configure caching with LRU eviction
     _dio.interceptors.add(
@@ -59,17 +62,80 @@ class SharedDioClient {
   final Dio _dio;
   final MemCacheStore _cacheStore;
 
-  static IOHttpClientAdapter _createAdapter() {
+  /// The bad-certificate callback set on all adapters once TOFU is configured.
+  /// `null` means TOFU is not yet configured (accept-all fallback).
+  bool Function(X509Certificate, String, int)? _badCertCallback;
+
+  /// Stored for creating interceptors on custom Dio instances.
+  CertificatePinningStore? _tlsStore;
+  GlobalKey<NavigatorState>? _tlsNavigatorKey;
+
+  /// Configure Trust-On-First-Use certificate validation.
+  ///
+  /// Sets the `badCertificateCallback` on all HTTP adapters and adds the
+  /// [TlsTrustInterceptor] to the shared Dio instance. Must be called
+  /// before the first HTTP request. Re-creating adapters is safe — the
+  /// previous adapter is discarded.
+  void configureTlsTrust({
+    required CertificatePinningStore store,
+    required GlobalKey<NavigatorState> navigatorKey,
+    required bool acceptAll,
+  }) {
+    _tlsStore = store;
+    _tlsNavigatorKey = navigatorKey;
+    _badCertCallback = TlsTrustInterceptor.badCertCallback(
+      store: store,
+      acceptAll: acceptAll,
+    );
+
+    // Reconfigure the shared _dio adapter.
+    _dio.httpClientAdapter = _createAdapter();
+
+    // Insert the TOFU interceptor at position 0 (before cache + retry).
+    // Only add once.
+    final hasTofu = _dio.interceptors.any((i) => i is TlsTrustInterceptor);
+    if (!hasTofu) {
+      _dio.interceptors.insert(
+        0,
+        TlsTrustInterceptor(
+          store: store,
+          navigatorKey: navigatorKey,
+          dio: _dio,
+        ),
+      );
+    }
+  }
+
+  /// Update the accept-all escape hatch at runtime (from settings toggle).
+  void setAcceptAllCerts(
+    bool acceptAll, {
+    required CertificatePinningStore store,
+  }) {
+    // Re-create the callback with the new flag. Adapters are already
+    // configured — the callback is a closure that reads the store's cache,
+    // so we just need to swap the flag.  Since badCertCallback is a static
+    // factory that captures `acceptAll` by value, we must rebuild it.
+    _badCertCallback = TlsTrustInterceptor.badCertCallback(
+      store: store,
+      acceptAll: acceptAll,
+    );
+    // Reconfigure all adapters so they pick up the new callback.
+    _dio.httpClientAdapter = _createAdapter();
+  }
+
+  static IOHttpClientAdapter _createAdapter({
+    bool Function(X509Certificate, String, int)? badCertCallback,
+  }) {
     return IOHttpClientAdapter()
       ..createHttpClient = () {
         final client = HttpClient();
         client.findProxy = (uri) => 'DIRECT';
         client.idleTimeout = const Duration(seconds: 15);
         client.connectionTimeout = const Duration(seconds: 5);
-        // Defense-in-depth: log bad certificates but allow connection.
-        // Self-hosted servers (Jellyfin/Navidrome) frequently use self-signed
-        // or local-CA certs — rejecting them would break the primary use case.
+        // TOFU: reject unknown certs so the interceptor can show a dialog.
+        // Falls back to accept-all when TOFU is not configured.
         client.badCertificateCallback =
+            badCertCallback ??
             (X509Certificate cert, String host, int port) {
               afLog(
                 'http',
@@ -93,7 +159,9 @@ class SharedDioClient {
   /// for transient failures on idempotent methods only.
   Dio createWithOptions(BaseOptions options) {
     final customDio = Dio(options);
-    customDio.httpClientAdapter = _createAdapter();
+    customDio.httpClientAdapter = _createAdapter(
+      badCertCallback: _badCertCallback,
+    );
 
     // HTTPS redirect guard — prevent scheme downgrade from HTTPS to HTTP
     // which could indicate a MITM attack on shared networks.
@@ -112,6 +180,15 @@ class SharedDioClient {
         ),
       ),
     );
+
+    // Add TOFU interceptor if configured.
+    final store = _tlsStore;
+    final navKey = _tlsNavigatorKey;
+    if (store != null && navKey != null) {
+      customDio.interceptors.add(
+        TlsTrustInterceptor(store: store, navigatorKey: navKey, dio: customDio),
+      );
+    }
 
     customDio.interceptors.add(_RetryInterceptor(customDio));
     return customDio;

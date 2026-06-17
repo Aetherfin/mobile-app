@@ -126,6 +126,7 @@ class PlayerSettingsStore {
   static final kDefaultAudioDevice = SettingsKey.stringKey(
     'af.default_audio_device',
   );
+  static final kAcceptAllCerts = SettingsKey.boolKey('af.accept_all_certs');
 
   // Compound keys (custom JSON serialization)
   static const kAudioEffects = 'af.audio_effects_json';
@@ -280,6 +281,14 @@ class PlayerSettingsStore {
   /// no device has been saved (meaning "auto" should be used).
   static Future<String?> loadDefaultAudioDevice() async =>
       loadValue(kDefaultAudioDevice);
+
+  /// Persist the accept-all-certificates escape hatch.
+  static Future<void> saveAcceptAllCerts(bool enabled) async =>
+      saveValue(kAcceptAllCerts, enabled);
+
+  /// Load the accept-all-certificates escape hatch. Defaults to false.
+  static Future<bool> loadAcceptAllCerts() async =>
+      (await loadValue(kAcceptAllCerts)) ?? false;
 
   /// Serialize the user-visible audio effects to JSON and persist.
   /// Delegates to [_serializeAudioEffects] to avoid duplication.

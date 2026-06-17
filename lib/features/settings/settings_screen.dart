@@ -12,6 +12,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/audio/player_settings_store.dart';
+import '../../core/network/certificate_pinning_store.dart';
+import '../../core/network/shared_dio_client.dart';
 import '../../home_widget/home_widget_manager.dart';
 import '../../app/router.dart';
 import '../../utils/log.dart';
@@ -123,19 +125,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         const SizedBox(height: AfSpacing.s24),
 
                         // ── Advanced ─────────────────────────────────────────────
-                        AfCollapsibleSection(
+                        const AfCollapsibleSection(
                           title: 'Advanced',
-                          child: SettingsGroup(
-                            children: [
-                              SettingsTile(
-                                icon: LucideIcons.trash2,
-                                title: 'Clear app data',
-                                subtitle: 'Reset app to initial state',
-                                danger: true,
-                                onTap: () => _handleClearAppData(context),
-                              ),
-                            ],
-                          ),
+                          child: _AdvancedSectionBody(),
                         ),
 
                         const SizedBox(height: AfSpacing.s24),
@@ -535,6 +527,65 @@ class _YouTubeMusicAccountSection extends ConsumerWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+// ── Advanced section ───────────────────────────────────────────────────────
+
+class _AdvancedSectionBody extends ConsumerStatefulWidget {
+  const _AdvancedSectionBody();
+  @override
+  ConsumerState<_AdvancedSectionBody> createState() =>
+      _AdvancedSectionBodyState();
+}
+
+class _AdvancedSectionBodyState extends ConsumerState<_AdvancedSectionBody> {
+  bool _acceptAllCerts = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAcceptAll();
+  }
+
+  Future<void> _loadAcceptAll() async {
+    final val = await PlayerSettingsStore.loadAcceptAllCerts();
+    if (mounted) setState(() => _acceptAllCerts = val);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SettingsGroup(
+      children: [
+        SettingsSwitchTile(
+          icon: LucideIcons.shieldOff,
+          title: 'Accept all certificates',
+          subtitle: 'Bypass TLS validation — for troubleshooting only',
+          value: _acceptAllCerts,
+          onChanged: (v) async {
+            setState(() => _acceptAllCerts = v);
+            await PlayerSettingsStore.saveAcceptAllCerts(v);
+            SharedDioClient().setAcceptAllCerts(
+              v,
+              store: CertificatePinningStore(),
+            );
+            afLog('settings', 'Accept all certificates: $v');
+          },
+        ),
+        SettingsTile(
+          icon: LucideIcons.trash2,
+          title: 'Clear app data',
+          subtitle: 'Reset app to initial state',
+          danger: true,
+          onTap: () {
+            // Find the parent SettingsScreen state to call _handleClearAppData.
+            final screenState = context
+                .findAncestorStateOfType<_SettingsScreenState>();
+            screenState?._handleClearAppData(context);
+          },
+        ),
+      ],
     );
   }
 }

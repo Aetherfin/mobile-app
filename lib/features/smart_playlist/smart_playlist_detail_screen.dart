@@ -9,6 +9,7 @@ import '../../state/providers.dart';
 import '../../widgets/async_error_view.dart';
 import '../../widgets/skeletons/track_row_skeleton.dart';
 import '../../widgets/track_context_menu.dart';
+import '../../utils/navigation.dart';
 import '../../widgets/track_row.dart';
 
 /// Shows the resolved tracks for a smart playlist — Dark Moody style.
@@ -42,7 +43,7 @@ class SmartPlaylistDetailScreen extends ConsumerWidget {
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),
           tooltip: 'Back',
-          onPressed: () => context.pop(),
+          onPressed: () => context.safePop(),
         ),
         title: Text(
           playlist?.name ?? 'Smart Playlist',

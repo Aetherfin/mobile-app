@@ -8,6 +8,7 @@ import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../widgets/af_dialog.dart';
 import '../../widgets/press_scale.dart';
+import '../../utils/navigation.dart';
 import '../../widgets/async_error_view.dart';
 import '../../widgets/skeletons/playlist_skeleton.dart';
 
@@ -30,7 +31,7 @@ class SmartPlaylistListScreen extends ConsumerWidget {
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),
           tooltip: 'Back',
-          onPressed: () => context.pop(),
+          onPressed: () => context.safePop(),
         ),
         title: Text('Smart Playlists', style: AfTypography.display),
         centerTitle: false,
@@ -213,12 +214,12 @@ class _PlaylistTile extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () => context.pop(),
+                onPressed: () => context.safePop(),
                 child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () {
-                  context.pop();
+                  context.safePop();
                   onDelete();
                 },
                 child: Text(

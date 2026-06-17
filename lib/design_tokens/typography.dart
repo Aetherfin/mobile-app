@@ -122,6 +122,26 @@ abstract final class AfTypography {
     ),
   );
 
+  /// JetBrains Mono — EQ parameter readouts and text fields.
+  static TextStyle get monoMedium => GoogleFonts.jetBrainsMono(
+    textStyle: const TextStyle(
+      fontSize: 13,
+      height: 17 / 13,
+      fontWeight: FontWeight.w500,
+      color: AfColors.textPrimary,
+    ),
+  );
+
+  /// JetBrains Mono — EQ curve axis labels and micro annotations.
+  static TextStyle get monoXSmall => GoogleFonts.jetBrainsMono(
+    textStyle: const TextStyle(
+      fontSize: 9,
+      height: 12 / 9,
+      fontWeight: FontWeight.w500,
+      color: AfColors.textPrimary,
+    ),
+  );
+
   /// Large initials for profile avatar.
   static TextStyle get avatarInitials => _outfit(
     fontSize: 32,

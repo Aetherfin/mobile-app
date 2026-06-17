@@ -88,220 +88,232 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                 ),
               ),
 
-              CustomScrollView(
-                controller: _scroll,
-                physics: const ClampingScrollPhysics(),
-                slivers: [
-                  // ── Breadcrumb ──
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        top:
-                            MediaQuery.of(context).padding.top +
-                            kToolbarHeight +
-                            AfSpacing.s8,
-                      ),
-                      child: AfBreadcrumb(
-                        items: [
-                          BreadcrumbItem(
-                            label: 'Home',
-                            onTap: () => context.go('/home'),
-                          ),
-                          BreadcrumbItem(label: 'Genre: ${widget.genre}'),
-                        ],
-                      ),
-                    ),
+              RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(genreAlbumsProvider(widget.genre));
+                  await ref.read(genreAlbumsProvider(widget.genre).future);
+                },
+                color: ref.watch(
+                  currentSpectralProvider.select((s) => s.primary),
+                ),
+                backgroundColor: AfColors.surfaceBase,
+                child: CustomScrollView(
+                  controller: _scroll,
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: ClampingScrollPhysics(),
                   ),
-
-                  // ── Genre header ──
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        top: AfSpacing.s8,
-                        left: AfSpacing.gutterGenerous,
-                        right: AfSpacing.gutterGenerous,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.genre,
-                            style: AfTypography.display.copyWith(
-                              color: AfColors.textPrimary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: AfSpacing.s4),
-                          Text(
-                            _buildSubtitle(albums.length, artists.length),
-                            style: AfTypography.bodyMedium.copyWith(
-                              color: AfColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // ── Artists in this genre ──
-                  if (artists.isNotEmpty) ...[
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: AfSpacing.s24),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AfSpacing.gutterGenerous,
-                        ),
-                        child: SectionHeader(title: 'Artists'),
-                      ),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: AfSpacing.s8),
-                    ),
+                  slivers: [
+                    // ── Breadcrumb ──
                     SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: 120,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          top:
+                              MediaQuery.of(context).padding.top +
+                              kToolbarHeight +
+                              AfSpacing.s8,
+                        ),
+                        child: AfBreadcrumb(
+                          items: [
+                            BreadcrumbItem(
+                              label: 'Home',
+                              onTap: () => context.go('/home'),
+                            ),
+                            BreadcrumbItem(label: 'Genre: ${widget.genre}'),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // ── Genre header ──
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          top: AfSpacing.s8,
+                          left: AfSpacing.gutterGenerous,
+                          right: AfSpacing.gutterGenerous,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.genre,
+                              style: AfTypography.display.copyWith(
+                                color: AfColors.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: AfSpacing.s4),
+                            Text(
+                              _buildSubtitle(albums.length, artists.length),
+                              style: AfTypography.bodyMedium.copyWith(
+                                color: AfColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // ── Artists in this genre ──
+                    if (artists.isNotEmpty) ...[
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: AfSpacing.s24),
+                      ),
+                      const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
                             horizontal: AfSpacing.gutterGenerous,
                           ),
-                          itemCount: artists.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(width: AfSpacing.s16),
-                          itemBuilder: (context, i) {
-                            final a = artists[i];
-                            return PressScale(
-                              onTap: a.id != null
-                                  ? () => context.push('/artist/${a.id}')
-                                  : null,
-                              child: SizedBox(
-                                width: 88,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 72,
-                                      height: 72,
-                                      decoration: const BoxDecoration(
-                                        color: AfColors.surfaceRaised,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: a.imageUrl != null
-                                          ? Artwork(
-                                              url: a.imageUrl,
-                                              size: 72,
-                                              radius: AfRadii.borderPill,
-                                              fit: BoxFit.cover,
-                                            )
-                                          : const Icon(
-                                              LucideIcons.user,
-                                              size: 32,
-                                              color: AfColors.textTertiary,
-                                            ),
-                                    ),
-                                    const SizedBox(height: AfSpacing.s8),
-                                    Text(
-                                      a.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
-                                      style: AfTypography.bodySmall.copyWith(
-                                        color: AfColors.textPrimary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
+                          child: SectionHeader(title: 'Artists'),
                         ),
                       ),
-                    ),
-                  ],
-
-                  // ── Albums in this genre ──
-                  if (albums.isNotEmpty) ...[
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: AfSpacing.s24),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AfSpacing.gutterGenerous,
-                        ),
-                        child: SectionHeader(title: 'Albums'),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: AfSpacing.s8),
                       ),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: AfSpacing.s8),
-                    ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AfSpacing.s16,
-                      ),
-                      sliver: SliverGrid(
-                        gridDelegate:
-                            const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent:
-                                  AfLayout.albumGridMaxTileExtent,
-                              mainAxisExtent: 220,
-                              crossAxisSpacing: AfSpacing.s16,
-                              mainAxisSpacing: AfSpacing.s16,
+                      SliverToBoxAdapter(
+                        child: SizedBox(
+                          height: 120,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AfSpacing.gutterGenerous,
                             ),
-                        delegate: SliverChildBuilderDelegate((context, i) {
-                          final a = albums[i];
-                          return StaggerReveal(
-                            children: [
-                              Tile(
-                                title: a.name,
-                                subtitle: a.artistName,
-                                variant: TileVariant.album,
-                                imageUrl: a.imageUrl,
-                                size: double.infinity,
-                                onTap: () => context.push('/album/${a.id}'),
-                              ),
-                            ],
-                          );
-                        }, childCount: albums.length),
-                      ),
-                    ),
-                  ],
-
-                  // ── Empty state ──
-                  if (albums.isEmpty)
-                    SliverToBoxAdapter(
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: AfSpacing.s96),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                LucideIcons.music2,
-                                size: 48,
-                                color: AfColors.textTertiary,
-                              ),
-                              const SizedBox(height: AfSpacing.s12),
-                              Text(
-                                'No albums in this genre',
-                                style: AfTypography.titleSmall,
-                              ),
-                            ],
+                            itemCount: artists.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(width: AfSpacing.s16),
+                            itemBuilder: (context, i) {
+                              final a = artists[i];
+                              return PressScale(
+                                onTap: a.id != null
+                                    ? () => context.push('/artist/${a.id}')
+                                    : null,
+                                child: SizedBox(
+                                  width: 88,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 72,
+                                        height: 72,
+                                        decoration: const BoxDecoration(
+                                          color: AfColors.surfaceRaised,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: a.imageUrl != null
+                                            ? Artwork(
+                                                url: a.imageUrl,
+                                                size: 72,
+                                                radius: AfRadii.borderPill,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : const Icon(
+                                                LucideIcons.user,
+                                                size: 32,
+                                                color: AfColors.textTertiary,
+                                              ),
+                                      ),
+                                      const SizedBox(height: AfSpacing.s8),
+                                      Text(
+                                        a.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
+                                        style: AfTypography.bodySmall.copyWith(
+                                          color: AfColors.textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
-                    ),
+                    ],
 
-                  const SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: AfSpacing.bottomInsetWithMiniAndNav,
+                    // ── Albums in this genre ──
+                    if (albums.isNotEmpty) ...[
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: AfSpacing.s24),
+                      ),
+                      const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AfSpacing.gutterGenerous,
+                          ),
+                          child: SectionHeader(title: 'Albums'),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: AfSpacing.s8),
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AfSpacing.s16,
+                        ),
+                        sliver: SliverGrid(
+                          gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent:
+                                    AfLayout.albumGridMaxTileExtent,
+                                mainAxisExtent: 220,
+                                crossAxisSpacing: AfSpacing.s16,
+                                mainAxisSpacing: AfSpacing.s16,
+                              ),
+                          delegate: SliverChildBuilderDelegate((context, i) {
+                            final a = albums[i];
+                            return StaggerReveal(
+                              children: [
+                                Tile(
+                                  title: a.name,
+                                  subtitle: a.artistName,
+                                  variant: TileVariant.album,
+                                  imageUrl: a.imageUrl,
+                                  size: double.infinity,
+                                  onTap: () => context.push('/album/${a.id}'),
+                                ),
+                              ],
+                            );
+                          }, childCount: albums.length),
+                        ),
+                      ),
+                    ],
+
+                    // ── Empty state ──
+                    if (albums.isEmpty)
+                      SliverToBoxAdapter(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: AfSpacing.s96),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  LucideIcons.music2,
+                                  size: 48,
+                                  color: AfColors.textTertiary,
+                                ),
+                                const SizedBox(height: AfSpacing.s12),
+                                Text(
+                                  'No albums in this genre',
+                                  style: AfTypography.titleSmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    const SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: AfSpacing.bottomInsetWithMiniAndNav,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           );

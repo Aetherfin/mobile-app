@@ -446,6 +446,10 @@ final routerProvider = Provider<GoRouter>((ref) {
   return _router;
 });
 
+/// Direct access to the root navigator key for use by TOFU certificate
+/// validation (showing the cert accept dialog from Dio interceptors).
+GlobalKey<NavigatorState> get rootNavigatorKey => _rootKey;
+
 /// Direct access to the singleton router for use in [AetherfinApp].
 /// Prefer this over [routerProvider] to avoid unnecessary rebuilds.
 GoRouter get appRouter => _router;

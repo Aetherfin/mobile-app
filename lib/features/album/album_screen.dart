@@ -100,141 +100,156 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen> {
 
                 AfScrollbar(
                   controller: _scroll,
-                  child: CustomScrollView(
-                    controller: _scroll,
-                    physics: const ClampingScrollPhysics(),
-                    slivers: [
-                      SliverToBoxAdapter(child: SizedBox(height: heroHeight)),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                            top: AfSpacing.s16,
-                            bottom: AfSpacing.s8,
-                          ),
-                          child: AfBreadcrumb(
-                            items: [
-                              BreadcrumbItem(
-                                label: 'Home',
-                                onTap: () => context.go('/home'),
-                              ),
-                              if (album.artistId != null)
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(albumDetailProvider(widget.albumId));
+                      await ref.read(
+                        albumDetailProvider(widget.albumId).future,
+                      );
+                    },
+                    color: spectral,
+                    backgroundColor: AfColors.surfaceBase,
+                    child: CustomScrollView(
+                      controller: _scroll,
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: ClampingScrollPhysics(),
+                      ),
+                      slivers: [
+                        SliverToBoxAdapter(child: SizedBox(height: heroHeight)),
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              top: AfSpacing.s16,
+                              bottom: AfSpacing.s8,
+                            ),
+                            child: AfBreadcrumb(
+                              items: [
                                 BreadcrumbItem(
-                                  label: 'Artist: ${album.artistName}',
-                                  onTap: () =>
-                                      context.push('/artist/${album.artistId}'),
+                                  label: 'Home',
+                                  onTap: () => context.go('/home'),
                                 ),
-                              BreadcrumbItem(label: 'Album: ${album.name}'),
-                            ],
+                                if (album.artistId != null)
+                                  BreadcrumbItem(
+                                    label: 'Artist: ${album.artistName}',
+                                    onTap: () => context.push(
+                                      '/artist/${album.artistId}',
+                                    ),
+                                  ),
+                                BreadcrumbItem(label: 'Album: ${album.name}'),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AfSpacing.gutterGenerous,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                album.name,
-                                style: AfTypography.display.copyWith(
-                                  color: AfColors.textPrimary,
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AfSpacing.gutterGenerous,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  album.name,
+                                  style: AfTypography.display.copyWith(
+                                    color: AfColors.textPrimary,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: AfSpacing.s4),
-                              GestureDetector(
-                                onTap: album.artistId != null
-                                    ? () => context.push(
-                                        '/artist/${album.artistId}',
-                                      )
-                                    : null,
-                                child: Semantics(
-                                  button: true,
-                                  label: 'Artist: ${album.artistName}',
-                                  child: Text(
-                                    album.artistName,
-                                    style: AfTypography.titleMedium.copyWith(
-                                      color: spectral,
+                                const SizedBox(height: AfSpacing.s4),
+                                GestureDetector(
+                                  onTap: album.artistId != null
+                                      ? () => context.push(
+                                          '/artist/${album.artistId}',
+                                        )
+                                      : null,
+                                  child: Semantics(
+                                    button: true,
+                                    label: 'Artist: ${album.artistName}',
+                                    child: Text(
+                                      album.artistName,
+                                      style: AfTypography.titleMedium.copyWith(
+                                        color: spectral,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: AfSpacing.s4),
-                              Text(
-                                album.metadataLine,
-                                style: AfTypography.bodySmall.copyWith(
-                                  color: AfColors.textTertiary,
+                                const SizedBox(height: AfSpacing.s4),
+                                Text(
+                                  album.metadataLine,
+                                  style: AfTypography.bodySmall.copyWith(
+                                    color: AfColors.textTertiary,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: AfSpacing.s16),
-                              AlbumActionRow(
-                                album: album,
-                                tracks: tracks,
-                                onPlay: () => ref
-                                    .read(playActionsProvider)
-                                    .playAlbum(tracks),
-                                onMore: () => showAlbumMoreSheet(
-                                  context,
-                                  ref,
-                                  album,
-                                  tracks,
+                                const SizedBox(height: AfSpacing.s16),
+                                AlbumActionRow(
+                                  album: album,
+                                  tracks: tracks,
+                                  onPlay: () => ref
+                                      .read(playActionsProvider)
+                                      .playAlbum(tracks),
+                                  onMore: () => showAlbumMoreSheet(
+                                    context,
+                                    ref,
+                                    album,
+                                    tracks,
+                                  ),
                                 ),
-                              ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AfSpacing.s24),
+                        ),
+                        SliverToBoxAdapter(
+                          child: StaggerReveal(
+                            children: [
+                              for (var i = 0; i < tracks.length; i++) ...[
+                                if (i > 0) const SizedBox(height: AfSpacing.s4),
+                                AlbumTrackRowItem(
+                                  track: tracks[i],
+                                  index: i,
+                                  activeId: activeId,
+                                  tracks: tracks,
+                                ),
+                              ],
                             ],
                           ),
                         ),
-                      ),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: AfSpacing.s24),
-                      ),
-                      SliverToBoxAdapter(
-                        child: StaggerReveal(
-                          children: [
-                            for (var i = 0; i < tracks.length; i++) ...[
-                              if (i > 0) const SizedBox(height: AfSpacing.s4),
-                              AlbumTrackRowItem(
-                                track: tracks[i],
-                                index: i,
-                                activeId: activeId,
-                                tracks: tracks,
+                        wikiAsync.maybeWhen(
+                          data: (wiki) {
+                            if (wiki == null ||
+                                wiki.wiki == null ||
+                                wiki.wiki!.isEmpty) {
+                              return const SliverToBoxAdapter(
+                                child: SizedBox(),
+                              );
+                            }
+                            return SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AfSpacing.gutterGenerous,
+                                  vertical: AfSpacing.s24,
+                                ),
+                                child: AlbumWikiPanel(
+                                  wiki: wiki.wiki!,
+                                  listeners: wiki.listeners,
+                                  playCount: wiki.playCount,
+                                ),
                               ),
-                            ],
-                          ],
+                            );
+                          },
+                          orElse: () =>
+                              const SliverToBoxAdapter(child: SizedBox()),
                         ),
-                      ),
-                      wikiAsync.maybeWhen(
-                        data: (wiki) {
-                          if (wiki == null ||
-                              wiki.wiki == null ||
-                              wiki.wiki!.isEmpty) {
-                            return const SliverToBoxAdapter(child: SizedBox());
-                          }
-                          return SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AfSpacing.gutterGenerous,
-                                vertical: AfSpacing.s24,
-                              ),
-                              child: AlbumWikiPanel(
-                                wiki: wiki.wiki!,
-                                listeners: wiki.listeners,
-                                playCount: wiki.playCount,
-                              ),
-                            ),
-                          );
-                        },
-                        orElse: () =>
-                            const SliverToBoxAdapter(child: SizedBox()),
-                      ),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(
-                          height: AfSpacing.bottomInsetWithMiniAndNav,
+                        const SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: AfSpacing.bottomInsetWithMiniAndNav,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
 

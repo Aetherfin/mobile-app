@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/smart_playlist/smart_playlist_model.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../utils/navigation.dart';
 import '../../widgets/skeletons/track_row_skeleton.dart';
 
 /// Create or edit a smart playlist — Dark Moody rule builder.
@@ -87,7 +88,7 @@ class _SmartPlaylistEditScreenState
     );
     await db.save(playlist);
     ref.invalidate(smartPlaylistsProvider);
-    if (mounted) context.pop();
+    if (mounted) context.safePop();
   }
 
   void _addRule() {

@@ -11,6 +11,7 @@ import '../../core/youtube/youtube_auth.dart';
 import '../../design_tokens/tokens.dart';
 import '../../utils/display_error.dart';
 import '../../utils/log.dart';
+import '../../utils/navigation.dart';
 import '../../widgets/af_loading_indicator.dart';
 import '../../state/youtube_music_providers.dart';
 
@@ -372,7 +373,7 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
         backgroundColor: AfColors.surfaceBase,
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft, color: AfColors.textPrimary),
-          onPressed: () => context.pop(),
+          onPressed: () => context.safePop(),
         ),
         title: Text(
           'Sign in to YouTube Music',

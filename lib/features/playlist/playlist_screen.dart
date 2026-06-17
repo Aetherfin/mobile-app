@@ -9,6 +9,7 @@ import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../utils/display_error.dart';
+import '../../utils/navigation.dart';
 import '../../widgets/af_scrollbar.dart';
 import '../../widgets/async_error_view.dart';
 import '../../widgets/breadcrumb.dart';
@@ -59,7 +60,7 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),
           tooltip: 'Back',
-          onPressed: () => context.pop(),
+          onPressed: () => context.safePop(),
         ),
         title: Text('Playlist', style: AfTypography.titleSmall),
         actions: [
@@ -124,103 +125,116 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
 
           return SafeArea(
             child: AfScrollbar(
-              child: CustomScrollView(
-                physics: const ClampingScrollPhysics(),
-                slivers: [
-                  // Breadcrumb.
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        top: AfSpacing.s16,
-                        bottom: AfSpacing.s8,
-                      ),
-                      child: AfBreadcrumb(
-                        items: [
-                          BreadcrumbItem(
-                            label: 'Playlists',
-                            onTap: () => context.go('/playlists'),
-                          ),
-                          BreadcrumbItem(label: pl.name),
-                        ],
-                      ),
-                    ),
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  if (mounted) setState(() => _localTracks = null);
+                  ref.invalidate(playlistDetailProvider(widget.playlistId));
+                  await ref.read(
+                    playlistDetailProvider(widget.playlistId).future,
+                  );
+                },
+                color: spectral,
+                backgroundColor: AfColors.surfaceBase,
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: ClampingScrollPhysics(),
                   ),
-
-                  // Header.
-                  SliverToBoxAdapter(
-                    child: PlaylistHeader(
-                      playlist: pl,
-                      tracks: tracks,
-                      primaryColor: spectral,
-                    ),
-                  ),
-
-                  // Action row.
-                  SliverToBoxAdapter(
-                    child: PlaylistActionRow(
-                      tracks: tracks,
-                      onPlay: () =>
-                          ref.read(playActionsProvider).playQueue(tracks),
-                      onShuffle: () async {
-                        await ref.read(playActionsProvider).playQueue(tracks);
-                        await ref
-                            .read(playerServiceProvider)
-                            .setAfShuffleMode(true);
-                      },
-                    ),
-                  ),
-
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: AfSpacing.s16),
-                  ),
-
-                  // Track list.
-                  if (tracks.isNotEmpty)
+                  slivers: [
+                    // Breadcrumb.
                     SliverToBoxAdapter(
-                      child: PlaylistTrackList(
-                        tracks: tracks,
-                        hasBackend: backend != null,
-                        activeId: activeId,
-                        isBuffering: isBuffering,
-                        activeAccent: activeAccent,
-                        spectral: spectral,
-                        onReorder: (oldIndex, newIndex) => _onReorder(
-                          oldIndex,
-                          newIndex,
-                          tracks,
-                          backend!,
-                          pl.id,
-                        ),
-                        confirmDismiss: (title) =>
-                            confirmRemoveTrack(context, title),
-                        onDismissed: (index) =>
-                            _removeTrack(index, tracks, backend!, pl.id),
-                        onTap: (index) => ref
-                            .read(playActionsProvider)
-                            .playQueue(tracks, startIndex: index),
-                        onLongPress: (track) =>
-                            showTrackContextMenu(context, ref, track),
-                      ),
-                    ),
-
-                  if (tracks.isEmpty)
-                    const SliverToBoxAdapter(
                       child: Padding(
-                        padding: EdgeInsets.only(top: AfSpacing.s48),
-                        child: EmptyState(
-                          icon: LucideIcons.listMusic,
-                          title: 'Empty playlist',
-                          body: 'Add songs to get started',
+                        padding: const EdgeInsets.only(
+                          top: AfSpacing.s16,
+                          bottom: AfSpacing.s8,
+                        ),
+                        child: AfBreadcrumb(
+                          items: [
+                            BreadcrumbItem(
+                              label: 'Playlists',
+                              onTap: () => context.go('/playlists'),
+                            ),
+                            BreadcrumbItem(label: pl.name),
+                          ],
                         ),
                       ),
                     ),
 
-                  const SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: AfSpacing.bottomInsetWithMiniAndNav,
+                    // Header.
+                    SliverToBoxAdapter(
+                      child: PlaylistHeader(
+                        playlist: pl,
+                        tracks: tracks,
+                        primaryColor: spectral,
+                      ),
                     ),
-                  ),
-                ],
+
+                    // Action row.
+                    SliverToBoxAdapter(
+                      child: PlaylistActionRow(
+                        tracks: tracks,
+                        onPlay: () =>
+                            ref.read(playActionsProvider).playQueue(tracks),
+                        onShuffle: () async {
+                          await ref.read(playActionsProvider).playQueue(tracks);
+                          await ref
+                              .read(playerServiceProvider)
+                              .setAfShuffleMode(true);
+                        },
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: AfSpacing.s16),
+                    ),
+
+                    // Track list.
+                    if (tracks.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: PlaylistTrackList(
+                          tracks: tracks,
+                          hasBackend: backend != null,
+                          activeId: activeId,
+                          isBuffering: isBuffering,
+                          activeAccent: activeAccent,
+                          spectral: spectral,
+                          onReorder: (oldIndex, newIndex) => _onReorder(
+                            oldIndex,
+                            newIndex,
+                            tracks,
+                            backend!,
+                            pl.id,
+                          ),
+                          confirmDismiss: (title) =>
+                              confirmRemoveTrack(context, title),
+                          onDismissed: (index) =>
+                              _removeTrack(index, tracks, backend!, pl.id),
+                          onTap: (index) => ref
+                              .read(playActionsProvider)
+                              .playQueue(tracks, startIndex: index),
+                          onLongPress: (track) =>
+                              showTrackContextMenu(context, ref, track),
+                        ),
+                      ),
+
+                    if (tracks.isEmpty)
+                      const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: AfSpacing.s48),
+                          child: EmptyState(
+                            icon: LucideIcons.listMusic,
+                            title: 'Empty playlist',
+                            body: 'Add songs to get started',
+                          ),
+                        ),
+                      ),
+
+                    const SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: AfSpacing.bottomInsetWithMiniAndNav,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -383,7 +397,7 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
         try {
           await backend.deletePlaylist(widget.playlistId);
           ref.invalidate(allPlaylistsProvider);
-          if (context.mounted) context.pop();
+          if (context.mounted) context.safePop();
         } on Exception catch (e) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

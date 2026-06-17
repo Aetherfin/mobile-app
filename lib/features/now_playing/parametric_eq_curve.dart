@@ -230,9 +230,7 @@ class ParametricEqCurvePainter extends CustomPainter {
     final tp = TextPainter(
       text: TextSpan(
         text: label,
-        // ponytail: no matching AfTypography token for 9px mono
-        style: AfTypography.mono.copyWith(
-          fontSize: 9,
+        style: AfTypography.monoXSmall.copyWith(
           color: AfColors.textTertiary.withValues(
             alpha: 0.45,
           ), // paint context — canvas label

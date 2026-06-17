@@ -159,284 +159,313 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
 
                 AfScrollbar(
                   controller: _scroll,
-                  child: CustomScrollView(
-                    controller: _scroll,
-                    physics: const ClampingScrollPhysics(),
-                    slivers: [
-                      SliverToBoxAdapter(child: SizedBox(height: heroHeight)),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                            top: AfSpacing.s16,
-                            bottom: AfSpacing.s8,
-                          ),
-                          child: AfBreadcrumb(
-                            items: [
-                              BreadcrumbItem(
-                                label: 'Home',
-                                onTap: () => context.go('/home'),
-                              ),
-                              BreadcrumbItem(label: 'Artist: ${artist.name}'),
-                            ],
-                          ),
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(artistDetailProvider(widget.artistId));
+                      ref.invalidate(artistAlbumsProvider(widget.artistId));
+                      ref.invalidate(artistTopTracksProvider(widget.artistId));
+                      await Future.wait<Object?>([
+                        ref.read(artistDetailProvider(widget.artistId).future),
+                        ref.read(artistAlbumsProvider(widget.artistId).future),
+                        ref.read(
+                          artistTopTracksProvider(widget.artistId).future,
                         ),
+                      ]);
+                    },
+                    color: activeAccent,
+                    backgroundColor: AfColors.surfaceBase,
+                    child: CustomScrollView(
+                      controller: _scroll,
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: ClampingScrollPhysics(),
                       ),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AfSpacing.gutterGenerous,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                artist.name,
-                                style: AfTypography.display.copyWith(
-                                  color: AfColors.textPrimary,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: AfSpacing.s4),
-                              Text(
-                                artist.statLine,
-                                style: AfTypography.bodySmall.copyWith(
-                                  color: AfColors.textTertiary,
-                                ),
-                              ),
-                              const SizedBox(height: AfSpacing.s16),
-                              ArtistActionRow(
-                                onPlay: topTracks.isNotEmpty
-                                    ? () => ref
-                                          .read(playActionsProvider)
-                                          .playQueue(topTracks, startIndex: 0)
-                                    : null,
-                                onRadio: () => startArtistRadio(
-                                  context,
-                                  ref,
-                                  artist.name,
-                                  widget.artistId,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (displayTracks.isNotEmpty)
-                        ...buildArtistTopSongsSlivers(
-                          topTracks: displayTracks,
-                          activeId: activeId,
-                          isBuffering: isBuffering,
-                          activeAccent: activeAccent,
-                          onTap: (i) => ref
-                              .read(playActionsProvider)
-                              .playQueue(displayTracks, startIndex: i),
-                          onLongPress: (track) =>
-                              showTrackContextMenu(context, ref, track),
-                          onMoreTap: songsMoreTap,
-                        ),
-                      wikiAsync.maybeWhen(
-                        data: (wiki) {
-                          if (wiki == null ||
-                              wiki.bio == null ||
-                              wiki.bio!.isEmpty) {
-                            return const SliverToBoxAdapter(child: SizedBox());
-                          }
-                          return SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AfSpacing.gutterGenerous,
-                                vertical: AfSpacing.s24,
-                              ),
-                              child: ArtistBiographyPanel(
-                                bio: wiki.bio!,
-                                listeners: wiki.listeners,
-                                playCount: wiki.playCount,
-                              ),
+                      slivers: [
+                        SliverToBoxAdapter(child: SizedBox(height: heroHeight)),
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              top: AfSpacing.s16,
+                              bottom: AfSpacing.s8,
                             ),
-                          );
-                        },
-                        orElse: () =>
-                            const SliverToBoxAdapter(child: SizedBox()),
-                      ),
-                      // -- Dynamic Sections (YT Music) --
-                      if (ytSections.isNotEmpty)
-                        ...ytSections.map((section) {
-                          final items = section.items;
-                          return SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                top: AfSpacing.s24,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AfSpacing.gutterGenerous,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          section.title,
-                                          style: AfTypography.titleMedium
-                                              .copyWith(
-                                                color: AfColors.textPrimary,
-                                              ),
-                                        ),
-                                        if (section.moreId != null)
-                                          GestureDetector(
-                                            onTap: () {
-                                              debugPrint(
-                                                'Aetherfin: Section More tapped with ID: ${section.moreId}',
-                                              );
-                                              final title = section.title
-                                                  .toLowerCase();
-                                              if (title.contains('album') ||
-                                                  title.contains('single') ||
-                                                  title.contains('ep')) {
-                                                context.push(
-                                                  '/artist/${widget.artistId}/albums',
-                                                );
-                                              } else {
-                                                context.push(
-                                                  '/album/${section.moreId}',
-                                                );
-                                              }
-                                            },
-                                            child: Text(
-                                              'More',
-                                              style: AfTypography.bodyMedium
-                                                  .copyWith(
-                                                    color: activeAccent,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
+                            child: AfBreadcrumb(
+                              items: [
+                                BreadcrumbItem(
+                                  label: 'Home',
+                                  onTap: () => context.go('/home'),
+                                ),
+                                BreadcrumbItem(label: 'Artist: ${artist.name}'),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AfSpacing.gutterGenerous,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  artist.name,
+                                  style: AfTypography.display.copyWith(
+                                    color: AfColors.textPrimary,
                                   ),
-                                  const SizedBox(height: AfSpacing.s8),
-                                  SizedBox(
-                                    height: 220,
-                                    child: ListView.separated(
-                                      scrollDirection: Axis.horizontal,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: AfSpacing.s4),
+                                Text(
+                                  artist.statLine,
+                                  style: AfTypography.bodySmall.copyWith(
+                                    color: AfColors.textTertiary,
+                                  ),
+                                ),
+                                const SizedBox(height: AfSpacing.s16),
+                                ArtistActionRow(
+                                  onPlay: topTracks.isNotEmpty
+                                      ? () => ref
+                                            .read(playActionsProvider)
+                                            .playQueue(topTracks, startIndex: 0)
+                                      : null,
+                                  onRadio: () => startArtistRadio(
+                                    context,
+                                    ref,
+                                    artist.name,
+                                    widget.artistId,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (displayTracks.isNotEmpty)
+                          ...buildArtistTopSongsSlivers(
+                            topTracks: displayTracks,
+                            activeId: activeId,
+                            isBuffering: isBuffering,
+                            activeAccent: activeAccent,
+                            onTap: (i) => ref
+                                .read(playActionsProvider)
+                                .playQueue(displayTracks, startIndex: i),
+                            onLongPress: (track) =>
+                                showTrackContextMenu(context, ref, track),
+                            onMoreTap: songsMoreTap,
+                          ),
+                        wikiAsync.maybeWhen(
+                          data: (wiki) {
+                            if (wiki == null ||
+                                wiki.bio == null ||
+                                wiki.bio!.isEmpty) {
+                              return const SliverToBoxAdapter(
+                                child: SizedBox(),
+                              );
+                            }
+                            return SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AfSpacing.gutterGenerous,
+                                  vertical: AfSpacing.s24,
+                                ),
+                                child: ArtistBiographyPanel(
+                                  bio: wiki.bio!,
+                                  listeners: wiki.listeners,
+                                  playCount: wiki.playCount,
+                                ),
+                              ),
+                            );
+                          },
+                          orElse: () =>
+                              const SliverToBoxAdapter(child: SizedBox()),
+                        ),
+                        // -- Dynamic Sections (YT Music) --
+                        if (ytSections.isNotEmpty)
+                          ...ytSections.map((section) {
+                            final items = section.items;
+                            return SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  top: AfSpacing.s24,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: AfSpacing.gutterGenerous,
                                       ),
-                                      itemCount: items.length.clamp(0, 10),
-                                      separatorBuilder: (_, _) =>
-                                          const SizedBox(width: AfSpacing.s12),
-                                      itemBuilder: (context, i) {
-                                        final item = items[i];
-                                        return PressScale(
-                                          onTap: () {
-                                            if (item.type ==
-                                                    InnerTubeItemType.album ||
-                                                item.type ==
-                                                    InnerTubeItemType
-                                                        .playlist) {
-                                              context.push('/album/${item.id}');
-                                            } else if (item.type ==
-                                                InnerTubeItemType.artist) {
-                                              context.push(
-                                                '/artist/${item.id}',
-                                              );
-                                            } else if (item.type ==
-                                                InnerTubeItemType.song) {
-                                              final track = AfTrack(
-                                                id: item.videoId ?? item.id,
-                                                title: item.title,
-                                                artistName: item.subtitle,
-                                                artistId: item.artistId,
-                                                albumName: 'YouTube Music',
-                                                imageUrl: item.thumbnailUrl,
-                                              );
-                                              ref
-                                                  .read(playActionsProvider)
-                                                  .playQueue([
-                                                    track,
-                                                  ], startIndex: 0);
-                                            }
-                                          },
-                                          child: SizedBox(
-                                            width: 152,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Artwork(
-                                                  url: item.thumbnailUrl,
-                                                  size: 152,
-                                                  radius: AfRadii.borderMd,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            section.title,
+                                            style: AfTypography.titleMedium
+                                                .copyWith(
+                                                  color: AfColors.textPrimary,
                                                 ),
-                                                const SizedBox(
-                                                  height: AfSpacing.s8,
-                                                ),
-                                                Text(
-                                                  item.title,
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: AfTypography.titleSmall
-                                                      .copyWith(
-                                                        color: AfColors
-                                                            .textPrimary,
-                                                      ),
-                                                ),
-                                                if (item.subtitle.isNotEmpty &&
-                                                    item.type !=
-                                                        InnerTubeItemType
-                                                            .artist)
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                          top: AfSpacing.s2,
-                                                        ),
-                                                    child: Text(
-                                                      item.subtitle,
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: AfTypography
-                                                          .bodySmall
-                                                          .copyWith(
-                                                            color: AfColors
-                                                                .textSecondary,
-                                                          ),
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
                                           ),
-                                        );
-                                      },
+                                          if (section.moreId != null)
+                                            GestureDetector(
+                                              onTap: () {
+                                                debugPrint(
+                                                  'Aetherfin: Section More tapped with ID: ${section.moreId}',
+                                                );
+                                                final title = section.title
+                                                    .toLowerCase();
+                                                if (title.contains('album') ||
+                                                    title.contains('single') ||
+                                                    title.contains('ep')) {
+                                                  context.push(
+                                                    '/artist/${widget.artistId}/albums',
+                                                  );
+                                                } else {
+                                                  context.push(
+                                                    '/album/${section.moreId}',
+                                                  );
+                                                }
+                                              },
+                                              child: Text(
+                                                'More',
+                                                style: AfTypography.bodyMedium
+                                                    .copyWith(
+                                                      color: activeAccent,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: AfSpacing.s8),
+                                    SizedBox(
+                                      height: 220,
+                                      child: ListView.separated(
+                                        scrollDirection: Axis.horizontal,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: AfSpacing.gutterGenerous,
+                                        ),
+                                        itemCount: items.length.clamp(0, 10),
+                                        separatorBuilder: (_, _) =>
+                                            const SizedBox(
+                                              width: AfSpacing.s12,
+                                            ),
+                                        itemBuilder: (context, i) {
+                                          final item = items[i];
+                                          return PressScale(
+                                            onTap: () {
+                                              if (item.type ==
+                                                      InnerTubeItemType.album ||
+                                                  item.type ==
+                                                      InnerTubeItemType
+                                                          .playlist) {
+                                                context.push(
+                                                  '/album/${item.id}',
+                                                );
+                                              } else if (item.type ==
+                                                  InnerTubeItemType.artist) {
+                                                context.push(
+                                                  '/artist/${item.id}',
+                                                );
+                                              } else if (item.type ==
+                                                  InnerTubeItemType.song) {
+                                                final track = AfTrack(
+                                                  id: item.videoId ?? item.id,
+                                                  title: item.title,
+                                                  artistName: item.subtitle,
+                                                  artistId: item.artistId,
+                                                  albumName: 'YouTube Music',
+                                                  imageUrl: item.thumbnailUrl,
+                                                );
+                                                ref
+                                                    .read(playActionsProvider)
+                                                    .playQueue([
+                                                      track,
+                                                    ], startIndex: 0);
+                                              }
+                                            },
+                                            child: SizedBox(
+                                              width: 152,
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Artwork(
+                                                    url: item.thumbnailUrl,
+                                                    size: 152,
+                                                    radius: AfRadii.borderMd,
+                                                  ),
+                                                  const SizedBox(
+                                                    height: AfSpacing.s8,
+                                                  ),
+                                                  Text(
+                                                    item.title,
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: AfTypography
+                                                        .titleSmall
+                                                        .copyWith(
+                                                          color: AfColors
+                                                              .textPrimary,
+                                                        ),
+                                                  ),
+                                                  if (item
+                                                          .subtitle
+                                                          .isNotEmpty &&
+                                                      item.type !=
+                                                          InnerTubeItemType
+                                                              .artist)
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            top: AfSpacing.s2,
+                                                          ),
+                                                      child: Text(
+                                                        item.subtitle,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: AfTypography
+                                                            .bodySmall
+                                                            .copyWith(
+                                                              color: AfColors
+                                                                  .textSecondary,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
+                            );
+                            // ignore: unnecessary_to_list_in_spreads
+                          }).toList()
+                        else ...[
+                          // -- Discography (non-YT Music fallback) --
+                          ...buildArtistDiscographySlivers(
+                            albums,
+                            onMoreTap: () => context.push(
+                              '/artist/${widget.artistId}/albums',
                             ),
-                          );
-                          // ignore: unnecessary_to_list_in_spreads
-                        }).toList()
-                      else ...[
-                        // -- Discography (non-YT Music fallback) --
-                        ...buildArtistDiscographySlivers(
-                          albums,
-                          onMoreTap: () =>
-                              context.push('/artist/${widget.artistId}/albums'),
-                          activeAccent: activeAccent,
+                            activeAccent: activeAccent,
+                          ),
+                        ],
+                        const SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: AfSpacing.bottomInsetWithMiniAndNav,
+                          ),
                         ),
                       ],
-                      const SliverToBoxAdapter(
-                        child: SizedBox(
-                          height: AfSpacing.bottomInsetWithMiniAndNav,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
 

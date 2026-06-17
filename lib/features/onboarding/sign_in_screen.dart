@@ -13,6 +13,7 @@ import '../../widgets/af_loading_indicator.dart';
 import '../../state/providers.dart';
 import '../../utils/display_error.dart';
 import '../../utils/log.dart';
+import '../../utils/navigation.dart';
 import '../../utils/url.dart';
 import '../../widgets/server_pill.dart';
 import '../../widgets/stagger_reveal.dart';
@@ -228,7 +229,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),
           tooltip: 'Back',
-          onPressed: () => context.pop(),
+          onPressed: () => context.safePop(),
         ),
         title: Text('Sign in', style: AfTypography.titleMedium),
         actions: [

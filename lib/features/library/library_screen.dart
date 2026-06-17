@@ -103,96 +103,125 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 ),
                 child: AfScrollbar(
                   controller: _scroll,
-                  child: CustomScrollView(
-                    controller: _scroll,
-                    physics: const ClampingScrollPhysics(),
-                    slivers: [
-                      // ── Header row: gradient title + search icon ──
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AfSpacing.s16,
-                            AfSpacing.s16,
-                            AfSpacing.s16,
-                            AfSpacing.s12,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: ShaderMask(
-                                  shaderCallback: (bounds) =>
-                                      const LinearGradient(
-                                        colors: [
-                                          AfColors.indigo400,
-                                          AfColors.indigo600,
-                                        ],
-                                      ).createShader(bounds),
-                                  child: Text(
-                                    'Library',
-                                    style: AfTypography.display.copyWith(
-                                      color: AfColors.textOnPrimary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              PressScale(
-                                onTap: () => _openSearch(context),
-                                child: Semantics(
-                                  button: true,
-                                  label: 'Search library',
-                                  child: Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      color: AfColors.glassFill,
-                                      borderRadius: AfRadii.borderPill,
-                                      border: Border.all(
-                                        color: AfColors.glassBorderStrong,
-                                        width: 1,
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      if (isLocal) {
+                        ref.invalidate(localAlbumsProvider);
+                        ref.invalidate(localArtistsProvider);
+                        ref.invalidate(localGenresProvider);
+                        await Future.wait<Object?>([
+                          ref.read(localAlbumsProvider.future),
+                          ref.read(localArtistsProvider.future),
+                          ref.read(localGenresProvider.future),
+                        ]);
+                      } else {
+                        ref.invalidate(allAlbumsProvider);
+                        ref.invalidate(allArtistsProvider);
+                        ref.invalidate(allGenresProvider);
+                        await Future.wait<Object?>([
+                          ref.read(allAlbumsProvider.future),
+                          ref.read(allArtistsProvider.future),
+                          ref.read(allGenresProvider.future),
+                        ]);
+                      }
+                    },
+                    color: ref.watch(
+                      currentSpectralProvider.select((s) => s.primary),
+                    ),
+                    backgroundColor: AfColors.surfaceBase,
+                    child: CustomScrollView(
+                      controller: _scroll,
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: ClampingScrollPhysics(),
+                      ),
+                      slivers: [
+                        // ── Header row: gradient title + search icon ──
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              AfSpacing.s16,
+                              AfSpacing.s16,
+                              AfSpacing.s16,
+                              AfSpacing.s12,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: ShaderMask(
+                                    shaderCallback: (bounds) =>
+                                        const LinearGradient(
+                                          colors: [
+                                            AfColors.indigo400,
+                                            AfColors.indigo600,
+                                          ],
+                                        ).createShader(bounds),
+                                    child: Text(
+                                      'Library',
+                                      style: AfTypography.display.copyWith(
+                                        color: AfColors.textOnPrimary,
                                       ),
                                     ),
-                                    child: const Icon(
-                                      LucideIcons.search,
-                                      color: AfColors.textSecondary,
-                                      size: 18,
+                                  ),
+                                ),
+                                PressScale(
+                                  onTap: () => _openSearch(context),
+                                  child: Semantics(
+                                    button: true,
+                                    label: 'Search library',
+                                    child: Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color: AfColors.glassFill,
+                                        borderRadius: AfRadii.borderPill,
+                                        border: Border.all(
+                                          color: AfColors.glassBorderStrong,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        LucideIcons.search,
+                                        color: AfColors.textSecondary,
+                                        size: 18,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
 
-                      // ── Recently Added ──
-                      SliverToBoxAdapter(
-                        child: _RecentlyAddedSection(isLocal: isLocal),
-                      ),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: AfSpacing.s12),
-                      ),
-
-                      // ── Pill Bar (pinned on scroll) ──
-                      SliverPersistentHeader(
-                        pinned: true,
-                        delegate: _PillBarDelegate(
-                          pills: pills,
-                          selected: _pill,
-                          onChanged: (v) => setState(() => _pill = v),
+                        // ── Recently Added ──
+                        SliverToBoxAdapter(
+                          child: _RecentlyAddedSection(isLocal: isLocal),
                         ),
-                      ),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: AfSpacing.s12),
-                      ),
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AfSpacing.s12),
+                        ),
 
-                      // ── Section Content ──
-                      switch (_pill) {
-                        SongsPill.songs => SongsTab(isLocal: isLocal),
-                        SongsPill.artists => ArtistsTab(isLocal: isLocal),
-                        SongsPill.albums => AlbumsTab(isLocal: isLocal),
-                        SongsPill.genres => GenresTab(isLocal: isLocal),
-                      },
-                    ],
+                        // ── Pill Bar (pinned on scroll) ──
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: _PillBarDelegate(
+                            pills: pills,
+                            selected: _pill,
+                            onChanged: (v) => setState(() => _pill = v),
+                          ),
+                        ),
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AfSpacing.s12),
+                        ),
+
+                        // ── Section Content ──
+                        switch (_pill) {
+                          SongsPill.songs => SongsTab(isLocal: isLocal),
+                          SongsPill.artists => ArtistsTab(isLocal: isLocal),
+                          SongsPill.albums => AlbumsTab(isLocal: isLocal),
+                          SongsPill.genres => GenresTab(isLocal: isLocal),
+                        },
+                      ],
+                    ),
                   ),
                 ),
               ),
