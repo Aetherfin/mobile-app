@@ -279,9 +279,9 @@ class _ParametricEqPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(x, y), radius, handlePaint);
 
-    // White border — paint context (glow/highlight), not semantic
+    // Handle border — paint context (glow/highlight), not semantic
     final borderPaint = Paint()
-      ..color = Colors.white
+      ..color = AfColors.textPrimary
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     canvas.drawCircle(Offset(x, y), radius, borderPaint);
@@ -1015,7 +1015,9 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                       child: Container(
                         width: 24,
                         height: 24,
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: AfSpacing.s2,
+                        ),
                         decoration: const BoxDecoration(
                           color: AfColors.textPrimary,
                           shape: BoxShape.circle,

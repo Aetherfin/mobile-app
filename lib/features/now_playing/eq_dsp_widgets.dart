@@ -160,7 +160,9 @@ class EqMasterBanner extends ConsumerWidget {
                   child: Container(
                     width: 26,
                     height: 26,
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AfSpacing.s2,
+                    ),
                     decoration: const BoxDecoration(
                       color: AfColors.textPrimary,
                       shape: BoxShape.circle,
@@ -378,7 +380,9 @@ class EqEffectToggle extends ConsumerWidget {
                   child: Container(
                     width: 24,
                     height: 24,
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AfSpacing.s2,
+                    ),
                     decoration: const BoxDecoration(
                       color: AfColors.textPrimary,
                       shape: BoxShape.circle,
@@ -535,7 +539,7 @@ Widget eqTextFieldRow(
   bool numericPipe = false,
 }) {
   return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
+    padding: const EdgeInsets.symmetric(vertical: AfSpacing.s4),
     child: Row(
       children: [
         SizedBox(width: 100, child: Text(label, style: AfTypography.bodySmall)),
@@ -555,8 +559,8 @@ Widget eqTextFieldRow(
               ),
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 8,
+                horizontal: AfSpacing.s8,
+                vertical: AfSpacing.s8,
               ),
               border: const OutlineInputBorder(
                 borderRadius: AfRadii.borderSm,

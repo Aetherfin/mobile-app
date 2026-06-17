@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
-import 'dart:developer' as dev;
+import '../../utils/log.dart';
 
 /// Shared Dio client with connection pooling and caching for all HTTP requests.
 ///
@@ -110,9 +110,6 @@ class SharedDioClient {
     _dio.close(force: true);
     _cacheStore.close();
   }
-
-  /// Returns the current number of cached entries
-  int get cacheSize => 0; // MemCacheStore doesn't expose size directly
 }
 
 /// Retry interceptor for transient HTTP failures.
@@ -154,10 +151,10 @@ class _RetryInterceptor extends Interceptor {
     int retryCount,
   ) async {
     final delay = _retryDelays[retryCount];
-    dev.log(
+    afLog(
+      'http',
       'Retrying ${err.requestOptions.method} ${err.requestOptions.uri} '
-      '(attempt ${retryCount + 1}/$_maxRetries) after ${delay.inSeconds}s',
-      name: 'aetherfin:http',
+          '(attempt ${retryCount + 1}/$_maxRetries) after ${delay.inSeconds}s',
     );
     await Future.delayed(delay);
     final options = err.requestOptions;
@@ -166,10 +163,7 @@ class _RetryInterceptor extends Interceptor {
       final response = await _dio.fetch(options);
       handler.resolve(response);
     } catch (retryErr) {
-      dev.log(
-        'Retry ${retryCount + 1}/$_maxRetries failed: $retryErr',
-        name: 'aetherfin:http',
-      );
+      afLog('http', 'Retry ${retryCount + 1}/$_maxRetries failed: $retryErr');
       if (retryErr is DioException && _shouldRetry(retryErr)) {
         final nextCount = retryCount + 1;
         if (nextCount < _maxRetries) {
@@ -177,7 +171,7 @@ class _RetryInterceptor extends Interceptor {
           return;
         }
       }
-      handler.next(err);
+      handler.next(retryErr as DioException);
     }
   }
 

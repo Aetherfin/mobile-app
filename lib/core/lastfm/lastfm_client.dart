@@ -39,6 +39,11 @@ class LastFmClient {
 
   final Dio _dio;
 
+  /// Close the underlying HTTP client and release resources.
+  void close() {
+    _dio.close(force: true);
+  }
+
   /// Helper to calculate MD5 request signature for authenticated endpoints.
   /// Concatenates parameters alphabetically by name, appends secret, and hashes.
   String _generateSignature(Map<String, String> params) {

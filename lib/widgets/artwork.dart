@@ -177,9 +177,7 @@ class CircularArtwork extends StatelessWidget {
           size: maxW,
           radius: maxW.isFinite && maxW > 0
               ? AfRadii.borderPill
-              : BorderRadius.circular(
-                  AfSpacing.s32,
-                ), // no exact AfRadii match for 32dp fallback
+              : AfRadii.borderXl, // 32dp → closest token 24dp
           semanticLabel: semanticLabel,
         );
       },

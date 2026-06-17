@@ -218,9 +218,11 @@ class _PlaylistTile extends ConsumerWidget {
                   Navigator.pop(context);
                   onDelete();
                 },
-                child: const Text(
+                child: Text(
                   'Delete',
-                  style: TextStyle(color: AfColors.semanticError),
+                  style: AfTypography.bodyMedium.copyWith(
+                    color: AfColors.semanticError,
+                  ),
                 ),
               ),
             ],

@@ -93,7 +93,9 @@ class YouTubeSongGrid extends ConsumerWidget {
                           if (isActive)
                             Positioned.fill(
                               child: Container(
-                                color: Colors.black.withValues(alpha: 0.5),
+                                color: AfColors.surfaceCanvas.withValues(
+                                  alpha: 0.5,
+                                ),
                                 child: Center(
                                   child: isBuffering
                                       ? const SizedBox(
@@ -101,11 +103,11 @@ class YouTubeSongGrid extends ConsumerWidget {
                                           height: 16,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            color: Colors.white,
+                                            color: AfColors.textOnPrimary,
                                           ),
                                         )
                                       : PlayingEqualizer(
-                                          color: Colors.white,
+                                          color: AfColors.textOnPrimary,
                                           size: 16.0,
                                           isPlaying: isPlaying,
                                         ),
@@ -294,7 +296,9 @@ class YouTubeHomeTile extends ConsumerWidget {
                       if (isActive)
                         Positioned.fill(
                           child: Container(
-                            color: Colors.black.withValues(alpha: 0.5),
+                            color: AfColors.surfaceCanvas.withValues(
+                              alpha: 0.5,
+                            ),
                             child: Center(
                               child: isBuffering
                                   ? const SizedBox(
@@ -302,11 +306,11 @@ class YouTubeHomeTile extends ConsumerWidget {
                                       height: 24,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        color: Colors.white,
+                                        color: AfColors.textOnPrimary,
                                       ),
                                     )
                                   : PlayingEqualizer(
-                                      color: Colors.white,
+                                      color: AfColors.textOnPrimary,
                                       size: 24.0,
                                       isPlaying: isPlaying,
                                     ),

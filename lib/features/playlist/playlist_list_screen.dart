@@ -80,7 +80,7 @@ class PlaylistListScreen extends ConsumerWidget {
                   child: Text(
                     'Sign in with Google',
                     style: AfTypography.bodyMedium.copyWith(
-                      color: Colors.white,
+                      color: AfColors.textOnPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

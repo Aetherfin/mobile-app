@@ -328,7 +328,7 @@ class PlaybackController {
       Media(url, httpHeaders: _authHeaders.isNotEmpty ? _authHeaders : null),
     ];
     afLog(
-      'aetherfin:youtube',
+      'aetherfin:audio',
       'playQueue: url=${url.length > 80 ? url.substring(0, 80) : url}...',
     );
 

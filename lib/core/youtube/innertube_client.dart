@@ -41,7 +41,7 @@ class InnerTubeClient {
     if (auth != null) {
       afLog(
         'youtube',
-        'setAuth: email=${auth.email} '
+        'setAuth: email=${auth.email.length > 2 ? '${auth.email.substring(0, 2)}***' : '***'} '
             'hasSAPISID=${auth.cookies.containsKey('SAPISID')} '
             'cookieCount=${auth.cookies.length} '
             'dataSyncId=${auth.dataSyncId}',

@@ -93,8 +93,8 @@ class _FrostedTopBarState extends ConsumerState<FrostedTopBar>
       animation: _expandAnim,
       builder: (context, _) {
         final radius = BorderRadius.circular(
-          ui.lerpDouble(36, AfRadii.lg, _expandAnim.value)!,
-        );
+          ui.lerpDouble(AfRadii.xl, AfRadii.lg, _expandAnim.value)!,
+        ); // 36→24dp xl, closest token
 
         return Padding(
           padding: const EdgeInsets.symmetric(

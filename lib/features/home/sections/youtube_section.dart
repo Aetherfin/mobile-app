@@ -38,7 +38,8 @@ class _YouTubeHomeViewState extends ConsumerState<YouTubeHomeView> {
     if (_autoLoaded) return;
     if (home.continuation != null && home.sections.length < 5) {
       _autoLoaded = true;
-      Future.delayed(const Duration(milliseconds: 300), () {
+      Future.delayed(AfDurations.bounce, () {
+        // 300→250ms, closest token
         if (mounted) {
           ref.read(youtubeHomeProvider.notifier).loadMore();
         }
@@ -291,7 +292,7 @@ class YouTubeAccountButton extends ConsumerWidget {
           decoration: BoxDecoration(
             color: isLoggedIn
                 ? AfColors.indigo600
-                : Colors.white.withValues(
+                : AfColors.textOnPrimary.withValues(
                     alpha: 0.06,
                   ), // decorative avatar bg — not semantic
             shape: BoxShape.circle,
@@ -400,14 +401,18 @@ class YouTubeAccountButton extends ConsumerWidget {
             },
             child: Text(
               'Sign out',
-              style: TextStyle(color: Colors.red.shade300),
+              style: AfTypography.bodyMedium.copyWith(
+                color: AfColors.semanticError,
+              ),
             ),
           ),
           TextButton(
             onPressed: () => ctx.pop(),
-            child: const Text(
+            child: Text(
               'Close',
-              style: TextStyle(color: AfColors.textSecondary),
+              style: AfTypography.bodyMedium.copyWith(
+                color: AfColors.textSecondary,
+              ),
             ),
           ),
         ],

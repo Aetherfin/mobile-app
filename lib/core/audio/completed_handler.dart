@@ -87,6 +87,7 @@ extension CompletedHandler on PlaybackController {
     unawaited(
       _queueLock.run(() async {
         if (_eofFallbackHandledTrackId == currentTrack.id) return;
+        if (_completedHandledForTrackId == currentTrack.id) return;
         _eofFallbackHandledTrackId = currentTrack.id;
         await _advanceToNextTrack();
       }),
@@ -123,6 +124,8 @@ extension CompletedHandler on PlaybackController {
 
       await _queueLock.run(() async {
         if (_disposed) return;
+        if (_completedHandledForTrackId == currentTrackId) return;
+        if (_eofFallbackHandledTrackId == currentTrackId) return;
 
         final loopAtEvent = _loopModeManager.mode;
         final playingAtEvent = _player.state.playing;

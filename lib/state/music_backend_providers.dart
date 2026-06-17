@@ -24,7 +24,11 @@ final musicBackendProvider = Provider.autoDispose<MusicBackend?>((ref) {
       source: 'live',
       extra: 'type=youtubeMusic auth=${youtubeAuth != null ? 'yes' : 'no'}',
     );
-    final client = YouTubeMusicClient(auth: youtubeAuth);
+    final clientVersion = ref.watch(aetherfinVersionProvider);
+    final client = YouTubeMusicClient(
+      auth: youtubeAuth,
+      clientVersion: clientVersion,
+    );
     ref.onDispose(client.close);
     return client;
   }
@@ -80,7 +84,11 @@ final musicBackendProvider = Provider.autoDispose<MusicBackend?>((ref) {
     case ServerType.youtubeMusic:
       {
         final youtubeAuth = ref.watch(youtubeAuthProvider);
-        final client = YouTubeMusicClient(auth: youtubeAuth);
+        final clientVersion = ref.watch(aetherfinVersionProvider);
+        final client = YouTubeMusicClient(
+          auth: youtubeAuth,
+          clientVersion: clientVersion,
+        );
         ref.onDispose(client.close);
         return client;
       }

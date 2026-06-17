@@ -64,7 +64,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final homeAsync = ref.read(youtubeHomeProvider);
     homeAsync.whenData((home) {
       if (home.continuation != null && home.sections.length < 5) {
-        Future.delayed(const Duration(milliseconds: 500), () {
+        Future.delayed(AfDurations.expressive, () {
           if (mounted) {
             ref.read(youtubeHomeProvider.notifier).loadMore();
           }

@@ -34,7 +34,7 @@ final albumDetailProvider = FutureProvider.autoDispose
         return null;
       }
 
-      final backend = ref.watch(musicBackendProvider);
+      final backend = ref.read(musicBackendProvider);
       if (backend != null) {
         final res = await backend.album(id);
         _logData(

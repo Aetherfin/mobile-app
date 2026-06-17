@@ -56,6 +56,9 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
     final oklch = srgbToOklch(energy);
     final target = OklchColor(0.35, 0.12, oklch.h).toColor();
 
+    // ponytail: mutation in build() — safe because guarded by `target != _target`.
+    // Runs exactly once per spectral change. Alternatives (ref.listen in initState,
+    // addPostFrameCallback) either don't work in ConsumerState or add frame delay.
     if (target != _target) {
       _target = target;
       _current = _colorAnimation.value ?? _current;

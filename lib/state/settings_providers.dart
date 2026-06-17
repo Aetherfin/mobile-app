@@ -75,18 +75,28 @@ final lastfmStatusProvider = NotifierProvider<StateHolder<String?>, String?>(
   () => StateHolder<String?>((ref) => null),
 );
 
+/// Tracks the previous [LastFmClient] instance for cleanup on rebuild.
+LastFmClient? _lastFmClient;
+
 /// Central Last.fm client provider, watching api key, secret and session key.
 final lastFmClientProvider = Provider<LastFmClient?>((ref) {
   final apiKey = ref.watch(lastfmApiKeyProvider);
   final apiSecret = ref.watch(lastfmApiSecretProvider);
   final sessionKey = ref.watch(lastfmSessionKeyProvider);
   if (apiKey.isEmpty) return null;
-  return LastFmClient(
+
+  // Close previous client before creating new one
+  _lastFmClient?.close();
+
+  final client = LastFmClient(
     apiKey: apiKey,
     apiSecret: apiSecret.isEmpty ? null : apiSecret,
     sessionKey: sessionKey.isEmpty ? null : sessionKey,
-    onStatus: (msg) => ref.read(lastfmStatusProvider.notifier).set(msg),
+    onStatus: ref.read(lastfmStatusProvider.notifier).set,
   );
+  ref.onDispose(client.close);
+  _lastFmClient = client;
+  return client;
 });
 
 /// Persisted Now Playing background style preference.

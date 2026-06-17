@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../../design_tokens/tokens.dart';
 import 'parametric_band.dart';
 
 /// CustomPainter that draws the combined parametric EQ frequency response.
@@ -83,7 +84,7 @@ class ParametricEqCurvePainter extends CustomPainter {
 
   void _drawGrid(Canvas canvas, Size size) {
     final gridPaint = Paint()
-      ..color = Colors.white
+      ..color = AfColors.textPrimary
           .withValues(alpha: 0.08) // grid line — paint context, not semantic
       ..strokeWidth = 0.5;
 
@@ -102,7 +103,7 @@ class ParametricEqCurvePainter extends CustomPainter {
 
     // Zero line (0 dB)
     final zeroPaint = Paint()
-      ..color = Colors.white
+      ..color = AfColors.textPrimary
           .withValues(alpha: 0.2) // zero line — paint context, not semantic
       ..strokeWidth = 1;
     final zeroY = _dbToY(0, size.height);
@@ -218,9 +219,9 @@ class ParametricEqCurvePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(x, y), isSel ? 8 : 6, handlePaint);
 
-    // White border — paint context (glow/highlight), not semantic
+    // Handle border — paint context (glow/highlight), not semantic
     final borderPaint = Paint()
-      ..color = Colors.white
+      ..color = AfColors.textPrimary
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     canvas.drawCircle(Offset(x, y), isSel ? 8 : 6, borderPaint);
@@ -229,12 +230,9 @@ class ParametricEqCurvePainter extends CustomPainter {
     final tp = TextPainter(
       text: TextSpan(
         text: label,
-        style: const TextStyle(
-          fontFamily: 'JetBrains Mono',
+        style: AfTypography.mono.copyWith(
           fontSize: 9,
-          color: Color(
-            0x73FFFFFF,
-          ), // paint context — canvas label, not semantic
+          color: const Color(0x73FFFFFF), // paint context — canvas label
         ),
       ),
       textDirection: TextDirection.ltr,

@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../design_tokens/tokens.dart';
+
 /// Glow effect utilities for the pro EQ screen.
 ///
 /// Three-layer glow: outer (blur 8px, 20%), inner (blur 3px, 40%), core (2.5px, 100%).
@@ -76,7 +78,7 @@ abstract final class GlowEffects {
         ..strokeWidth = isActive ? 1.6 : 1.0,
       // Specular highlight
       Paint()
-        ..color = Colors.white.withValues(
+        ..color = AfColors.textPrimary.withValues(
           alpha: 0.4,
         ), // glow/paint context — not semantic
     ];
@@ -112,7 +114,7 @@ abstract final class GlowEffects {
       center - Offset(actualRadius * 0.2, actualRadius * 0.2),
       actualRadius * 0.4,
       Paint()
-        ..color = Colors.white.withValues(
+        ..color = AfColors.textPrimary.withValues(
           alpha: 0.4,
         ), // glow/paint context — not semantic
     );

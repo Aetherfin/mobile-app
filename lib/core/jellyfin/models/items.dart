@@ -28,6 +28,13 @@ class AfAlbum {
   final DateTime? dateAdded;
   final bool isFavorite;
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is AfAlbum && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
+
   AfAlbum copyWith({
     String? id,
     String? name,
@@ -82,6 +89,13 @@ class AfArtist {
   final String? imageUrl;
   final String? bio;
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is AfArtist && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
+
   String get statLine {
     final albums = albumCount == 1 ? '1 Album' : '$albumCount Albums';
     final tracks = trackCount == 1 ? '1 Track' : '$trackCount Tracks';
@@ -134,6 +148,13 @@ class AfTrack {
   /// Genre tag from the track metadata. Populated for local mode tracks
   /// from the SQLite entity; server mode tracks may or may not carry it.
   final String? genre;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is AfTrack && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
 
   AfTrack copyWith({
     String? id,
@@ -201,6 +222,13 @@ class AfPlaylist {
   mosaicImageUrls; // up to 4 cover images for the 4-quadrant montage
   final bool isPublic;
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is AfPlaylist && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
+
   /// Singular/plural-aware subtitle ("1 track" / "12 tracks"). Used wherever
   /// playlists appear in lists so the labels stay grammatical for one-track
   /// playlists.
@@ -215,6 +243,13 @@ class AfGenre {
   final String name;
   final String tint; // hex, used as fallback color
   final String? imageUrl;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is AfGenre && other.name == name;
+
+  @override
+  int get hashCode => name.hashCode;
 }
 
 /// Full song-level metadata + file details — backs the "Show details"
@@ -302,6 +337,14 @@ class AfTrackDetails {
 
   /// Whether the server transcodes the stream (Jellyfin: TranscodingUrl present).
   final bool isTranscoded;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AfTrackDetails && other.track.id == track.id;
+
+  @override
+  int get hashCode => track.id.hashCode;
 
   /// `1.23 MB` / `512 KB` / `1.5 GB` formatting for [sizeBytes]. Uses
   /// 1024-based units (KiB/MiB) but renders the friendlier `MB` suffix

@@ -16,8 +16,8 @@ ThemeData buildNocturneTheme() {
   return _buildTheme(Spectral.fallback);
 }
 
-/// Cache key: spectral primary + secondary colors.
-int _spectralKey(Spectral s) => Object.hash(s.primary, s.secondary);
+/// Cache key: full spectral palette (all 19 fields).
+int _spectralKey(Spectral s) => s.hashCode;
 
 /// LRU cache for ThemeData keyed by spectral palette (max 8 entries).
 final LinkedHashMap<int, ThemeData> _themeCache = LinkedHashMap();

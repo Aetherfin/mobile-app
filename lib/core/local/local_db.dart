@@ -27,8 +27,6 @@ class LocalDb {
   }
   final AppDatabase db;
 
-  Set<String>? _favoriteIdsCache;
-
   late final TrackRepository tracks;
   late final AlbumRepository albums;
   late final PlaylistRepository playlists;
@@ -56,9 +54,34 @@ class LocalDb {
   Future<void> removeFolder(String uri) async {
     await db.transaction(() async {
       await (db.delete(db.folders)..where((f) => f.uri.equals(uri))).go();
+      final likePattern = '${escapeSqlLike(uri)}%';
+
+      // Cascade delete in dependent tables before removing tracks
+      await db.customStatement(
+        r"DELETE FROM playlist_entries WHERE track_id LIKE ? ESCAPE '\'",
+        [likePattern],
+      );
+      await db.customStatement(
+        r"DELETE FROM playback_history WHERE track_id LIKE ? ESCAPE '\'",
+        [likePattern],
+      );
+      await db.customStatement(
+        r"DELETE FROM track_stats WHERE track_id LIKE ? ESCAPE '\'",
+        [likePattern],
+      );
+      await db.customStatement(
+        r"DELETE FROM favorites WHERE item_id LIKE ? ESCAPE '\'",
+        [likePattern],
+      );
+      await db.customStatement(
+        r"DELETE FROM track_co_occurrences WHERE track_a_id LIKE ? ESCAPE '\'"
+        r" OR track_b_id LIKE ? ESCAPE '\'",
+        [likePattern, likePattern],
+      );
+
       await db.customStatement(
         r"DELETE FROM tracks WHERE id LIKE ? ESCAPE '\'",
-        ['${escapeSqlLike(uri)}%'],
+        [likePattern],
       );
     });
   }
@@ -200,14 +223,19 @@ class LocalDb {
   }
 
   /// Cached variant of [favoriteIds] — avoids repeated full-table scans.
+  /// Uses a Future-based memoization pattern (`_favoriteIdsFuture`) instead
+  /// of `??=` to prevent async race when concurrent callers see a null cache.
+  Future<Set<String>>? _favoriteIdsFuture;
+
   Future<Set<String>> favoriteIdsCached() async {
-    return _favoriteIdsCache ??= await favoriteIds();
+    _favoriteIdsFuture ??= favoriteIds();
+    return _favoriteIdsFuture!;
   }
 
   /// Must be called whenever the favorites table is mutated so the cache
   /// stays consistent.
   void invalidateFavoriteIdsCache() {
-    _favoriteIdsCache = null;
+    _favoriteIdsFuture = null;
   }
 
   Future<void> setFavorite(String itemId, bool isFavorite) async {

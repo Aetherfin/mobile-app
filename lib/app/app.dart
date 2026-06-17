@@ -7,8 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../core/network/connectivity_observer.dart';
-import '../design_tokens/colors.dart';
-import '../design_tokens/spacing.dart';
+import '../design_tokens/tokens.dart';
 import '../state/animated_spectral.dart';
 import '../utils/log.dart';
 import 'router.dart';
@@ -120,7 +119,7 @@ class _ConnectivityBannerState extends State<_ConnectivityBanner> {
     return SnackBar(
       content: const Row(
         children: [
-          Icon(LucideIcons.wifiOff, color: Colors.white, size: 20),
+          Icon(LucideIcons.wifiOff, color: AfColors.textOnPrimary, size: 20),
           SizedBox(width: AfSpacing.s8),
           Expanded(child: Text('No internet connection')),
         ],

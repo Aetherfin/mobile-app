@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:drift/drift.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -75,7 +76,16 @@ class OfflineCacheService {
 
     try {
       if (await realFile.exists()) {
-        afLog('cache', 'cacheTrack: already cached $trackId');
+        // Update lastPlayedAt even for already-cached tracks so LRU
+        // eviction doesn't evict recently-played tracks.
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await (_db.update(_db.cacheEntries)
+              ..where((t) => t.trackId.equals(trackId)))
+            .write(CacheEntriesCompanion(lastPlayedAt: Value(now)));
+        afLog(
+          'cache',
+          'cacheTrack: already cached $trackId (refreshed lastPlayedAt)',
+        );
         return;
       }
 
@@ -127,28 +137,45 @@ class OfflineCacheService {
   }
 
   /// Evict least-recently-played tracks until under the max cache size.
+  /// Uses SQL aggregate for total size and batched ORDER BY to avoid loading
+  /// all entries into memory.
   Future<void> evictLRU({int? maxCacheSizeBytes}) async {
     final maxSize = maxCacheSizeBytes ?? await _loadMaxCacheSize();
-    final entries = await _db.select(_db.cacheEntries).get();
-    var totalSize = entries.fold<int>(0, (sum, e) => sum + e.fileSize);
+
+    // Single aggregate query instead of loading all rows
+    final sizeResult = await _db
+        .customSelect(
+          'SELECT COALESCE(SUM(file_size), 0) AS total FROM cache_entries',
+          readsFrom: {_db.cacheEntries},
+        )
+        .getSingle();
+    var totalSize = sizeResult.read<int>('total');
 
     if (totalSize <= maxSize) return;
 
-    final sorted = List<CacheEntryEntity>.from(entries)
-      ..sort((a, b) => a.lastPlayedAt.compareTo(b.lastPlayedAt));
-
+    // Evict oldest entries in batches of 50 — loads only eviction candidates
     var evicted = 0;
-    for (final entry in sorted) {
-      if (totalSize <= maxSize) break;
-      final file = _fileFor(entry.trackId);
-      if (await file.exists()) {
-        await file.delete();
-        totalSize -= entry.fileSize;
-        evicted++;
+    while (totalSize > maxSize) {
+      final entries =
+          await (_db.select(_db.cacheEntries)
+                ..orderBy([(t) => OrderingTerm.asc(t.lastPlayedAt)])
+                ..limit(50))
+              .get();
+
+      if (entries.isEmpty) break;
+
+      for (final entry in entries) {
+        if (totalSize <= maxSize) break;
+        final file = _fileFor(entry.trackId);
+        if (await file.exists()) {
+          await file.delete();
+          totalSize -= entry.fileSize;
+          evicted++;
+        }
+        await (_db.delete(
+          _db.cacheEntries,
+        )..where((t) => t.trackId.equals(entry.trackId))).go();
       }
-      await (_db.delete(
-        _db.cacheEntries,
-      )..where((t) => t.trackId.equals(entry.trackId))).go();
     }
 
     if (evicted > 0) {

@@ -28,7 +28,28 @@ class NavidromeClient extends SubsonicClient {
              'Accept': 'application/json',
            },
          ),
-       );
+       ) {
+    _ndDio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401 &&
+              error.requestOptions.extra['_nd401Retry'] != true) {
+            _ndToken = null;
+            error.requestOptions.extra['_nd401Retry'] = true;
+            try {
+              await _ensureNdAuthenticated();
+              final response = await _ndDio.fetch(error.requestOptions);
+              handler.resolve(response);
+              return;
+            } on Exception catch (_) {
+              // Re-auth failed — pass original error to next handler
+            }
+          }
+          handler.next(error);
+        },
+      ),
+    );
+  }
 
   final Dio _ndDio;
 

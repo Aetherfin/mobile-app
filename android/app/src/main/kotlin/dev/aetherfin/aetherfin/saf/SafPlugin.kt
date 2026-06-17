@@ -207,7 +207,7 @@ class SafPlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
                 // Only READ/WRITE flags are valid here. PERSISTABLE is
                 // set on the launching intent (line 144-147), not on the
                 // takePersistableUriPermission call itself.
-                val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 activity?.contentResolver?.takePersistableUriPermission(uri, flags)
             } catch (_: Exception) {
                 // Some custom ROM document providers reject persistable

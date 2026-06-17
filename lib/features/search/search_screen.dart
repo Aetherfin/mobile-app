@@ -52,7 +52,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   // to rebuild.
   final _filterNotifier = ValueNotifier<SearchFilter>(SearchFilter.all);
 
-  static const _debounce = Duration(milliseconds: 250);
+  static const _debounce = AfDurations.bounce;
   Timer? _debounceTimer;
 
   @override

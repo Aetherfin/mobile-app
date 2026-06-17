@@ -90,4 +90,16 @@ class JellyfinAuth {
   /// for backward compatibility with persisted auth blobs that predate
   /// multi-backend support.
   final ServerType serverType;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is JellyfinAuth &&
+          other.server == server &&
+          other.userId == userId &&
+          other.accessToken == accessToken &&
+          other.serverType == serverType;
+
+  @override
+  int get hashCode => Object.hash(server, userId, accessToken, serverType);
 }

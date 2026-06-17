@@ -135,7 +135,7 @@ class CompactTrackRow extends ConsumerWidget {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
+                        color: AfColors.surfaceCanvas.withValues(alpha: 0.5),
                         borderRadius: AfRadii.borderSm,
                       ),
                       child: Center(
@@ -145,11 +145,11 @@ class CompactTrackRow extends ConsumerWidget {
                                 height: 16,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: AfColors.textOnPrimary,
                                 ),
                               )
                             : PlayingEqualizer(
-                                color: Colors.white,
+                                color: AfColors.textOnPrimary,
                                 size: 16.0,
                                 isPlaying: isPlaying,
                               ),

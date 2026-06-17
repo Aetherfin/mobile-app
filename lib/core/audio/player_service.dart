@@ -225,6 +225,7 @@ class AfPlayerService {
   NativeMediaSessionBridge _bridge = NativeMediaSessionBridge();
 
   bool _disposed = false;
+  double _preDuckVolume = 1.0;
 
   // ---------------------------------------------------------------------------
   // Callbacks (public — set by UI layer)
@@ -900,11 +901,12 @@ class AfPlayerService {
         unawaited(_artworkManager.downloadArtworkForNotification(track));
       }
     };
-    bridge.onDuck = (volume) => unawaited(_player.setVolume(volume * 100));
+    bridge.onDuck = (volume) {
+      _preDuckVolume = _player.state.volume;
+      unawaited(_player.setVolume(volume * 100));
+    };
     bridge.onUnduck = () {
-      // Restore to user's volume setting
-      final vol = _player.state.volume;
-      unawaited(_player.setVolume(vol));
+      unawaited(_player.setVolume(_preDuckVolume));
     };
     bridge.onShortcutAction = _handleShortcutAction;
   }

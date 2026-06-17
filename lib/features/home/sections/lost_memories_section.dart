@@ -148,7 +148,7 @@ class _LostMemoryTile extends ConsumerWidget {
                       ),
                       if (isActive)
                         Container(
-                          color: Colors.black.withValues(alpha: 0.5),
+                          color: AfColors.surfaceCanvas.withValues(alpha: 0.5),
                           child: Center(
                             child: isBuffering
                                 ? const SizedBox(
@@ -156,11 +156,11 @@ class _LostMemoryTile extends ConsumerWidget {
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: Colors.white,
+                                      color: AfColors.textOnPrimary,
                                     ),
                                   )
                                 : PlayingEqualizer(
-                                    color: Colors.white,
+                                    color: AfColors.textOnPrimary,
                                     size: 20.0,
                                     isPlaying: isPlaying,
                                   ),

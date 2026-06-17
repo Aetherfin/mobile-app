@@ -226,6 +226,7 @@ final favoriteIdsProvider = Provider<Set<String>>((ref) {
 final playlistTrackIdsProvider = FutureProvider.autoDispose<Set<String>>((
   ref,
 ) async {
+  ref.keepAlive();
   final backend = ref.watch(musicBackendProvider);
   if (backend == null) return <String>{};
 

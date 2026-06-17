@@ -94,7 +94,7 @@ class _PlayingEqualizerState extends State<PlayingEqualizer>
                 height: widget.size * val,
                 decoration: BoxDecoration(
                   color: color,
-                  borderRadius: BorderRadius.circular(1.0),
+                  borderRadius: AfRadii.borderXs, // 1→4dp, closest token
                 ),
               );
             },
@@ -209,7 +209,7 @@ class TrackRow extends ConsumerWidget {
               width: artSize,
               height: artSize,
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
+                color: AfColors.surfaceCanvas.withValues(alpha: 0.5),
                 borderRadius: AfRadii.borderSm,
               ),
               child: Center(
@@ -219,11 +219,11 @@ class TrackRow extends ConsumerWidget {
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: AfColors.textOnPrimary,
                         ),
                       )
                     : PlayingEqualizer(
-                        color: Colors.white,
+                        color: AfColors.textOnPrimary,
                         size: 16.0,
                         isPlaying: isPlaying,
                       ),

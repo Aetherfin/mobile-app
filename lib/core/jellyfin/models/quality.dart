@@ -37,6 +37,29 @@ class TrackQuality {
   /// Transcode bitrate in kbps.
   final int? transcodeBitrateKbps;
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TrackQuality &&
+          other.sourceCodec == sourceCodec &&
+          other.bitrateKbps == bitrateKbps &&
+          other.bitDepth == bitDepth &&
+          other.sampleRateKhz == sampleRateKhz &&
+          other.isTranscoded == isTranscoded &&
+          other.transcodeCodec == transcodeCodec &&
+          other.transcodeBitrateKbps == transcodeBitrateKbps;
+
+  @override
+  int get hashCode => Object.hash(
+    sourceCodec,
+    bitrateKbps,
+    bitDepth,
+    sampleRateKhz,
+    isTranscoded,
+    transcodeCodec,
+    transcodeBitrateKbps,
+  );
+
   /// Display label for the quality chip.
   ///
   ///   `FLAC 24/96`  — native lossless

@@ -59,7 +59,7 @@ class LyricsResolver {
     _cache[trackId] = (raw: raw, source: source);
   }
 
-  int _resolveGeneration = 0;
+  final Map<String, int> _resolveGenerations = {};
 
   /// Resolve lyrics for [trackId].
   ///
@@ -71,7 +71,8 @@ class LyricsResolver {
     required AfTrack track,
     bool enableRaceFetch = false,
   }) async {
-    final generation = ++_resolveGeneration;
+    final generation = (_resolveGenerations[trackId] ?? 0) + 1;
+    _resolveGenerations[trackId] = generation;
 
     // ── Step 1: Check cache first ─────────────────────────────────────
     final cached = _cache[trackId];
@@ -116,7 +117,7 @@ class LyricsResolver {
 
     // Phase 1: fast parallel NetEase + LRCLib.
     final phase1 = await _resolvePhase1(trackId: trackId, track: track);
-    if (phase1 != null && generation == _resolveGeneration) {
+    if (phase1 != null && generation == _resolveGenerations[trackId]) {
       if (!isSyncedLyrics(phase1)) {
         // Phase 2: background quality upgrade.
         final phase2 = await _resolvePhase2(
@@ -124,13 +125,13 @@ class LyricsResolver {
           track: track,
           baseline: phase1,
         );
-        if (phase2 != null && generation == _resolveGeneration) {
+        if (phase2 != null && generation == _resolveGenerations[trackId]) {
           return phase2;
         }
       }
       return phase1;
     }
-    if (generation != _resolveGeneration) return null;
+    if (generation != _resolveGenerations[trackId]) return null;
     return null;
   }
 

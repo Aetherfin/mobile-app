@@ -16,13 +16,16 @@ import 'youtube_home_content.dart';
 /// YouTube Music account library — that's Phase 2. This MVP focuses
 /// on search + streaming.
 class YouTubeMusicClient implements MusicBackend {
-  YouTubeMusicClient({this.auth}) : _yt = YoutubeExplode() {
+  YouTubeMusicClient({this.auth, String clientVersion = '0.0.0'})
+    : _clientVersion = clientVersion,
+      _yt = YoutubeExplode() {
     if (auth != null) {
       _innertube.setAuth(auth);
     }
   }
 
   final YouTubeAuthBundle? auth;
+  final String _clientVersion;
   final YoutubeExplode _yt;
   final InnerTubeClient _innertube = InnerTubeClient();
 
@@ -598,7 +601,7 @@ class YouTubeMusicClient implements MusicBackend {
 
   @override
   Map<String, String> get authHeaders => {
-    'User-Agent': 'Aetherfin/0.3.5 (Android)',
+    'User-Agent': 'Aetherfin/$_clientVersion (Android)',
   };
 
   // ── Lifecycle ────────────────────────────────────────────────────────
@@ -608,6 +611,7 @@ class YouTubeMusicClient implements MusicBackend {
 
   @override
   void close() {
+    _innertube.dispose();
     _yt.close();
   }
 }

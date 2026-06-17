@@ -32,9 +32,31 @@ final lyricsCacheProvider =
       Map<String, LyricsResult>
     >(() => StateHolder<Map<String, LyricsResult>>((ref) => {}));
 
+/// No-op resolver returned when no backend is available.
+class _NoopLyricsResolver implements LyricsResolver {
+  const _NoopLyricsResolver();
+
+  @override
+  int get cacheSize => 0;
+
+  @override
+  bool isCached(String trackId) => false;
+
+  @override
+  void cacheLyrics(String trackId, String raw, LyricsSource source) {}
+
+  @override
+  Future<LyricsResult?> resolve({
+    required String trackId,
+    required AfTrack track,
+    bool enableRaceFetch = false,
+  }) async => null;
+}
+
 final sharedLyricsResolverProvider = Provider<LyricsResolver>((ref) {
   final backend = ref.watch(musicBackendProvider);
-  return LyricsResolver(backend: backend!);
+  if (backend == null) return const _NoopLyricsResolver();
+  return LyricsResolver(backend: backend);
 });
 
 final searchProvider = FutureProvider.autoDispose.family<SearchResults, String>(
@@ -141,11 +163,20 @@ final lyricsProvider = FutureProvider.autoDispose.family<LyricsResult?, String>(
     final resolver = ref.read(sharedLyricsResolverProvider);
     final result = await resolver.resolve(trackId: trackId, track: track);
 
-    // Populate provider-level cache
+    // Populate provider-level cache (capped at 100 entries, evicts oldest)
     if (result != null) {
-      ref
-          .read(lyricsCacheProvider.notifier)
-          .update((prev) => {...prev, trackId: result});
+      ref.read(lyricsCacheProvider.notifier).update((prev) {
+        final updated = Map<String, LyricsResult>.from(prev);
+        updated[trackId] = result;
+        if (updated.length > 100) {
+          // Evict oldest entries (LinkedHashMap preserves insertion order)
+          final excess = updated.length - 100;
+          for (final key in updated.keys.take(excess).toList()) {
+            updated.remove(key);
+          }
+        }
+        return updated;
+      });
     }
 
     return result;

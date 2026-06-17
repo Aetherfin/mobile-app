@@ -244,7 +244,7 @@ class _ArtworkRing extends StatelessWidget {
             child: Artwork(
               url: track.imageUrl,
               size: _artworkSize,
-              radius: BorderRadius.circular(AfSpacing.s24),
+              radius: AfRadii.borderXl,
             ),
           ),
           Positioned.fill(

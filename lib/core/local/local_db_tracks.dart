@@ -93,29 +93,41 @@ class TrackRepository {
   /// to load deleted files. The next scan will re-extract cover art for
   /// these tracks.
   ///
+  /// Processes in batches of 500 to avoid loading all tracks into memory.
   /// Batches updates to avoid N individual UPDATE statements.
   Future<int> nullStaleCoverPaths() async {
-    final rows = await (db.select(
-      db.tracks,
-    )..where((t) => t.coverPath.isNotNull())).get();
+    const batchSize = 500;
+    var totalNulled = 0;
 
-    final staleIds = <String>[];
-    for (final row in rows) {
-      final coverPath = row.coverPath;
-      if (coverPath != null && !await File(coverPath).exists()) {
-        staleIds.add(row.id);
+    while (true) {
+      final rows =
+          await (db.select(db.tracks)
+                ..where((t) => t.coverPath.isNotNull())
+                ..limit(batchSize))
+              .get();
+
+      if (rows.isEmpty) break;
+
+      final staleIds = <String>[];
+      for (final row in rows) {
+        final coverPath = row.coverPath;
+        if (coverPath != null && !await File(coverPath).exists()) {
+          staleIds.add(row.id);
+        }
+      }
+
+      if (staleIds.isNotEmpty) {
+        await (db.update(db.tracks)..where((t) => t.id.isIn(staleIds))).write(
+          const TracksCompanion(coverPath: Value(null)),
+        );
+        totalNulled += staleIds.length;
       }
     }
 
-    if (staleIds.isEmpty) return 0;
-
-    // Batch-update all stale entries in a single statement
-    await (db.update(db.tracks)..where((t) => t.id.isIn(staleIds))).write(
-      const TracksCompanion(coverPath: Value(null)),
-    );
-
-    afLog('local', 'nulled ${staleIds.length} stale cover_path entries');
-    return staleIds.length;
+    if (totalNulled > 0) {
+      afLog('local', 'nulled $totalNulled stale cover_path entries');
+    }
+    return totalNulled;
   }
 
   /// Propagate cover art from tracks that have art to all tracks in the

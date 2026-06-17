@@ -372,14 +372,14 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
           icon: const Icon(Icons.arrow_back, color: AfColors.textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           'Sign in to YouTube Music',
-          style: TextStyle(color: AfColors.textPrimary),
+          style: AfTypography.titleSmall.copyWith(color: AfColors.textPrimary),
         ),
         actions: [
           if (_isLoading)
             const Padding(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.all(AfSpacing.s16),
               child: AfLoadingIndicator(),
             ),
         ],
@@ -390,11 +390,11 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(AfSpacing.s12),
-              color: Colors.red.withValues(alpha: 0.15),
+              color: AfColors.semanticError.withValues(alpha: 0.15),
               child: Text(
                 _error!,
                 style: AfTypography.bodySmall.copyWith(
-                  color: Colors.red.shade300,
+                  color: AfColors.semanticError,
                 ),
               ),
             ),

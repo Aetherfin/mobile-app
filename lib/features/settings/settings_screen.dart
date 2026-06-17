@@ -31,11 +31,24 @@ import 'settings_widgets.dart';
 
 // ── Screen ───────────────────────────────────────────────────────────────────
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  late final Future<PackageInfo> _packageInfoFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _packageInfoFuture = PackageInfo.fromPlatform();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final mode = ref.watch(appModeProvider);
     final isLocal = mode == AppMode.local;
 
@@ -181,7 +194,11 @@ class SettingsScreen extends ConsumerWidget {
                                     try {
                                       final prefs =
                                           await SharedPreferences.getInstance();
-                                      await prefs.clear();
+                                      for (final key in prefs.getKeys()) {
+                                        if (key.startsWith('af.')) {
+                                          await prefs.remove(key);
+                                        }
+                                      }
                                     } on Exception catch (e) {
                                       afLog(
                                         'settings',
@@ -335,7 +352,7 @@ class SettingsScreen extends ConsumerWidget {
                               vertical: AfSpacing.s24,
                             ),
                             child: FutureBuilder<PackageInfo>(
-                              future: PackageInfo.fromPlatform(),
+                              future: _packageInfoFuture,
                               builder: (context, snap) {
                                 final version = snap.data != null
                                     ? 'v${snap.data!.version}+${snap.data!.buildNumber}'

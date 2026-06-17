@@ -41,11 +41,14 @@ class SmartQueueManager {
   static const int bufferSize = 15;
   static const int refillThreshold = 5;
 
+  /// Guards against concurrent refill/dequeue buffer mutations.
+  bool _busy = false;
+
   bool get isBufferLow => _buffer.length < refillThreshold;
   int get bufferLength => _buffer.length;
 
   List<AfTrack> dequeueBatch(int count) {
-    if (_buffer.isEmpty) return const [];
+    if (_busy || _buffer.isEmpty) return const [];
     final actual = count > _buffer.length ? _buffer.length : count;
     final batch = _buffer.sublist(0, actual);
     _buffer.removeRange(0, actual);
@@ -105,7 +108,9 @@ class SmartQueueManager {
   // ── Refill buffer ──────────────────────────────────────────────────────
 
   Future<void> refillBuffer(AfTrack current) async {
+    if (_busy) return;
     if (_buffer.length >= bufferSize) return;
+    _busy = true;
     try {
       final recentlyPlayedIds = await _getRecentlyPlayedIds();
       final provider = QueueCandidateProvider(
@@ -117,10 +122,11 @@ class SmartQueueManager {
         current,
         recentlyPlayedIds,
       );
-      if (candidates.isEmpty) return;
-      final scored = await _scoreAll(candidates, current, recentlyPlayedIds);
-      final need = bufferSize - _buffer.length;
-      _buffer.addAll(scored.take(need).map((e) => e.key));
+      if (candidates.isNotEmpty) {
+        final scored = await _scoreAll(candidates, current, recentlyPlayedIds);
+        final need = bufferSize - _buffer.length;
+        _buffer.addAll(scored.take(need).map((e) => e.key));
+      }
     } on Exception catch (e, stack) {
       afLog(
         'error',
@@ -128,6 +134,8 @@ class SmartQueueManager {
         error: e,
         stackTrace: stack,
       );
+    } finally {
+      _busy = false;
     }
   }
 

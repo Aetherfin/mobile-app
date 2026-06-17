@@ -22,7 +22,7 @@ class AetherfinTileService : TileService() {
             registerReceiver(
                 receiver,
                 IntentFilter(AetherfinMediaSessionService.ACTION_UPDATE_STATE),
-                Context.RECEIVER_EXPORTED
+                Context.RECEIVER_NOT_EXPORTED
             )
         } else {
             registerReceiver(

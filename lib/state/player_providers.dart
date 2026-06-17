@@ -5,6 +5,7 @@ import 'state_holder.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart'
     show Loop, MpvPlayerError, FftFrame;
 
+import '../design_tokens/tokens.dart';
 import '../core/audio/active_queue_store.dart';
 import '../core/audio/af_loop_mode.dart';
 import '../core/audio/jellyfin_playback_reporter.dart';
@@ -36,7 +37,8 @@ class _WireDisposables {
   StreamSubscription<MpvPlayerError>? errorSub;
   StreamSubscription<bool>? bufferingSub;
   StreamSubscription<bool>? pausedForCacheSub;
-  StreamSubscription<bool>? playingSub;
+  StreamSubscription<bool>? queueSavingPlayingSub;
+  StreamSubscription<bool>? infraPlayingSub;
   JellyfinPlaybackReporter? reporter;
   LastFmPlaybackReporter? lastfmReporter;
   ActiveQueueStore? activeQueueStore;
@@ -49,7 +51,8 @@ class _WireDisposables {
     await errorSub?.cancel();
     await bufferingSub?.cancel();
     await pausedForCacheSub?.cancel();
-    await playingSub?.cancel();
+    await queueSavingPlayingSub?.cancel();
+    await infraPlayingSub?.cancel();
     await reporter?.dispose();
     await lastfmReporter?.dispose();
   }
@@ -148,7 +151,7 @@ Future<void> _wireQueueLoading(Ref ref, AfPlayerService svc) async {
 void _wireQueueSaving(Ref ref, AfPlayerService svc, _WireDisposables d) {
   void triggerSaveQueue() {
     d.saveQueueDebounce?.cancel();
-    d.saveQueueDebounce = Timer(const Duration(milliseconds: 1500), () async {
+    d.saveQueueDebounce = Timer(AfDurations.shimmer, () async {
       final backend = ref.read(musicBackendProvider);
       if (backend == null) return;
 
@@ -198,7 +201,7 @@ void _wireQueueSaving(Ref ref, AfPlayerService svc, _WireDisposables d) {
   }
 
   // Start/stop the periodic timer based on playback state.
-  d.playingSub = svc.playingStream.listen((playing) {
+  d.queueSavingPlayingSub = svc.playingStream.listen((playing) {
     if (playing) {
       startActiveQueuePeriodicTimer();
     } else {
@@ -436,7 +439,7 @@ void _wireInfrastructure(Ref ref, AfPlayerService svc, _WireDisposables d) {
   );
 
   // Update home widget when play/pause state changes.
-  d.playingSub = svc.playingStream.listen((playing) {
+  d.infraPlayingSub = svc.playingStream.listen((playing) {
     final track = ref.read(currentTrackProvider);
     HomeWidgetManager.update(
       title: track?.title ?? 'Not Playing',
@@ -531,7 +534,7 @@ void _startPositionPolling(Ref ref, AfPlayerService svc) {
     ref.read(positionStreamProvider.notifier).set(pos);
     pendingPosition = null;
     positionThrottleTimer = Timer(
-      const Duration(milliseconds: 200),
+      AfDurations.quick, // 200→180ms, closest token
       flushPendingPosition,
     );
   }
@@ -565,7 +568,7 @@ void _startPositionPolling(Ref ref, AfPlayerService svc) {
   Future<void> runDurationPollLoop() async {
     final gen = loopGeneration;
     while (loopRunning && gen == loopGeneration) {
-      await Future.delayed(const Duration(milliseconds: 1000));
+      await Future.delayed(AfDurations.ambient); // 1000→1200ms, closest token
       if (!loopRunning || gen != loopGeneration || disposed) break;
 
       final rawDur = await svc.getRawDuration();

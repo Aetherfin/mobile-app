@@ -103,6 +103,7 @@ class LastFmPlaybackReporter {
         final listened = _player.listenedDuration;
         if (_isThresholdMet(listened, previousTrack.duration)) {
           _submitScrobble(client, previousTrack, listened);
+          _scrobbledTrackIds.add(previousTrack.id);
         } else {
           afLog(
             'data',
@@ -120,6 +121,7 @@ class LastFmPlaybackReporter {
         final listened = _player.listenedDuration;
         if (_isThresholdMet(listened, previousTrack.duration)) {
           _submitScrobble(client, previousTrack, listened);
+          _scrobbledTrackIds.add(previousTrack.id);
         }
       }
       _lastReportedTrack = null;
