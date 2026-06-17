@@ -186,9 +186,12 @@ trap 'rm -f "$FIFO"' EXIT
 
 tg_update() {
   [ "$HAS_TG" = true ] && [ -n "${TG_MESSAGE_ID:-}" ] || return 0
-  export TG_STATUS_TEXT="$1"
-  export TG_ICON="${2:-🔨}"
-  $PYTHON "$ROOT/tool/telegram_notifier.py" update 2>/dev/null || true
+  (
+    export TG_STATUS_TEXT="$1"
+    export TG_ICON="${2:-🔨}"
+    $PYTHON "$ROOT/tool/telegram_notifier.py" update 2>/dev/null || true
+  ) &
+  disown
 }
 
 progress_bar() {
