@@ -205,7 +205,6 @@ def update_message():
 
 def success_message():
     msg_id = os.environ.get('TG_MESSAGE_ID')
-    _delete_message(msg_id)
 
     tag = os.environ.get('TG_TAG', '')
     apk_dir = os.environ.get('TG_APK_DIR', 'build/app/outputs/flutter-apk')
@@ -231,6 +230,8 @@ def success_message():
         apk_size = os.path.getsize(apk_path)
         print(f"Uploading {apk_name} to gofile...")
         download_url = _upload_to_gofile(apk_path)
+
+    _delete_message(msg_id)
 
     icon = "\U0001f680" if tag else "\u2705"
     status = "Release Successful!" if tag else "Build Successful!"
