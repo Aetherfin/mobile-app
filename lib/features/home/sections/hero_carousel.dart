@@ -228,7 +228,9 @@ class _HeroAlbumCarouselState extends ConsumerState<HeroAlbumCarousel> {
               child: AnimatedBuilder(
                 animation: _pageController,
                 builder: (context, _) {
-                  final currentPage = _pageController.page ?? 0;
+                  final currentPage = _pageController.hasClients
+                      ? (_pageController.page ?? 0)
+                      : 0.0;
                   return PageView.builder(
                     controller: _pageController,
                     itemCount: albums.length,
