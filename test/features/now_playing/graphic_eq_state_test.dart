@@ -29,15 +29,15 @@ void main() {
           enabled: true,
         );
         final fx = state.toAudioEffects(const AudioEffects());
-        expect(fx.superequalizer.enabled, true);
-        expect(fx.superequalizer.params.length, 18);
+        expect(fx.superequalizer!.enabled, true);
+        expect(fx.superequalizer!.params.length, 18);
       });
 
       test('maps zero levels to empty params', () {
         final state = GraphicEqState(enabled: true);
         final fx = state.toAudioEffects(const AudioEffects());
-        expect(fx.superequalizer.enabled, true);
-        expect(fx.superequalizer.params, isEmpty);
+        expect(fx.superequalizer!.enabled, true);
+        expect(fx.superequalizer!.params, isEmpty);
       });
 
       test('disables superequalizer when state is disabled', () {
@@ -46,7 +46,7 @@ void main() {
           enabled: false,
         );
         final fx = state.toAudioEffects(const AudioEffects());
-        expect(fx.superequalizer.enabled, false);
+        expect(fx.superequalizer!.enabled, false);
       });
 
       test('converts level dB to superequalizer gain multiplier', () {
@@ -75,7 +75,7 @@ void main() {
         );
         final fx = state.toAudioEffects(const AudioEffects());
         // Band 0 should have a gain value > 1.0 (boosted)
-        final band0Gain = fx.superequalizer.params['1b'];
+        final band0Gain = fx.superequalizer!.params['1b'];
         expect(band0Gain, isNotNull);
         expect(band0Gain!, greaterThan(1.0));
       });
@@ -89,8 +89,8 @@ void main() {
           enabled: true,
         );
         final fx = state.toAudioEffects(const AudioEffects());
-        expect(fx.superequalizer.enabled, true);
-        for (final gain in fx.superequalizer.params.values) {
+        expect(fx.superequalizer!.enabled, true);
+        for (final gain in fx.superequalizer!.params.values) {
           expect(gain, greaterThan(1.0));
         }
       });
@@ -101,8 +101,8 @@ void main() {
           enabled: true,
         );
         final fx = state.toAudioEffects(const AudioEffects());
-        expect(fx.superequalizer.enabled, true);
-        for (final gain in fx.superequalizer.params.values) {
+        expect(fx.superequalizer!.enabled, true);
+        for (final gain in fx.superequalizer!.params.values) {
           expect(gain, lessThan(1.0));
         }
       });

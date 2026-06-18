@@ -91,10 +91,8 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
         children: [
           AnimatedBuilder(
             animation: _colorAnimation,
-            builder: (context, _) => GlowBackground(
-              energy: energy,
-              child: const SizedBox.shrink(),
-            ),
+            builder: (context, _) =>
+                GlowBackground(energy: energy, child: const SizedBox.shrink()),
           ),
           widget.child,
         ],

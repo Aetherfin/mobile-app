@@ -45,13 +45,15 @@ class GraphicEqState {
   factory GraphicEqState.fromAudioEffects(AudioEffects fx) {
     final se = fx.superequalizer;
     final levels = List<double>.filled(18, 0.0);
-    for (var i = 0; i < 18; i++) {
-      final gain = se.params[_bandKeys[i]];
-      if (gain != null) {
-        levels[i] = gain - 0.5;
+    if (se != null) {
+      for (var i = 0; i < 18; i++) {
+        final gain = se.params[_bandKeys[i]];
+        if (gain != null) {
+          levels[i] = gain - 0.5;
+        }
       }
     }
-    return GraphicEqState(levels: levels, enabled: se.enabled);
+    return GraphicEqState(levels: levels, enabled: se?.enabled ?? false);
   }
 
   /// Creates a [GraphicEqState].

@@ -165,10 +165,7 @@ class _AlbumActionRowState extends ConsumerState<AlbumActionRow> {
                   ref.read(playActionsProvider).playQueue(shuffled);
                 },
                 style: AfTypography.outlinedAction,
-                icon: const Icon(
-                  LucideIcons.shuffle,
-                  size: AfIconSizes.sm,
-                ),
+                icon: const Icon(LucideIcons.shuffle, size: AfIconSizes.sm),
                 label: const Text('Shuffle'),
               ),
             ),

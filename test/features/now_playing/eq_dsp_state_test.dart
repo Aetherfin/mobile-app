@@ -38,18 +38,18 @@ void main() {
         state.bass = 3.0;
         state.treble = -2.0;
         final fx = state.toAudioEffects(const AudioEffects());
-        expect(fx.bass.enabled, true);
-        expect(fx.bass.g, 3.0);
-        expect(fx.treble.enabled, true);
-        expect(fx.treble.g, -2.0);
+        expect(fx.bass!.enabled, true);
+        expect(fx.bass!.g, 3.0);
+        expect(fx.treble!.enabled, true);
+        expect(fx.treble!.g, -2.0);
       });
 
       test('includes dynamics', () {
         state.loudnorm = true;
         state.compressor = true;
         final fx = state.toAudioEffects(const AudioEffects());
-        expect(fx.loudnorm.enabled, true);
-        expect(fx.acompressor.enabled, true);
+        expect(fx.loudnorm!.enabled, true);
+        expect(fx.acompressor!.enabled, true);
       });
     });
 
@@ -84,8 +84,7 @@ void main() {
         state.loadFromAudioEffects(fx);
         // Verify the output still has no superequalizer (DSP state doesn't own it)
         final out = state.toAudioEffects(const AudioEffects());
-        expect(out.superequalizer.enabled, false);
-        expect(out.superequalizer.params, isEmpty);
+        expect(out.superequalizer, isNull);
       });
     });
 

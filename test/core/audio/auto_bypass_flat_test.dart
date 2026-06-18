@@ -13,8 +13,8 @@ void main() {
         bass: const BassSettings(enabled: true, g: 6.0),
       );
       final out = autoBypassFlat(fx);
-      expect(out.bass.enabled, isTrue);
-      expect(out.bass.g, 6.0);
+      expect(out.bass!.enabled, isTrue);
+      expect(out.bass!.g, 6.0);
     });
 
     test('bass: enabled flips to false when gain is 0', () {
@@ -22,7 +22,7 @@ void main() {
         bass: const BassSettings(enabled: true, g: 0.0),
       );
       final out = autoBypassFlat(fx);
-      expect(out.bass.enabled, isFalse);
+      expect(out.bass!.enabled, isFalse);
     });
 
     test('treble: enabled flips to false when gain is 0', () {
@@ -30,7 +30,7 @@ void main() {
         treble: const TrebleSettings(enabled: true, g: 0.0),
       );
       final out = autoBypassFlat(fx);
-      expect(out.treble.enabled, isFalse);
+      expect(out.treble!.enabled, isFalse);
     });
 
     test('superequalizer: enabled stays true when params is non-empty', () {
@@ -41,7 +41,7 @@ void main() {
         ),
       );
       final out = autoBypassFlat(fx);
-      expect(out.superequalizer.enabled, isTrue);
+      expect(out.superequalizer!.enabled, isTrue);
     });
 
     test('superequalizer: enabled stays true when a band is cut to 0.0', () {
@@ -56,7 +56,7 @@ void main() {
         ),
       );
       final out = autoBypassFlat(fx);
-      expect(out.superequalizer.enabled, isTrue);
+      expect(out.superequalizer!.enabled, isTrue);
     });
 
     test('superequalizer: enabled flips to false when params is empty', () {
@@ -64,7 +64,7 @@ void main() {
         superequalizer: const SuperequalizerSettings(enabled: true, params: {}),
       );
       final out = autoBypassFlat(fx);
-      expect(out.superequalizer.enabled, isFalse);
+      expect(out.superequalizer!.enabled, isFalse);
     });
 
     test(
@@ -86,10 +86,10 @@ void main() {
           ),
         );
         final out = autoBypassFlat(fx);
-        expect(out.deesser.f, 1.0);
-        expect(out.deesser.i, 0.5);
-        expect(out.deesser.m, 0.5);
-        expect(out.deesser.enabled, isTrue);
+        expect(out.deesser!.f, 1.0);
+        expect(out.deesser!.i, 0.5);
+        expect(out.deesser!.m, 0.5);
+        expect(out.deesser!.enabled, isTrue);
       },
     );
 
@@ -103,9 +103,9 @@ void main() {
         ),
       );
       final out = autoBypassFlat(fx);
-      expect(out.deesser.f, 0.0);
-      expect(out.deesser.i, 0.0);
-      expect(out.deesser.m, 0.0);
+      expect(out.deesser!.f, 0.0);
+      expect(out.deesser!.i, 0.0);
+      expect(out.deesser!.m, 0.0);
     });
 
     test('deesser: in-range params pass through unchanged', () {
@@ -113,9 +113,9 @@ void main() {
         deesser: const DeesserSettings(enabled: true, f: 0.5, i: 0.3, m: 0.75),
       );
       final out = autoBypassFlat(fx);
-      expect(out.deesser.f, 0.5);
-      expect(out.deesser.i, 0.3);
-      expect(out.deesser.m, 0.75);
+      expect(out.deesser!.f, 0.5);
+      expect(out.deesser!.i, 0.3);
+      expect(out.deesser!.m, 0.75);
     });
 
     test('disabled filters stay disabled', () {
@@ -128,9 +128,9 @@ void main() {
         ),
       );
       final out = autoBypassFlat(fx);
-      expect(out.bass.enabled, isFalse);
-      expect(out.treble.enabled, isFalse);
-      expect(out.superequalizer.enabled, isFalse);
+      expect(out.bass!.enabled, isFalse);
+      expect(out.treble!.enabled, isFalse);
+      expect(out.superequalizer!.enabled, isFalse);
     });
 
     // ── M3: Range validation for all effects ──────────────────────────────
@@ -146,7 +146,7 @@ void main() {
           ),
         );
         final out = autoBypassFlat(fx);
-        expect(out.acompressor.threshold, 0.0);
+        expect(out.acompressor!.threshold, 0.0);
 
         final fx2 = const AudioEffects().copyWith(
           acompressor: const AcompressorSettings(
@@ -158,7 +158,7 @@ void main() {
           ),
         );
         final out2 = autoBypassFlat(fx2);
-        expect(out2.acompressor.threshold, -100.0);
+        expect(out2.acompressor!.threshold, -100.0);
       });
 
       test('compressor ratio clamped to 1..30', () {
@@ -172,7 +172,7 @@ void main() {
           ),
         );
         final out = autoBypassFlat(fx);
-        expect(out.acompressor.ratio, 1.0);
+        expect(out.acompressor!.ratio, 1.0);
 
         final fx2 = const AudioEffects().copyWith(
           acompressor: const AcompressorSettings(
@@ -184,7 +184,7 @@ void main() {
           ),
         );
         final out2 = autoBypassFlat(fx2);
-        expect(out2.acompressor.ratio, 30.0);
+        expect(out2.acompressor!.ratio, 30.0);
       });
 
       test('compressor attack clamped to 0.1..1000', () {
@@ -198,7 +198,7 @@ void main() {
           ),
         );
         final out = autoBypassFlat(fx);
-        expect(out.acompressor.attack, 0.1);
+        expect(out.acompressor!.attack, 0.1);
 
         final fx2 = const AudioEffects().copyWith(
           acompressor: const AcompressorSettings(
@@ -210,7 +210,7 @@ void main() {
           ),
         );
         final out2 = autoBypassFlat(fx2);
-        expect(out2.acompressor.attack, 1000.0);
+        expect(out2.acompressor!.attack, 1000.0);
       });
 
       test('compressor release clamped to 0.1..1000', () {
@@ -224,7 +224,7 @@ void main() {
           ),
         );
         final out = autoBypassFlat(fx);
-        expect(out.acompressor.release, 0.1);
+        expect(out.acompressor!.release, 0.1);
 
         final fx2 = const AudioEffects().copyWith(
           acompressor: const AcompressorSettings(
@@ -236,7 +236,7 @@ void main() {
           ),
         );
         final out2 = autoBypassFlat(fx2);
-        expect(out2.acompressor.release, 1000.0);
+        expect(out2.acompressor!.release, 1000.0);
       });
 
       test('gate threshold clamped to -100..0', () {
@@ -250,7 +250,7 @@ void main() {
           ),
         );
         final out = autoBypassFlat(fx);
-        expect(out.agate.threshold, 0.0);
+        expect(out.agate!.threshold, 0.0);
       });
 
       test('gate ratio clamped to 1..30', () {
@@ -264,7 +264,7 @@ void main() {
           ),
         );
         final out = autoBypassFlat(fx);
-        expect(out.agate.ratio, 1.0);
+        expect(out.agate!.ratio, 1.0);
       });
 
       test('rubberband pitch clamped to 0.5..2.0', () {
@@ -276,7 +276,7 @@ void main() {
           ),
         );
         final out = autoBypassFlat(fx);
-        expect(out.rubberband.pitch, 0.5);
+        expect(out.rubberband!.pitch, 0.5);
 
         final fx2 = const AudioEffects().copyWith(
           rubberband: const RubberbandSettings(
@@ -286,7 +286,7 @@ void main() {
           ),
         );
         final out2 = autoBypassFlat(fx2);
-        expect(out2.rubberband.pitch, 2.0);
+        expect(out2.rubberband!.pitch, 2.0);
       });
 
       test('rubberband tempo clamped to 0.5..2.0', () {
@@ -298,7 +298,7 @@ void main() {
           ),
         );
         final out = autoBypassFlat(fx);
-        expect(out.rubberband.tempo, 0.5);
+        expect(out.rubberband!.tempo, 0.5);
 
         final fx2 = const AudioEffects().copyWith(
           rubberband: const RubberbandSettings(
@@ -308,7 +308,7 @@ void main() {
           ),
         );
         final out2 = autoBypassFlat(fx2);
-        expect(out2.rubberband.tempo, 2.0);
+        expect(out2.rubberband!.tempo, 2.0);
       });
 
       test('tremolo frequency clamped to 0.1..50', () {
@@ -316,13 +316,13 @@ void main() {
           tremolo: const TremoloSettings(enabled: true, f: 0.01, d: 0.5),
         );
         final out = autoBypassFlat(fx);
-        expect(out.tremolo.f, 0.1);
+        expect(out.tremolo!.f, 0.1);
 
         final fx2 = const AudioEffects().copyWith(
           tremolo: const TremoloSettings(enabled: true, f: 100.0, d: 0.5),
         );
         final out2 = autoBypassFlat(fx2);
-        expect(out2.tremolo.f, 50.0);
+        expect(out2.tremolo!.f, 50.0);
       });
 
       test('tremolo depth clamped to 0..1', () {
@@ -330,7 +330,7 @@ void main() {
           tremolo: const TremoloSettings(enabled: true, f: 5.0, d: 2.0),
         );
         final out = autoBypassFlat(fx);
-        expect(out.tremolo.d, 1.0);
+        expect(out.tremolo!.d, 1.0);
       });
 
       test('vibrato frequency clamped to 0.1..50', () {
@@ -338,13 +338,13 @@ void main() {
           vibrato: const VibratoSettings(enabled: true, f: 0.01, d: 0.5),
         );
         final out = autoBypassFlat(fx);
-        expect(out.vibrato.f, 0.1);
+        expect(out.vibrato!.f, 0.1);
 
         final fx2 = const AudioEffects().copyWith(
           vibrato: const VibratoSettings(enabled: true, f: 100.0, d: 0.5),
         );
         final out2 = autoBypassFlat(fx2);
-        expect(out2.vibrato.f, 50.0);
+        expect(out2.vibrato!.f, 50.0);
       });
 
       test('vibrato depth clamped to 0..1', () {
@@ -352,7 +352,7 @@ void main() {
           vibrato: const VibratoSettings(enabled: true, f: 5.0, d: 2.0),
         );
         final out = autoBypassFlat(fx);
-        expect(out.vibrato.d, 1.0);
+        expect(out.vibrato!.d, 1.0);
       });
     });
   });

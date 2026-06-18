@@ -58,12 +58,12 @@ void main() {
         // Verify combined state has all fields
         final combined = PlayerSettingsStore.loadAudioEffects(p);
         expect(combined, isNotNull);
-        expect(combined!.bass.enabled, isTrue);
-        expect(combined.bass.g, 5.0);
-        expect(combined.loudnorm.enabled, isTrue);
+        expect(combined!.bass!.enabled, isTrue);
+        expect(combined.bass!.g, 5.0);
+        expect(combined.loudnorm!.enabled, isTrue);
         // Graphic EQ preserved in superequalizer
-        expect(combined.superequalizer.enabled, isTrue);
-        expect(combined.superequalizer.params, isNotEmpty);
+        expect(combined.superequalizer!.enabled, isTrue);
+        expect(combined.superequalizer!.params, isNotEmpty);
         // Parametric EQ preserved in custom filters
         expect(combined.custom, isNotEmpty);
       });
@@ -102,7 +102,7 @@ void main() {
         // Combined key should still have original value (not overwritten)
         final combined = PlayerSettingsStore.loadAudioEffects(p);
         expect(combined, isNotNull);
-        expect(combined!.bass.g, 3.0);
+        expect(combined!.bass!.g, 3.0);
 
         // Split keys should be removed
         expect(p.getString('af.dsp_state_json'), isNull);
@@ -150,8 +150,8 @@ void main() {
         final loaded = PlayerSettingsStore.loadAudioEffects(p);
 
         expect(loaded, isNotNull);
-        expect(loaded!.superequalizer.enabled, isTrue);
-        expect(loaded.superequalizer.params.isNotEmpty, isTrue);
+        expect(loaded!.superequalizer!.enabled, isTrue);
+        expect(loaded.superequalizer!.params.isNotEmpty, isTrue);
       });
 
       test('parametric EQ state round-trips through unified key', () async {
@@ -193,11 +193,11 @@ void main() {
         final loaded = PlayerSettingsStore.loadAudioEffects(p);
 
         expect(loaded, isNotNull);
-        expect(loaded!.bass.enabled, isTrue);
-        expect(loaded.bass.g, 5.0);
-        expect(loaded.treble.enabled, isTrue);
-        expect(loaded.treble.g, -3.0);
-        expect(loaded.loudnorm.enabled, isTrue);
+        expect(loaded!.bass!.enabled, isTrue);
+        expect(loaded.bass!.g, 5.0);
+        expect(loaded.treble!.enabled, isTrue);
+        expect(loaded.treble!.g, -3.0);
+        expect(loaded.loudnorm!.enabled, isTrue);
       });
     });
   });

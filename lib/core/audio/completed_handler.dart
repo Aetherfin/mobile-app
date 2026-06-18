@@ -214,12 +214,7 @@ extension CompletedHandler on PlaybackController {
         await _player.play();
       }
     } on Exception catch (e, stack) {
-      afLog(
-        'audio',
-        'forNtimes: seek(0) failed',
-        error: e,
-        stackTrace: stack,
-      );
+      afLog('audio', 'forNtimes: seek(0) failed', error: e, stackTrace: stack);
     }
     updateMediaSession();
   }
@@ -239,12 +234,7 @@ extension CompletedHandler on PlaybackController {
         return true;
       }
     } on Exception catch (e, stack) {
-      afLog(
-        'audio',
-        'autoplay check failed',
-        error: e,
-        stackTrace: stack,
-      );
+      afLog('audio', 'autoplay check failed', error: e, stackTrace: stack);
     }
     return false;
   }

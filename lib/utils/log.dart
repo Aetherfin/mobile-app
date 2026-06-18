@@ -42,10 +42,7 @@ void afLog(
 /// Fire-and-forget wrapper that catches and logs errors.
 /// Use instead of `unawaited()` for async operations where errors
 /// should be logged but not propagated.
-void safeFireAndForget(
-  Future<void> Function() operation, {
-  String? label,
-}) {
+void safeFireAndForget(Future<void> Function() operation, {String? label}) {
   unawaited(
     (() async {
       try {

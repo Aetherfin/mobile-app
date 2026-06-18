@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
 
   # Audio — mpv_audio_kit replaces just_audio + audio_session.
-  mpv_audio_kit: 0.3.6
+  mpv_audio_kit: ^0.4.2
 
   # State management
   flutter_riverpod: 3.3.2

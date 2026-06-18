@@ -204,7 +204,12 @@ class AfPlayerService {
           ) // ponytail: audio buffer, not animation
           .catchError((Object e, StackTrace? stack) {
             _initFailed = true;
-            afLog('error', 'setAudioBuffer failed', error: e, stackTrace: stack);
+            afLog(
+              'error',
+              'setAudioBuffer failed',
+              error: e,
+              stackTrace: stack,
+            );
           }),
     );
     _bindStreams();
@@ -591,17 +596,19 @@ class AfPlayerService {
   Stream<CacheSettings> get cacheStream => _player.stream.cache;
 
   Future<void> setDemuxerMaxBytes(int bytes) async {
-    await _player.setDemuxerMaxBytes(bytes);
+    await _player.setDemuxer(_player.state.demuxer.copyWith(maxBytes: bytes));
     afLog('audio', 'demuxerMaxBytes=${bytes ~/ (1024 * 1024)} MiB');
   }
 
   Future<void> setDemuxerMaxBackBytes(int bytes) async {
-    await _player.setDemuxerMaxBackBytes(bytes);
+    await _player.setDemuxer(
+      _player.state.demuxer.copyWith(maxBackBytes: bytes),
+    );
     afLog('audio', 'demuxerMaxBackBytes=${bytes ~/ (1024 * 1024)} MiB');
   }
 
   Future<void> setDemuxerReadaheadSecs(Duration secs) async {
-    await _player.setDemuxerReadaheadSecs(secs);
+    await _player.setDemuxer(_player.state.demuxer.copyWith(readahead: secs));
     afLog('audio', 'demuxerReadaheadSecs=${secs.inSeconds}s');
   }
 
@@ -971,48 +978,53 @@ class AfPlayerService {
 AudioEffects autoBypassFlat(AudioEffects fx) {
   return fx.copyWith(
     // Tone — bypass flat
-    bass: fx.bass.copyWith(enabled: fx.bass.enabled && fx.bass.g.abs() > 0.001),
-    treble: fx.treble.copyWith(
-      enabled: fx.treble.enabled && fx.treble.g.abs() > 0.001,
+    bass: fx.bass?.copyWith(
+      enabled: (fx.bass?.enabled ?? false) && (fx.bass?.g ?? 0).abs() > 0.001,
+    ),
+    treble: fx.treble?.copyWith(
+      enabled:
+          (fx.treble?.enabled ?? false) && (fx.treble?.g ?? 0).abs() > 0.001,
     ),
     // Graphic EQ — bypass when empty
-    superequalizer: fx.superequalizer.copyWith(
-      enabled: fx.superequalizer.enabled && fx.superequalizer.params.isNotEmpty,
+    superequalizer: fx.superequalizer?.copyWith(
+      enabled:
+          (fx.superequalizer?.enabled ?? false) &&
+          (fx.superequalizer?.params ?? const <String, double>{}).isNotEmpty,
     ),
     // Compressor — clamp ranges
-    acompressor: fx.acompressor.copyWith(
-      threshold: fx.acompressor.threshold.clamp(-100.0, 0.0),
-      ratio: fx.acompressor.ratio.clamp(1.0, 30.0),
-      attack: fx.acompressor.attack.clamp(0.1, 1000.0),
-      release: fx.acompressor.release.clamp(0.1, 1000.0),
+    acompressor: fx.acompressor?.copyWith(
+      threshold: fx.acompressor!.threshold.clamp(-100.0, 0.0),
+      ratio: fx.acompressor!.ratio.clamp(1.0, 30.0),
+      attack: fx.acompressor!.attack.clamp(0.1, 1000.0),
+      release: fx.acompressor!.release.clamp(0.1, 1000.0),
     ),
     // Gate — clamp ranges
-    agate: fx.agate.copyWith(
-      threshold: fx.agate.threshold.clamp(-100.0, 0.0),
-      ratio: fx.agate.ratio.clamp(1.0, 30.0),
-      attack: fx.agate.attack.clamp(0.1, 1000.0),
-      release: fx.agate.release.clamp(0.1, 1000.0),
+    agate: fx.agate?.copyWith(
+      threshold: fx.agate!.threshold.clamp(-100.0, 0.0),
+      ratio: fx.agate!.ratio.clamp(1.0, 30.0),
+      attack: fx.agate!.attack.clamp(0.1, 1000.0),
+      release: fx.agate!.release.clamp(0.1, 1000.0),
     ),
     // Deesser — clamp 0..1
-    deesser: fx.deesser.copyWith(
-      f: fx.deesser.f.clamp(0.0, 1.0),
-      i: fx.deesser.i.clamp(0.0, 1.0),
-      m: fx.deesser.m.clamp(0.0, 1.0),
+    deesser: fx.deesser?.copyWith(
+      f: fx.deesser!.f.clamp(0.0, 1.0),
+      i: fx.deesser!.i.clamp(0.0, 1.0),
+      m: fx.deesser!.m.clamp(0.0, 1.0),
     ),
     // Rubberband — clamp pitch/tempo
-    rubberband: fx.rubberband.copyWith(
-      pitch: fx.rubberband.pitch.clamp(0.5, 2.0),
-      tempo: fx.rubberband.tempo.clamp(0.5, 2.0),
+    rubberband: fx.rubberband?.copyWith(
+      pitch: fx.rubberband!.pitch.clamp(0.5, 2.0),
+      tempo: fx.rubberband!.tempo.clamp(0.5, 2.0),
     ),
     // Tremolo — clamp freq/depth
-    tremolo: fx.tremolo.copyWith(
-      f: fx.tremolo.f.clamp(0.1, 50.0),
-      d: fx.tremolo.d.clamp(0.0, 1.0),
+    tremolo: fx.tremolo?.copyWith(
+      f: fx.tremolo!.f.clamp(0.1, 50.0),
+      d: fx.tremolo!.d.clamp(0.0, 1.0),
     ),
     // Vibrato — clamp freq/depth
-    vibrato: fx.vibrato.copyWith(
-      f: fx.vibrato.f.clamp(0.1, 50.0),
-      d: fx.vibrato.d.clamp(0.0, 1.0),
+    vibrato: fx.vibrato?.copyWith(
+      f: fx.vibrato!.f.clamp(0.1, 50.0),
+      d: fx.vibrato!.d.clamp(0.0, 1.0),
     ),
   );
 }

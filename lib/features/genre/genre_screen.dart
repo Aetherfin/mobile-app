@@ -55,15 +55,12 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   ) async {
     unawaited(HapticFeedback.mediumImpact());
     final details = await Future.wait(
-      albums.map(
-        (a) => ref.read(albumDetailProvider(a.id).future),
-      ),
+      albums.map((a) => ref.read(albumDetailProvider(a.id).future)),
     );
-    final tracks =
-        details
-            .whereType<({AfAlbum album, List<AfTrack> tracks})>()
-            .expand((d) => d.tracks)
-            .toList();
+    final tracks = details
+        .whereType<({AfAlbum album, List<AfTrack> tracks})>()
+        .expand((d) => d.tracks)
+        .toList();
     if (tracks.isNotEmpty && context.mounted) {
       await ref.read(playActionsProvider).playQueue(tracks);
     }
@@ -77,9 +74,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
   ) async {
     unawaited(HapticFeedback.mediumImpact());
     final details = await Future.wait(
-      albums.map(
-        (a) => ref.read(albumDetailProvider(a.id).future),
-      ),
+      albums.map((a) => ref.read(albumDetailProvider(a.id).future)),
     );
     final tracks =
         details
