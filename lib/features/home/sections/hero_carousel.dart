@@ -33,7 +33,6 @@ class _HeroAlbumCarouselState extends ConsumerState<HeroAlbumCarousel> {
     ({Color energy, Color shadow}) spectral,
   ) {
     final distance = (index - currentPage).abs();
-    final parallaxOffset = (index - currentPage) * 30;
     final scale = 1.0 + ((1.0 - distance.clamp(0.0, 1.0)) * 0.04);
     final opacity = 1.0 - (distance.clamp(0.0, 1.0) * 0.15);
     final isCentered = distance < 0.3;
@@ -58,15 +57,12 @@ class _HeroAlbumCarouselState extends ConsumerState<HeroAlbumCarousel> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Artwork with parallax drift
-                  Transform.translate(
-                    offset: Offset(parallaxOffset, 0),
-                    child: Artwork(
-                      url: album.imageUrl,
-                      size: double.infinity,
-                      radius: BorderRadius.zero,
-                      fit: BoxFit.cover,
-                    ),
+                  // Artwork
+                  Artwork(
+                    url: album.imageUrl,
+                    size: double.infinity,
+                    radius: BorderRadius.zero,
+                    fit: BoxFit.cover,
                   ),
                   // Spectral glow accent
                   Positioned(
