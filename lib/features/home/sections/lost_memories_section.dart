@@ -42,14 +42,14 @@ class LostMemoriesSection extends ConsumerWidget {
             ),
             const SizedBox(height: AfSpacing.s12),
             SizedBox(
-              height: 172,
+              height: 140,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
                 itemCount: tracks.length,
                 // itemExtent enables layout caching for large lists.
-                // Includes the trailing separator gap (12px) per item.
-                itemExtent: _LostMemoryTile._tileSize + AfSpacing.s12,
+                // Includes the trailing separator gap (8px) per item.
+                itemExtent: _LostMemoryTile._tileSize + AfSpacing.s8,
                 itemBuilder: (context, i) {
                   final t = tracks[i];
                   return _LostMemoryTile(
@@ -69,7 +69,7 @@ class LostMemoriesSection extends ConsumerWidget {
           padding: EdgeInsets.symmetric(horizontal: AfSpacing.s16),
           child: SkeletonBlock(
             width: double.infinity,
-            height: 180,
+            height: 140,
             borderRadius: AfRadii.borderMd,
           ),
         ),
@@ -91,7 +91,7 @@ class _LostMemoryTile extends ConsumerWidget {
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
-  static const double _tileSize = 100;
+  static const double _tileSize = 80;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -128,7 +128,7 @@ class _LostMemoryTile extends ConsumerWidget {
                     children: [
                       Artwork(
                         url: track.imageUrl,
-                        size: 100,
+                        size: 80,
                         radius: BorderRadius.zero,
                         fit: BoxFit.cover,
                       ),

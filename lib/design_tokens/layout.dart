@@ -30,6 +30,14 @@ abstract final class AfLayout {
 
   /// Maximum content width for tab screens. Content is centered and
   /// constrained on wider screens to prevent edge-to-edge stretching.
+  /// On medium/expanded screens, content breathes wider.
+  static double maxContentWidthFor(double screenWidth) {
+    if (screenWidth >= medium) return 720;
+    if (screenWidth >= compact) return 640;
+    return 600;
+  }
+
+  /// Legacy constant — prefer [maxContentWidthFor] for responsive layouts.
   static const double maxContentWidth = 600;
 
   /// Maximum dialog width.

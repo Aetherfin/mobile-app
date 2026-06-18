@@ -231,8 +231,11 @@ class _HeroAlbumCarouselState extends ConsumerState<HeroAlbumCarousel> {
       children: [
         Column(
           children: [
+            // Fluid height: 240dp on phones, 280dp on wider screens.
             SizedBox(
-              height: 240,
+              height: MediaQuery.sizeOf(context).width > AfLayout.compact
+                  ? 280
+                  : 240,
               child: AnimatedBuilder(
                 animation: _pageController,
                 builder: (context, _) {

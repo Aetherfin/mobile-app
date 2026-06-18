@@ -140,8 +140,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // ponytail: LayoutBuilder removed — constraints param was never read.
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AfLayout.maxContentWidth,
+            constraints: BoxConstraints(
+              maxWidth: AfLayout.maxContentWidthFor(
+                MediaQuery.sizeOf(context).width,
+              ),
             ),
             child: RefreshIndicator(
               onRefresh: _onRefresh,
@@ -186,15 +188,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                   const LostMemoriesSection(),
 
+                  // Generous gap before discovery sections (layout rhythm).
+                  // LostMemories and Artists each add their own 24dp top
+                  // spacer; this extra 8dp widens the gap to 32dp total,
+                  // creating visual separation between "your music" and
+                  // "explore" groups.
                   const SliverToBoxAdapter(
-                    child: SizedBox(height: AfSpacing.sectionGap),
+                    child: SizedBox(height: AfSpacing.s8),
                   ),
 
                   ArtistsSection(isLocal: isLocal),
-
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: AfSpacing.sectionGap),
-                  ),
 
                   GenresSection(isLocal: isLocal),
 
