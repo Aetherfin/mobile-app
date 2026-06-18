@@ -53,15 +53,7 @@ class _HeroAlbumCarouselState extends ConsumerState<HeroAlbumCarousel> {
             opacity: opacity,
             duration: AfDurations.quick,
             child: Container(
-              decoration: BoxDecoration(
-                borderRadius: AfRadii.borderXl,
-                border: isCentered
-                    ? Border.all(
-                        color: spectral.energy.withValues(alpha: 0.3),
-                        width: 1.5,
-                      )
-                    : null,
-              ),
+              decoration: const BoxDecoration(borderRadius: AfRadii.borderXl),
               clipBehavior: Clip.antiAlias,
               child: Stack(
                 fit: StackFit.expand,
@@ -193,6 +185,19 @@ class _HeroAlbumCarouselState extends ConsumerState<HeroAlbumCarousel> {
                       ],
                     ),
                   ),
+                  // Border on top of artwork so parallax drift doesn't cover it
+                  if (isCentered)
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: AfRadii.borderXl,
+                          border: Border.all(
+                            color: spectral.energy.withValues(alpha: 0.3),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
