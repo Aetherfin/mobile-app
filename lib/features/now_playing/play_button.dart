@@ -60,7 +60,7 @@ class _PlayButtonState extends ConsumerState<PlayButton>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.isPlaying != widget.isPlaying) {
       _scaleController.forward(from: 0.0);
-      final reduced = MediaQuery.of(context).disableAnimations;
+      final reduced = MediaQuery.disableAnimationsOf(context);
       if (widget.isPlaying) {
         if (!reduced) {
           _pulseController.repeat(reverse: true);

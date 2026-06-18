@@ -5,7 +5,6 @@ import 'package:aetherfin/core/local/local_library.dart';
 import 'package:aetherfin/core/local/local_db.dart';
 import 'package:aetherfin/core/local/app_database.dart';
 
-
 void main() {
   group('LocalBackend identification', () {
     test('trackStreamUrl returns trackId unchanged', () async {

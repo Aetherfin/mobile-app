@@ -150,41 +150,45 @@ class PinnedAlbumsRow extends StatelessWidget {
             const SizedBox(width: AfSpacing.s12),
         itemBuilder: (context, i) {
           final a = albums[i];
-          return GestureDetector(
-            onTap: () => context.push('/album/${a.id}'),
-            child: SizedBox(
-              width: 120,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Album artwork
-                  AspectRatio(
-                    aspectRatio: 1,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        borderRadius: AfRadii.borderSm,
-                        color: AfColors.surfaceRaised,
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Artwork(
-                        url: a.imageUrl,
-                        size: 120,
-                        radius: AfRadii.borderSm,
+          return Semantics(
+            button: true,
+            label: 'Go to album ${a.name}',
+            child: GestureDetector(
+              onTap: () => context.push('/album/${a.id}'),
+              child: SizedBox(
+                width: 120,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Album artwork
+                    AspectRatio(
+                      aspectRatio: 1,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          borderRadius: AfRadii.borderSm,
+                          color: AfColors.surfaceRaised,
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Artwork(
+                          url: a.imageUrl,
+                          size: 120,
+                          radius: AfRadii.borderSm,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AfSpacing.s8),
+                    const SizedBox(height: AfSpacing.s8),
 
-                  // Album name
-                  Text(
-                    a.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AfTypography.bodySmall.copyWith(
-                      color: AfColors.textPrimary,
+                    // Album name
+                    Text(
+                      a.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AfTypography.bodySmall.copyWith(
+                        color: AfColors.textPrimary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );

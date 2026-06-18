@@ -307,22 +307,27 @@ class _StatsPillBarState extends ConsumerState<_StatsPillBar>
                     children: List.generate(count, (i) {
                       final isActive = _tabs[i] == widget.selected;
                       return Expanded(
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () =>
-                              ref.read(statsTabProvider.notifier).set(_tabs[i]),
-                          child: Container(
-                            height: 44,
-                            alignment: Alignment.center,
-                            child: Text(
-                              _labels[i],
-                              style: AfTypography.bodyMedium.copyWith(
-                                color: isActive
-                                    ? AfColors.textOnPrimary
-                                    : AfColors.textSecondary,
-                                fontWeight: isActive
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
+                        child: Semantics(
+                          button: true,
+                          label: _labels[i],
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => ref
+                                .read(statsTabProvider.notifier)
+                                .set(_tabs[i]),
+                            child: Container(
+                              height: 44,
+                              alignment: Alignment.center,
+                              child: Text(
+                                _labels[i],
+                                style: AfTypography.bodyMedium.copyWith(
+                                  color: isActive
+                                      ? AfColors.textOnPrimary
+                                      : AfColors.textSecondary,
+                                  fontWeight: isActive
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                ),
                               ),
                             ),
                           ),

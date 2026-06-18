@@ -110,15 +110,21 @@ class _ExpandedNowPlayingState extends ConsumerState<ExpandedNowPlaying> {
                     onTap: track.artistId == null
                         ? null
                         : () => context.push('/artist/${track.artistId}'),
-                    child: Text(
-                      track.artistName,
-                      style: AfTypography.bodyLarge.copyWith(
-                        color: track.artistId == null
-                            ? AfColors.textSecondary
-                            : spectral,
+                    child: Semantics(
+                      button: track.artistId != null,
+                      label: track.artistId == null
+                          ? null
+                          : 'Go to artist ${track.artistName}',
+                      child: Text(
+                        track.artistName,
+                        style: AfTypography.bodyLarge.copyWith(
+                          color: track.artistId == null
+                              ? AfColors.textSecondary
+                              : spectral,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   if (track.albumName.isNotEmpty) ...[
@@ -128,13 +134,19 @@ class _ExpandedNowPlayingState extends ConsumerState<ExpandedNowPlaying> {
                       onTap: track.albumId == null
                           ? null
                           : () => context.push('/album/${track.albumId}'),
-                      child: Text(
-                        track.albumName,
-                        style: AfTypography.bodySmall.copyWith(
-                          color: AfColors.textTertiary,
+                      child: Semantics(
+                        button: track.albumId != null,
+                        label: track.albumId == null
+                            ? null
+                            : 'Go to album ${track.albumName}',
+                        child: Text(
+                          track.albumName,
+                          style: AfTypography.bodySmall.copyWith(
+                            color: AfColors.textTertiary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -233,32 +245,36 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: AfSpacing.s8),
-          decoration: BoxDecoration(
-            color: isActive
-                ? accent.withValues(alpha: 0.15)
-                : AfColors.surfaceHigh.withValues(alpha: 0.3),
-            borderRadius: AfRadii.borderSm,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 14,
-                color: isActive ? accent : AfColors.textTertiary,
-              ),
-              const SizedBox(width: AfSpacing.s4),
-              Text(
-                label,
-                style: AfTypography.label.copyWith(
+      child: Semantics(
+        button: true,
+        label: label,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: AfSpacing.s8),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? accent.withValues(alpha: 0.15)
+                  : AfColors.surfaceHigh.withValues(alpha: 0.3),
+              borderRadius: AfRadii.borderSm,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 14,
                   color: isActive ? accent : AfColors.textTertiary,
                 ),
-              ),
-            ],
+                const SizedBox(width: AfSpacing.s4),
+                Text(
+                  label,
+                  style: AfTypography.label.copyWith(
+                    color: isActive ? accent : AfColors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

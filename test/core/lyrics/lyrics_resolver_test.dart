@@ -8,7 +8,6 @@ import 'package:aetherfin/core/lyrics/lyrics_resolver.dart';
 import 'package:aetherfin/core/lyrics/netease_client.dart';
 import 'package:aetherfin/core/lyrics/lrclib_client.dart';
 
-
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
 class MockMusicBackend extends Mock implements MusicBackend {}

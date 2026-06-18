@@ -271,8 +271,8 @@ class PlaylistListScreen extends ConsumerWidget {
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
           sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: AfLayout.albumGridMaxTileExtent,
               mainAxisExtent: 240,
               crossAxisSpacing: AfSpacing.s16,
               mainAxisSpacing: AfSpacing.s16,

@@ -385,21 +385,27 @@ class _CircleButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(AfSpacing.s8),
-          decoration: BoxDecoration(
-            color: filled ? AfColors.textPrimary : Colors.transparent,
-            shape: BoxShape.circle,
-            border: filled
-                ? null
-                : Border.all(color: AfColors.textSecondary, width: 1),
-          ),
-          child: Icon(
-            icon,
-            size: 20,
-            color: filled ? AfColors.surfaceCanvas : AfColors.textSecondary,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: AfSpacing.minHitTarget,
+          minHeight: AfSpacing.minHitTarget,
+        ),
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(AfSpacing.s8),
+            decoration: BoxDecoration(
+              color: filled ? AfColors.textPrimary : Colors.transparent,
+              shape: BoxShape.circle,
+              border: filled
+                  ? null
+                  : Border.all(color: AfColors.textSecondary, width: 1),
+            ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: filled ? AfColors.surfaceCanvas : AfColors.textSecondary,
+            ),
           ),
         ),
       ),

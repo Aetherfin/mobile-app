@@ -47,6 +47,7 @@ class _LibraryScopeScreenState extends ConsumerState<LibraryScopeScreen> {
       _selected.addAll(views.map((v) => v.id));
       ref.read(selectedLibraryIdsProvider.notifier).set(_selected.toSet());
       await context.push('/onboarding/done');
+      if (!mounted) return;
       return;
     }
     if (!mounted) return;

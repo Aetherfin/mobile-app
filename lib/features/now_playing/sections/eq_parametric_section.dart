@@ -12,6 +12,98 @@ import '../eq_preset_manager.dart';
 import '../parametric_band.dart';
 import '../parametric_eq_curve.dart';
 
+// ── Isolated Band Controls ───────────────────────────────────────────────────
+
+/// Per-band controls with local slider state.
+/// Only rebuilds itself on slider ticks — parent rebuilds on structural changes.
+class _IsolatedBandControls extends StatefulWidget {
+  const _IsolatedBandControls({
+    super.key,
+    required this.index,
+    required this.band,
+    required this.spectral,
+    required this.onFieldChanged,
+    required this.onApply,
+  });
+
+  final int index;
+  final ParametricBand band;
+  final Color spectral;
+  final void Function(String field, dynamic value) onFieldChanged;
+  final Future<void> Function() onApply;
+
+  @override
+  State<_IsolatedBandControls> createState() => _IsolatedBandControlsState();
+}
+
+class _IsolatedBandControlsState extends State<_IsolatedBandControls> {
+  late double _gain = widget.band.gain;
+  late double _frequency = widget.band.frequency;
+  late double _q = widget.band.q;
+
+  @override
+  void didUpdateWidget(covariant _IsolatedBandControls oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.band.gain != widget.band.gain) _gain = widget.band.gain;
+    if (oldWidget.band.frequency != widget.band.frequency) {
+      _frequency = widget.band.frequency;
+    }
+    if (oldWidget.band.q != widget.band.q) _q = widget.band.q;
+  }
+
+  void _set(String field, dynamic value) => widget.onFieldChanged(field, value);
+
+  @override
+  Widget build(BuildContext context) {
+    final i = widget.index;
+    return EqExpandableContent(
+      visible: widget.band.enabled,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Gain slider
+          eqSliderRow(
+            'Gain',
+            _gain,
+            -24.0,
+            24.0,
+            96,
+            (v) {
+              setState(() => _gain = v);
+              _set('parametricBand${i}Gain', v);
+            },
+            widget.onApply,
+            suffix: 'dB',
+            precision: 1,
+          ),
+          // Frequency slider (logarithmic mapping)
+          _LogFrequencySlider(
+            frequency: _frequency,
+            spectral: widget.spectral,
+            onChanged: (v) {
+              setState(() => _frequency = v);
+              _set('parametricBand${i}Freq', v);
+            },
+            onChangeEnd: widget.onApply,
+          ),
+          // Q factor slider
+          _QFactorSlider(
+            q: _q,
+            spectral: widget.spectral,
+            onChanged: (v) {
+              setState(() => _q = v);
+              _set('parametricBand${i}Q', v);
+            },
+            onChangeEnd: widget.onApply,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Parametric Section ───────────────────────────────────────────────────────
+
 /// Parametric EQ section with per-band gain / frequency / Q controls.
 class EqParametricSection extends ConsumerStatefulWidget {
   const EqParametricSection({
@@ -111,10 +203,17 @@ class _EqParametricSectionState extends ConsumerState<EqParametricSection> {
               // Preset chips
               _buildPresetChips(spectral),
               const SizedBox(height: AfSpacing.s8),
-              // Band controls
+              // Band controls — each band is an isolated widget
               for (var i = 0; i < _bands.length; i++) ...[
                 _buildBandHeader(i, spectral),
-                _buildBandControls(i, spectral),
+                _IsolatedBandControls(
+                  key: ValueKey('band-ctrl-$i'),
+                  index: i,
+                  band: _bands[i],
+                  spectral: spectral,
+                  onFieldChanged: _set,
+                  onApply: widget.onApply,
+                ),
                 if (i < _bands.length - 1) const SizedBox(height: AfSpacing.s8),
               ],
               const SizedBox(height: AfSpacing.s8),
@@ -169,72 +268,6 @@ class _EqParametricSectionState extends ConsumerState<EqParametricSection> {
           ),
         ),
       ],
-    );
-  }
-
-  /// Create a new band with one field changed (immutable update).
-  ParametricBand _withBandField(
-    int index, {
-    double? frequency,
-    double? gain,
-    double? q,
-    bool? enabled,
-  }) {
-    final b = _bands[index];
-    return ParametricBand(
-      frequency: frequency ?? b.frequency,
-      gain: gain ?? b.gain,
-      q: q ?? b.q,
-      enabled: enabled ?? b.enabled,
-    );
-  }
-
-  Widget _buildBandControls(int index, Color spectral) {
-    final band = _bands[index];
-    return EqExpandableContent(
-      visible: band.enabled,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Gain slider
-          eqSliderRow(
-            'Gain',
-            band.gain,
-            -24.0,
-            24.0,
-            96,
-            (v) {
-              setState(() => _bands[index] = _withBandField(index, gain: v));
-              _set('parametricBand${index}Gain', v);
-            },
-            widget.onApply,
-            suffix: 'dB',
-            precision: 1,
-          ),
-          // Frequency slider (logarithmic mapping)
-          _LogFrequencySlider(
-            frequency: band.frequency,
-            spectral: spectral,
-            onChanged: (v) {
-              setState(
-                () => _bands[index] = _withBandField(index, frequency: v),
-              );
-              _set('parametricBand${index}Freq', v);
-            },
-            onChangeEnd: widget.onApply,
-          ),
-          // Q factor slider
-          _QFactorSlider(
-            q: band.q,
-            spectral: spectral,
-            onChanged: (v) {
-              setState(() => _bands[index] = _withBandField(index, q: v));
-              _set('parametricBand${index}Q', v);
-            },
-            onChangeEnd: widget.onApply,
-          ),
-        ],
-      ),
     );
   }
 

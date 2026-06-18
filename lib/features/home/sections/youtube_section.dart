@@ -32,9 +32,9 @@ class YouTubeHomeView extends ConsumerStatefulWidget {
 }
 
 class _YouTubeHomeViewState extends ConsumerState<YouTubeHomeView> {
-  // YouTube brand colors — no AfColors token applicable
-  static const _youtubeRed = Color(0xFFFF0000);
-  static const _youtubeRedDark = Color(0xFFFF4444);
+  // YouTube brand colors — uses AfColors tokens
+  static const _youtubeRed = AfColors.youtubeRed;
+  static const _youtubeRedDark = AfColors.youtubeRedDark;
 
   bool _autoLoaded = false;
 

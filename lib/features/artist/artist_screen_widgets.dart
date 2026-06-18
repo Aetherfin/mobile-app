@@ -328,16 +328,22 @@ class _ArtistBiographyPanelState extends ConsumerState<ArtistBiographyPanel> {
             ),
           ),
           const SizedBox(height: AfSpacing.s8),
-          GestureDetector(
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: Semantics(
-              button: true,
-              label: _expanded ? 'Collapse biography' : 'Expand biography',
-              child: Text(
-                _expanded ? 'Show less' : 'Read more',
-                style: AfTypography.bodySmall.copyWith(
-                  color: spectral,
-                  fontWeight: FontWeight.bold,
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              minWidth: AfSpacing.minHitTarget,
+              minHeight: AfSpacing.minHitTarget,
+            ),
+            child: GestureDetector(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Semantics(
+                button: true,
+                label: _expanded ? 'Collapse biography' : 'Expand biography',
+                child: Text(
+                  _expanded ? 'Show less' : 'Read more',
+                  style: AfTypography.bodySmall.copyWith(
+                    color: spectral,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

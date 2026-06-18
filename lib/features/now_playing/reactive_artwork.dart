@@ -95,8 +95,8 @@ class _ArtworkCard extends ConsumerWidget {
         Positioned(
           top: AfSpacing.s12,
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.6,
-            height: MediaQuery.of(context).size.width * 0.6,
+            width: MediaQuery.sizeOf(context).width * 0.6,
+            height: MediaQuery.sizeOf(context).width * 0.6,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               boxShadow: [

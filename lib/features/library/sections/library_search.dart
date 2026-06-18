@@ -173,6 +173,7 @@ class _LibrarySearchState extends ConsumerState<LibrarySearch> {
                   ),
                   onChanged: (v) {
                     _debounce?.cancel();
+                    // ponytail: 300ms debounce, not a standard AfDurations tier
                     _debounce = Timer(const Duration(milliseconds: 300), () {
                       setState(() => _query = v.trim().toLowerCase());
                     });
@@ -224,50 +225,54 @@ class _RecentAndSuggestions extends ConsumerWidget {
               if (recent.isEmpty) return const SizedBox.shrink();
               return Column(
                 children: recent.map((a) {
-                  return FocusPressScale(
-                    onTap: () {
-                      if (context.canPop()) context.pop();
-                      context.push('/album/${a.id}');
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: AfSpacing.s4),
-                      child: Row(
-                        children: [
-                          Artwork(
-                            url: a.imageUrl,
-                            size: 44,
-                            radius: AfRadii.borderSm,
-                          ),
-                          const SizedBox(width: AfSpacing.s12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  a.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AfTypography.bodyMedium.copyWith(
-                                    color: AfColors.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  a.artistName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AfTypography.bodySmall.copyWith(
-                                    color: AfColors.textTertiary,
-                                  ),
-                                ),
-                              ],
+                  return Semantics(
+                    button: true,
+                    label: 'Open album ${a.name}',
+                    child: FocusPressScale(
+                      onTap: () {
+                        if (context.canPop()) context.pop();
+                        context.push('/album/${a.id}');
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: AfSpacing.s4),
+                        child: Row(
+                          children: [
+                            Artwork(
+                              url: a.imageUrl,
+                              size: 44,
+                              radius: AfRadii.borderSm,
                             ),
-                          ),
-                          const Icon(
-                            LucideIcons.arrowUpLeft,
-                            color: AfColors.textDisabled,
-                            size: 16,
-                          ),
-                        ],
+                            const SizedBox(width: AfSpacing.s12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    a.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AfTypography.bodyMedium.copyWith(
+                                      color: AfColors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    a.artistName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AfTypography.bodySmall.copyWith(
+                                      color: AfColors.textTertiary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              LucideIcons.arrowUpLeft,
+                              color: AfColors.textDisabled,
+                              size: 16,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -299,24 +304,28 @@ class _RecentAndSuggestions extends ConsumerWidget {
                 runSpacing: AfSpacing.s8,
                 children: list.take(8).map((g) {
                   final tint = parseGenreTint(g.tint);
-                  return FocusPressScale(
-                    onTap: () {
-                      if (context.canPop()) context.pop();
-                      context.push('/genre/${g.name}');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AfSpacing.s16,
-                        vertical: AfSpacing.s8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: tint.withValues(alpha: 0.25),
-                        borderRadius: AfRadii.borderPill,
-                      ),
-                      child: Text(
-                        g.name,
-                        style: AfTypography.bodySmall.copyWith(
-                          color: AfColors.textOnPrimary,
+                  return Semantics(
+                    button: true,
+                    label: 'Open genre ${g.name}',
+                    child: FocusPressScale(
+                      onTap: () {
+                        if (context.canPop()) context.pop();
+                        context.push('/genre/${g.name}');
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AfSpacing.s16,
+                          vertical: AfSpacing.s8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: tint.withValues(alpha: 0.25),
+                          borderRadius: AfRadii.borderPill,
+                        ),
+                        child: Text(
+                          g.name,
+                          style: AfTypography.bodySmall.copyWith(
+                            color: AfColors.textOnPrimary,
+                          ),
                         ),
                       ),
                     ),
@@ -372,45 +381,49 @@ class _LiveResults extends ConsumerWidget {
                 title: 'Albums',
                 child: Column(
                   children: filtered.map((a) {
-                    return FocusPressScale(
-                      onTap: () {
-                        if (context.canPop()) context.pop();
-                        context.push('/album/${a.id}');
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: AfSpacing.s4),
-                        child: Row(
-                          children: [
-                            Artwork(
-                              url: a.imageUrl,
-                              size: 44,
-                              radius: AfRadii.borderSm,
-                            ),
-                            const SizedBox(width: AfSpacing.s12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    a.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AfTypography.bodyMedium.copyWith(
-                                      color: AfColors.textPrimary,
-                                    ),
-                                  ),
-                                  Text(
-                                    a.artistName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AfTypography.bodySmall.copyWith(
-                                      color: AfColors.textTertiary,
-                                    ),
-                                  ),
-                                ],
+                    return Semantics(
+                      button: true,
+                      label: 'Open album ${a.name}',
+                      child: FocusPressScale(
+                        onTap: () {
+                          if (context.canPop()) context.pop();
+                          context.push('/album/${a.id}');
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: AfSpacing.s4),
+                          child: Row(
+                            children: [
+                              Artwork(
+                                url: a.imageUrl,
+                                size: 44,
+                                radius: AfRadii.borderSm,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: AfSpacing.s12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      a.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AfTypography.bodyMedium.copyWith(
+                                        color: AfColors.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      a.artistName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AfTypography.bodySmall.copyWith(
+                                        color: AfColors.textTertiary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -434,32 +447,36 @@ class _LiveResults extends ConsumerWidget {
                 title: 'Artists',
                 child: Column(
                   children: filtered.map((a) {
-                    return FocusPressScale(
-                      onTap: () {
-                        if (context.canPop()) context.pop();
-                        context.push('/artist/${a.id}');
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: AfSpacing.s4),
-                        child: Row(
-                          children: [
-                            Artwork(
-                              url: a.imageUrl,
-                              size: 44,
-                              radius: AfRadii.borderPill,
-                            ),
-                            const SizedBox(width: AfSpacing.s12),
-                            Expanded(
-                              child: Text(
-                                a.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AfTypography.bodyMedium.copyWith(
-                                  color: AfColors.textPrimary,
+                    return Semantics(
+                      button: true,
+                      label: 'Open artist ${a.name}',
+                      child: FocusPressScale(
+                        onTap: () {
+                          if (context.canPop()) context.pop();
+                          context.push('/artist/${a.id}');
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: AfSpacing.s4),
+                          child: Row(
+                            children: [
+                              Artwork(
+                                url: a.imageUrl,
+                                size: 44,
+                                radius: AfRadii.borderPill,
+                              ),
+                              const SizedBox(width: AfSpacing.s12),
+                              Expanded(
+                                child: Text(
+                                  a.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AfTypography.bodyMedium.copyWith(
+                                    color: AfColors.textPrimary,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     );

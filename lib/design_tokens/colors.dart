@@ -63,6 +63,12 @@ abstract final class AfColors {
   static const semanticOffline = Color(0xFF706A64);
 
   // ---------------------------------------------------------------------------
+  // Brand — external service colors (not spectral)
+  // ---------------------------------------------------------------------------
+  static const youtubeRed = Color(0xFFFF0000);
+  static const youtubeRedDark = Color(0xFFFF4444);
+
+  // ---------------------------------------------------------------------------
   // EQ band colors — frequency-coded for parametric EQ visualization.
   // Used by frequency_response_painter and parametric_eq_curve.
   // ---------------------------------------------------------------------------

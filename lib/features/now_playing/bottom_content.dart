@@ -103,7 +103,7 @@ class _BottomContentState extends ConsumerState<BottomContent>
       animation: _expandAnim,
       builder: (context, _) {
         // Interpolate max height: compact ~36% → expanded ~70% (below top bar)
-        final screenH = MediaQuery.of(context).size.height;
+        final screenH = MediaQuery.sizeOf(context).height;
         final compactH = screenH * 0.36;
         final expandedH = screenH - kToolbarHeight - 80; // below top bar
         final currentH = compactH + (expandedH - compactH) * _expandAnim.value;

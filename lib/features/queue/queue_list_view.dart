@@ -105,18 +105,22 @@ class QueueListView extends ConsumerWidget {
                     if (isSelectionMode)
                       GestureDetector(
                         onTap: () => onSelectToggle?.call(i),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AfSpacing.s12,
-                          ),
-                          child: Icon(
-                            selected
-                                ? LucideIcons.circleCheck
-                                : LucideIcons.circle,
-                            size: 22,
-                            color: selected
-                                ? AfColors.accentPrimary
-                                : AfColors.textTertiary,
+                        child: Semantics(
+                          button: true,
+                          label: 'Select track: ${t.title}',
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AfSpacing.s12,
+                            ),
+                            child: Icon(
+                              selected
+                                  ? LucideIcons.circleCheck
+                                  : LucideIcons.circle,
+                              size: 22,
+                              color: selected
+                                  ? AfColors.accentPrimary
+                                  : AfColors.textTertiary,
+                            ),
                           ),
                         ),
                       ),

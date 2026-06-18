@@ -23,7 +23,7 @@ class WelcomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     afLog('boot', 'WelcomeScreen.build');
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
     final spectral = ref.watch(
       currentSpectralProvider.select((s) => s.primary),
     );
@@ -153,6 +153,7 @@ class WelcomeScreen extends ConsumerWidget {
                           await AppModeStore.save(AppMode.local);
                           if (context.mounted) {
                             await context.push('/onboarding/local-setup');
+                            if (!context.mounted) return;
                           }
                         },
                       ),
@@ -184,6 +185,7 @@ class WelcomeScreen extends ConsumerWidget {
                           await AppModeStore.save(AppMode.server);
                           if (context.mounted) {
                             await context.push('/onboarding/discover');
+                            if (!context.mounted) return;
                           }
                         },
                       ),

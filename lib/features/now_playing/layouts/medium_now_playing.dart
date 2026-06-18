@@ -250,24 +250,28 @@ class _LyricsToggleSection extends StatelessWidget {
           // Toggle button
           GestureDetector(
             onTap: onToggleLyrics,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  LucideIcons.mic2,
-                  size: 16,
-                  color: lyricsAnim.value > 0
-                      ? spectral
-                      : AfColors.textSecondary,
-                ),
-                const SizedBox(width: AfSpacing.s4),
-                Text(
-                  'Lyrics',
-                  style: AfTypography.label.copyWith(
-                    color: AfColors.textSecondary,
+            child: Semantics(
+              button: true,
+              label: 'Toggle lyrics',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LucideIcons.mic2,
+                    size: 16,
+                    color: lyricsAnim.value > 0
+                        ? spectral
+                        : AfColors.textSecondary,
                   ),
-                ),
-              ],
+                  const SizedBox(width: AfSpacing.s4),
+                  Text(
+                    'Lyrics',
+                    style: AfTypography.label.copyWith(
+                      color: AfColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: AfSpacing.s8),

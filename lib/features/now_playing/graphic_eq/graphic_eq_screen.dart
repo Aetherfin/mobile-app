@@ -129,14 +129,11 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
     unawaited(_save());
   }
 
-  void _updateBandLocal(int index, double value) {
-    setState(() {
-      _state.levels[index] = value;
-      _activePreset = null;
-    });
-  }
-
-  void _onDragEnd() {
+  /// Called by isolated band sliders on drag end — applies + saves.
+  void _onBandDragEnd(int index, double value) {
+    _state.levels[index] = value;
+    _activePreset = null;
+    setState(() {}); // Rebuild visualization only
     unawaited(_apply());
     unawaited(_save());
   }
@@ -380,10 +377,10 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
           width: 44,
           child: _BandSlider(
             freq: freqLabels[i],
-            value: _state.levels[i],
+            initialValue: _state.levels[i],
             activeColor: _bandColor(_state.levels[i], spectral),
-            onChanged: (v) => _updateBandLocal(i, v),
-            onChangeEnd: _onDragEnd,
+            onChanged: (_) {}, // Local during drag — no parent rebuild
+            onChangeEnd: (v) => _onBandDragEnd(i, v),
           ),
         );
       },
@@ -391,52 +388,80 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
   }
 }
 
-// ─── Custom Vertical Band Slider ───────────────────────────────────────────
+// ─── Custom Vertical Band Slider (self-contained) ──────────────────────────
 
-class _BandSlider extends StatelessWidget {
+/// Holds its own value locally during drag. Parent only rebuilds on
+/// structural changes (preset/reset/enable), not slider ticks.
+class _BandSlider extends StatefulWidget {
   const _BandSlider({
     required this.freq,
-    required this.value,
+    required this.initialValue,
     required this.activeColor,
     required this.onChanged,
     required this.onChangeEnd,
   });
 
   final String freq;
-  final double value;
+  final double initialValue;
   final Color activeColor;
   final ValueChanged<double> onChanged;
-  final VoidCallback onChangeEnd;
+  final ValueChanged<double> onChangeEnd;
+
+  @override
+  State<_BandSlider> createState() => _BandSliderState();
+}
+
+class _BandSliderState extends State<_BandSlider> {
+  late double _value = widget.initialValue;
 
   static const _min = -12.0;
   static const _max = 12.0;
 
   @override
+  void didUpdateWidget(covariant _BandSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialValue != widget.initialValue) {
+      _value = widget.initialValue;
+    }
+  }
+
+  String _formatDb(double v) {
+    if (v >= 0) return '+${v.toStringAsFixed(0)}';
+    return v.toStringAsFixed(0);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final reduced = MediaQuery.of(context).disableAnimations;
-    final dbLabel = _formatDb(value);
+    final dbLabel = _formatDb(_value);
 
     return Semantics(
-      label: 'Frequency band $freq, gain $dbLabel',
-      value: value.abs() < 0.5 ? 'flat' : (value > 0 ? 'boost' : 'cut'),
+      label: 'Frequency band ${widget.freq}, gain $dbLabel',
+      value: _value.abs() < 0.5 ? 'flat' : (_value > 0 ? 'boost' : 'cut'),
       child: GestureDetector(
         onVerticalDragUpdate: (details) {
           final box = context.findRenderObject() as RenderBox?;
           if (box == null) return;
           final height = box.size.height;
           final delta = -details.delta.dy / height * (_max - _min);
-          onChanged((value + delta).clamp(_min, _max));
+          final newValue = (_value + delta).clamp(_min, _max);
+          setState(() => _value = newValue);
+          widget.onChanged(newValue);
         },
-        onVerticalDragEnd: (_) => onChangeEnd(),
+        onVerticalDragEnd: (_) => widget.onChangeEnd(_value),
         child: Focus(
           onKeyEvent: (node, event) {
             if (event is KeyDownEvent) {
               const step = 1.0;
               if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-                onChanged((value + step).clamp(_min, _max));
+                final newValue = (_value + step).clamp(_min, _max);
+                setState(() => _value = newValue);
+                widget.onChanged(newValue);
                 return KeyEventResult.handled;
               } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                onChanged((value - step).clamp(_min, _max));
+                final newValue = (_value - step).clamp(_min, _max);
+                setState(() => _value = newValue);
+                widget.onChanged(newValue);
                 return KeyEventResult.handled;
               }
             }
@@ -448,11 +473,11 @@ class _BandSlider extends StatelessWidget {
               children: [
                 // ── dB value ──
                 Text(
-                  _formatDb(value),
+                  _formatDb(_value),
                   style: AfTypography.overline.copyWith(
-                    color: value.abs() < 0.5
+                    color: _value.abs() < 0.5
                         ? AfColors.textTertiary
-                        : activeColor,
+                        : widget.activeColor,
                   ),
                 ),
                 const SizedBox(height: AfSpacing.s2),
@@ -463,7 +488,7 @@ class _BandSlider extends StatelessWidget {
                     builder: (context, constraints) {
                       final h = constraints.maxHeight;
                       final w = constraints.maxWidth;
-                      final t = ((value - _min) / (_max - _min)).clamp(
+                      final t = ((_value - _min) / (_max - _min)).clamp(
                         0.0,
                         1.0,
                       );
@@ -497,7 +522,7 @@ class _BandSlider extends StatelessWidget {
                             ),
                           ),
                           // Fill bar from center to value
-                          if (value.abs() > 0.5)
+                          if (_value.abs() > 0.5)
                             Positioned(
                               left: w / 2 - 1.5,
                               top: thumbY < centerY ? thumbY : centerY,
@@ -512,7 +537,7 @@ class _BandSlider extends StatelessWidget {
                                   h * 0.5,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: activeColor,
+                                  color: widget.activeColor,
                                   borderRadius: AfRadii.borderPill,
                                 ),
                               ),
@@ -526,10 +551,12 @@ class _BandSlider extends StatelessWidget {
                               height: 12,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: activeColor,
+                                color: widget.activeColor,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: activeColor.withValues(alpha: 0.4),
+                                    color: widget.activeColor.withValues(
+                                      alpha: 0.4,
+                                    ),
                                     blurRadius: 4,
                                   ),
                                 ],
@@ -545,7 +572,7 @@ class _BandSlider extends StatelessWidget {
 
                 // ── Frequency label ──
                 Text(
-                  freq,
+                  widget.freq,
                   style: AfTypography.overline.copyWith(
                     color: AfColors.textTertiary,
                   ),
@@ -558,10 +585,5 @@ class _BandSlider extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatDb(double v) {
-    if (v >= 0) return '+${v.toStringAsFixed(0)}';
-    return v.toStringAsFixed(0);
   }
 }

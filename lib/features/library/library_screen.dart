@@ -297,8 +297,8 @@ class _RecentlyAddedSection extends ConsumerWidget {
                 // Scale the text area with the user's text scaler (clamped to
                 // 0.85-1.3 by the root MediaQuery) so this never overflows
                 // across devices or accessibility settings.
-                final mq = MediaQuery.of(context);
-                final textScale = mq.textScaler.scale(1.0);
+                final mq = MediaQuery.textScalerOf(context);
+                final textScale = mq.scale(1.0);
                 const artworkSize = 120.0;
                 final textArea = (22 + AfSpacing.s2 + 16) * textScale + 4;
                 final rowHeight = artworkSize + AfSpacing.s8 + textArea;
@@ -332,8 +332,8 @@ class _RecentlyAddedSection extends ConsumerWidget {
       },
       loading: () => Builder(
         builder: (context) {
-          final mq = MediaQuery.of(context);
-          final textScale = mq.textScaler.scale(1.0);
+          final mq = MediaQuery.textScalerOf(context);
+          final textScale = mq.scale(1.0);
           const artworkSize = 120.0;
           final textArea = (22 + AfSpacing.s2 + 16) * textScale + 4;
           final rowHeight = artworkSize + AfSpacing.s8 + textArea;

@@ -166,31 +166,35 @@ class _AboutTile extends StatelessWidget {
       color: Colors.transparent,
       child: PressScale(
         onTap: onTap,
-        child: InkWell(
-          borderRadius: AfRadii.borderMd,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AfSpacing.s12,
-              vertical: AfSpacing.s12,
-            ),
-            child: Row(
-              children: [
-                Icon(icon, size: 20, color: AfColors.textSecondary),
-                const SizedBox(width: AfSpacing.s12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: AfTypography.bodyMedium.copyWith(
-                      color: AfColors.textPrimary,
+        child: Semantics(
+          button: true,
+          label: title,
+          child: InkWell(
+            borderRadius: AfRadii.borderMd,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AfSpacing.s12,
+                vertical: AfSpacing.s12,
+              ),
+              child: Row(
+                children: [
+                  Icon(icon, size: 20, color: AfColors.textSecondary),
+                  const SizedBox(width: AfSpacing.s12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: AfTypography.bodyMedium.copyWith(
+                        color: AfColors.textPrimary,
+                      ),
                     ),
                   ),
-                ),
-                const Icon(
-                  LucideIcons.chevronRight,
-                  size: 16,
-                  color: AfColors.textTertiary,
-                ),
-              ],
+                  const Icon(
+                    LucideIcons.chevronRight,
+                    size: 16,
+                    color: AfColors.textTertiary,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

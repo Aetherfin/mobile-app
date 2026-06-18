@@ -7,7 +7,7 @@ import '../../../utils/oklch.dart';
 ///
 /// Renders a dark surface with an animated radial glow emanating from the
 /// center, using the artwork's spectral colors. The glow is implemented
-/// as layered [BoxShadow] effects on a [Container] for GPU-friendly rendering.
+/// as a [RadialGradient] on a [DecoratedBox] — GPU-friendly, no per-frame blur.
 class GlowBackground extends StatefulWidget {
   const GlowBackground({super.key, required this.energy, required this.child});
 
@@ -54,23 +54,21 @@ class _GlowBackgroundState extends State<GlowBackground>
     return AnimatedBuilder(
       animation: _glowAnimation,
       builder: (context, child) {
-        final glowOpacity = _glowAnimation.value;
+        final opacity = _glowAnimation.value;
         return Container(
           color: AfColors.surfaceCanvas,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: glowColor.withValues(alpha: 0.3 * glowOpacity),
-                  blurRadius: 120,
-                  spreadRadius: -20,
-                ),
-                BoxShadow(
-                  color: deepGlow.withValues(alpha: 0.2 * glowOpacity),
-                  blurRadius: 200,
-                  spreadRadius: -40,
-                ),
-              ],
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 0.8,
+                colors: [
+                  glowColor.withValues(alpha: 0.35 * opacity),
+                  deepGlow.withValues(alpha: 0.18 * opacity),
+                  AfColors.surfaceCanvas.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.4, 1.0],
+              ),
             ),
             child: child,
           ),

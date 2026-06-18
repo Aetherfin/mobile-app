@@ -42,7 +42,7 @@ class CompactNowPlaying extends StatelessWidget {
         // ── Centered artwork card (swipe up to expand queue) ──
         Positioned(
           top: _topBarCompactHeight,
-          bottom: MediaQuery.of(context).size.height * _contentHeightRatio,
+          bottom: MediaQuery.sizeOf(context).height * _contentHeightRatio,
           left: _artworkHorizontalMargin,
           right: _artworkHorizontalMargin,
           child: Semantics(
@@ -70,7 +70,7 @@ class CompactNowPlaying extends StatelessWidget {
           left: 0,
           right: 0,
           bottom: 0,
-          height: MediaQuery.of(context).size.height * _contentHeightRatio,
+          height: MediaQuery.sizeOf(context).height * _contentHeightRatio,
           child: RepaintBoundary(
             child: ExcludeSemantics(
               child: IgnorePointer(

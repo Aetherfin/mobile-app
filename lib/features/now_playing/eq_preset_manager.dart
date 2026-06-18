@@ -77,7 +77,7 @@ class EqPresetManager {
             child: Semantics(
               button: true,
               selected: isActive,
-              label: 'EQ preset: ${entry.key}',
+              label: 'Preset: ${entry.key}',
               child: GestureDetector(
                 onLongPress: isUserPreset ? () => onDelete(entry.key) : null,
                 child: ChoiceChip(
@@ -270,7 +270,7 @@ class EqPresetManager {
             child: Semantics(
               button: true,
               selected: isActive,
-              label: 'Parametric preset: ${entry.key}',
+              label: 'Preset: ${entry.key}',
               child: GestureDetector(
                 onLongPress: isUserPreset ? () => onDelete(entry.key) : null,
                 child: ChoiceChip(

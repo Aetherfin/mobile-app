@@ -140,7 +140,7 @@ class _LyricsListState extends ConsumerState<LyricsList> {
     }
 
     return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.35,
+      height: MediaQuery.sizeOf(context).height * 0.35,
       child: ListView.builder(
         controller: widget.scrollController,
         padding: const EdgeInsets.symmetric(

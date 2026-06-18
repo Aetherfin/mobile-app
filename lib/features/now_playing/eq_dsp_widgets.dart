@@ -551,8 +551,8 @@ Widget eqTextFieldRow(
     padding: const EdgeInsets.symmetric(vertical: AfSpacing.s4),
     child: Row(
       children: [
-        // ponytail: no matching AfSpacing token for 100
-        SizedBox(width: 100, child: Text(label, style: AfTypography.bodySmall)),
+        // ponytail: 96 is closest AfSpacing token
+        SizedBox(width: 96, child: Text(label, style: AfTypography.bodySmall)),
         const SizedBox(width: AfSpacing.s8),
         Expanded(
           child: TextFormField(
@@ -564,9 +564,8 @@ Widget eqTextFieldRow(
             decoration: InputDecoration(
               labelText: label,
               hintText: hint,
-              // ponytail: no matching AfTypography token for 12px mono
-              hintStyle: AfTypography.monoMedium.copyWith(
-                fontSize: 12,
+              // ponytail: 12px mono hint — caption is 12dp
+              hintStyle: AfTypography.caption.copyWith(
                 color: AfColors.textTertiary,
               ),
               isDense: true,
@@ -655,7 +654,7 @@ class _EqExpandableContentState extends State<EqExpandableContent>
 
   @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
     if (reduced) {
       return widget.visible ? widget.child : const SizedBox.shrink();
     }
@@ -704,7 +703,7 @@ class EqBandBar extends ConsumerWidget {
         (s) => (primary: s.primary, secondary: s.secondary),
       ),
     );
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
     // Normalize gain to 0..1 for display (0 = min, 1 = max).
     final t = ((gain - min) / (max - min)).clamp(0.0, 1.0);
     // 0.5 = flat (unity), below = cut, above = boost.

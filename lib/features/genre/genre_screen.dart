@@ -108,7 +108,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                       child: Padding(
                         padding: EdgeInsets.only(
                           top:
-                              MediaQuery.of(context).padding.top +
+                              MediaQuery.paddingOf(context).top +
                               kToolbarHeight +
                               AfSpacing.s8,
                         ),

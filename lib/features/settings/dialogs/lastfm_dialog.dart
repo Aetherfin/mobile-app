@@ -35,17 +35,21 @@ void showLastFmApiConfigDialog(BuildContext context, WidgetRef ref) {
           style: AfTypography.bodyMedium,
         ),
         const SizedBox(height: AfSpacing.s8),
-        PressScale(
-          onTap: () => launchUrl(
-            Uri.parse('https://www.last.fm/api/account/create'),
-            mode: LaunchMode.externalApplication,
-          ),
-          child: InkWell(
-            child: Text(
-              'Create a developer account and register your API key at last.fm/api/account/create',
-              style: AfTypography.bodySmall.copyWith(
-                color: spectral,
-                decoration: TextDecoration.underline,
+        Semantics(
+          button: true,
+          label: 'Open last.fm profile',
+          child: PressScale(
+            onTap: () => launchUrl(
+              Uri.parse('https://www.last.fm/api/account/create'),
+              mode: LaunchMode.externalApplication,
+            ),
+            child: InkWell(
+              child: Text(
+                'Create a developer account and register your API key at last.fm/api/account/create',
+                style: AfTypography.bodySmall.copyWith(
+                  color: spectral,
+                  decoration: TextDecoration.underline,
+                ),
               ),
             ),
           ),

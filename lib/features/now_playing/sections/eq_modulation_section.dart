@@ -4,6 +4,67 @@ import 'package:flutter/material.dart';
 
 import '../eq_dsp_widgets.dart';
 
+// ── Isolated Slider ──────────────────────────────────────────────────────────
+
+/// Self-contained slider that holds its own value locally.
+/// Parent only rebuilds on structural changes (toggle/add/remove), not slider ticks.
+class _IsolatedEqSlider extends StatefulWidget {
+  const _IsolatedEqSlider({
+    required this.label,
+    required this.initialValue,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.onChanged,
+    required this.onChangeEnd,
+    this.suffix,
+    this.precision = 0,
+  });
+
+  final String label;
+  final double initialValue;
+  final double min;
+  final double max;
+  final int divisions;
+  final ValueChanged<double> onChanged;
+  final VoidCallback onChangeEnd;
+  final String? suffix;
+  final int precision;
+
+  @override
+  State<_IsolatedEqSlider> createState() => _IsolatedEqSliderState();
+}
+
+class _IsolatedEqSliderState extends State<_IsolatedEqSlider> {
+  late double _value = widget.initialValue;
+
+  @override
+  void didUpdateWidget(covariant _IsolatedEqSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialValue != widget.initialValue) {
+      _value = widget.initialValue;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return eqSliderRow(
+      widget.label,
+      _value,
+      widget.min,
+      widget.max,
+      widget.divisions,
+      (v) {
+        setState(() => _value = v);
+        widget.onChanged(v);
+      },
+      widget.onChangeEnd,
+      suffix: widget.suffix,
+      precision: widget.precision,
+    );
+  }
+}
+
 // ── Modulation Section ───────────────────────────────────────────────────────
 
 class EqModulationSection extends StatefulWidget {
@@ -72,73 +133,23 @@ class EqModulationSection extends StatefulWidget {
 
 class _EqModulationSectionState extends State<EqModulationSection> {
   late bool _phaser = widget.phaser;
-  late double _phaserInGain = widget.phaserInGain;
-  late double _phaserOutGain = widget.phaserOutGain;
-  late double _phaserDelay = widget.phaserDelay;
-  late double _phaserDecay = widget.phaserDecay;
-  late double _phaserSpeed = widget.phaserSpeed;
   late bool _flanger = widget.flanger;
-  late double _flangerDelay = widget.flangerDelay;
-  late double _flangerDepth = widget.flangerDepth;
-  late double _flangerRegen = widget.flangerRegen;
-  late double _flangerWidth = widget.flangerWidth;
-  late double _flangerSpeed = widget.flangerSpeed;
   late bool _chorus = widget.chorus;
-  late double _chorusInGain = widget.chorusInGain;
-  late double _chorusOutGain = widget.chorusOutGain;
+  late bool _tremolo = widget.tremolo;
+  late bool _vibrato = widget.vibrato;
+
+  // ponytail: chorus text fields still need parent state (string values, not sliders)
   late String _chorusDelays = widget.chorusDelays;
   late String _chorusDecays = widget.chorusDecays;
   late String _chorusSpeeds = widget.chorusSpeeds;
   late String _chorusDepths = widget.chorusDepths;
-  late bool _tremolo = widget.tremolo;
-  late double _tremoloFreq = widget.tremoloFreq;
-  late double _tremoloDepth = widget.tremoloDepth;
-  late bool _vibrato = widget.vibrato;
-  late double _vibratoFreq = widget.vibratoFreq;
-  late double _vibratoDepth = widget.vibratoDepth;
 
   @override
   void didUpdateWidget(covariant EqModulationSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.phaser != widget.phaser) _phaser = widget.phaser;
-    if (oldWidget.phaserInGain != widget.phaserInGain) {
-      _phaserInGain = widget.phaserInGain;
-    }
-    if (oldWidget.phaserOutGain != widget.phaserOutGain) {
-      _phaserOutGain = widget.phaserOutGain;
-    }
-    if (oldWidget.phaserDelay != widget.phaserDelay) {
-      _phaserDelay = widget.phaserDelay;
-    }
-    if (oldWidget.phaserDecay != widget.phaserDecay) {
-      _phaserDecay = widget.phaserDecay;
-    }
-    if (oldWidget.phaserSpeed != widget.phaserSpeed) {
-      _phaserSpeed = widget.phaserSpeed;
-    }
     if (oldWidget.flanger != widget.flanger) _flanger = widget.flanger;
-    if (oldWidget.flangerDelay != widget.flangerDelay) {
-      _flangerDelay = widget.flangerDelay;
-    }
-    if (oldWidget.flangerDepth != widget.flangerDepth) {
-      _flangerDepth = widget.flangerDepth;
-    }
-    if (oldWidget.flangerRegen != widget.flangerRegen) {
-      _flangerRegen = widget.flangerRegen;
-    }
-    if (oldWidget.flangerWidth != widget.flangerWidth) {
-      _flangerWidth = widget.flangerWidth;
-    }
-    if (oldWidget.flangerSpeed != widget.flangerSpeed) {
-      _flangerSpeed = widget.flangerSpeed;
-    }
     if (oldWidget.chorus != widget.chorus) _chorus = widget.chorus;
-    if (oldWidget.chorusInGain != widget.chorusInGain) {
-      _chorusInGain = widget.chorusInGain;
-    }
-    if (oldWidget.chorusOutGain != widget.chorusOutGain) {
-      _chorusOutGain = widget.chorusOutGain;
-    }
     if (oldWidget.chorusDelays != widget.chorusDelays) {
       _chorusDelays = widget.chorusDelays;
     }
@@ -152,19 +163,7 @@ class _EqModulationSectionState extends State<EqModulationSection> {
       _chorusDepths = widget.chorusDepths;
     }
     if (oldWidget.tremolo != widget.tremolo) _tremolo = widget.tremolo;
-    if (oldWidget.tremoloFreq != widget.tremoloFreq) {
-      _tremoloFreq = widget.tremoloFreq;
-    }
-    if (oldWidget.tremoloDepth != widget.tremoloDepth) {
-      _tremoloDepth = widget.tremoloDepth;
-    }
     if (oldWidget.vibrato != widget.vibrato) _vibrato = widget.vibrato;
-    if (oldWidget.vibratoFreq != widget.vibratoFreq) {
-      _vibratoFreq = widget.vibratoFreq;
-    }
-    if (oldWidget.vibratoDepth != widget.vibratoDepth) {
-      _vibratoDepth = widget.vibratoDepth;
-    }
   }
 
   void _set(String field, dynamic value) => widget.onChanged(field, value);
@@ -190,70 +189,55 @@ class _EqModulationSectionState extends State<EqModulationSection> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              eqSliderRow(
-                'In gain',
-                _phaserInGain,
-                0.0,
-                1.0,
-                20,
-                (v) {
-                  setState(() => _phaserInGain = v);
-                  _set('phaserInGain', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'In gain',
+                initialValue: widget.phaserInGain,
+                min: 0.0,
+                max: 1.0,
+                divisions: 20,
+                onChanged: (v) => _set('phaserInGain', v),
+                onChangeEnd: widget.onApply,
                 precision: 2,
               ),
-              eqSliderRow(
-                'Out gain',
-                _phaserOutGain,
-                0.0,
-                1.0,
-                20,
-                (v) {
-                  setState(() => _phaserOutGain = v);
-                  _set('phaserOutGain', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Out gain',
+                initialValue: widget.phaserOutGain,
+                min: 0.0,
+                max: 1.0,
+                divisions: 20,
+                onChanged: (v) => _set('phaserOutGain', v),
+                onChangeEnd: widget.onApply,
                 precision: 2,
               ),
-              eqSliderRow(
-                'Delay',
-                _phaserDelay,
-                0.0,
-                5.0,
-                50,
-                (v) {
-                  setState(() => _phaserDelay = v);
-                  _set('phaserDelay', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Delay',
+                initialValue: widget.phaserDelay,
+                min: 0.0,
+                max: 5.0,
+                divisions: 50,
+                onChanged: (v) => _set('phaserDelay', v),
+                onChangeEnd: widget.onApply,
                 precision: 1,
                 suffix: 'ms',
               ),
-              eqSliderRow(
-                'Decay',
-                _phaserDecay,
-                0.0,
-                0.99,
-                99,
-                (v) {
-                  setState(() => _phaserDecay = v);
-                  _set('phaserDecay', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Decay',
+                initialValue: widget.phaserDecay,
+                min: 0.0,
+                max: 0.99,
+                divisions: 99,
+                onChanged: (v) => _set('phaserDecay', v),
+                onChangeEnd: widget.onApply,
                 precision: 2,
               ),
-              eqSliderRow(
-                'Speed',
-                _phaserSpeed,
-                0.1,
-                2.0,
-                19,
-                (v) {
-                  setState(() => _phaserSpeed = v);
-                  _set('phaserSpeed', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Speed',
+                initialValue: widget.phaserSpeed,
+                min: 0.1,
+                max: 2.0,
+                divisions: 19,
+                onChanged: (v) => _set('phaserSpeed', v),
+                onChangeEnd: widget.onApply,
                 precision: 2,
                 suffix: 'Hz',
               ),
@@ -276,72 +260,57 @@ class _EqModulationSectionState extends State<EqModulationSection> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              eqSliderRow(
-                'Delay',
-                _flangerDelay,
-                0.0,
-                30.0,
-                60,
-                (v) {
-                  setState(() => _flangerDelay = v);
-                  _set('flangerDelay', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Delay',
+                initialValue: widget.flangerDelay,
+                min: 0.0,
+                max: 30.0,
+                divisions: 60,
+                onChanged: (v) => _set('flangerDelay', v),
+                onChangeEnd: widget.onApply,
                 precision: 1,
                 suffix: 'ms',
               ),
-              eqSliderRow(
-                'Depth',
-                _flangerDepth,
-                0.0,
-                10.0,
-                20,
-                (v) {
-                  setState(() => _flangerDepth = v);
-                  _set('flangerDepth', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Depth',
+                initialValue: widget.flangerDepth,
+                min: 0.0,
+                max: 10.0,
+                divisions: 20,
+                onChanged: (v) => _set('flangerDepth', v),
+                onChangeEnd: widget.onApply,
                 precision: 1,
               ),
-              eqSliderRow(
-                'Regen',
-                _flangerRegen,
-                -95.0,
-                95.0,
-                38,
-                (v) {
-                  setState(() => _flangerRegen = v);
-                  _set('flangerRegen', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Regen',
+                initialValue: widget.flangerRegen,
+                min: -95.0,
+                max: 95.0,
+                divisions: 38,
+                onChanged: (v) => _set('flangerRegen', v),
+                onChangeEnd: widget.onApply,
                 precision: 0,
                 suffix: '%',
               ),
-              eqSliderRow(
-                'Width',
-                _flangerWidth,
-                0.0,
-                100.0,
-                20,
-                (v) {
-                  setState(() => _flangerWidth = v);
-                  _set('flangerWidth', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Width',
+                initialValue: widget.flangerWidth,
+                min: 0.0,
+                max: 100.0,
+                divisions: 20,
+                onChanged: (v) => _set('flangerWidth', v),
+                onChangeEnd: widget.onApply,
                 precision: 0,
                 suffix: '%',
               ),
-              eqSliderRow(
-                'Speed',
-                _flangerSpeed,
-                0.1,
-                10.0,
-                99,
-                (v) {
-                  setState(() => _flangerSpeed = v);
-                  _set('flangerSpeed', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Speed',
+                initialValue: widget.flangerSpeed,
+                min: 0.1,
+                max: 10.0,
+                divisions: 99,
+                onChanged: (v) => _set('flangerSpeed', v),
+                onChangeEnd: widget.onApply,
                 precision: 1,
                 suffix: 'Hz',
               ),
@@ -364,30 +333,24 @@ class _EqModulationSectionState extends State<EqModulationSection> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              eqSliderRow(
-                'In gain',
-                _chorusInGain,
-                0.0,
-                1.0,
-                20,
-                (v) {
-                  setState(() => _chorusInGain = v);
-                  _set('chorusInGain', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'In gain',
+                initialValue: widget.chorusInGain,
+                min: 0.0,
+                max: 1.0,
+                divisions: 20,
+                onChanged: (v) => _set('chorusInGain', v),
+                onChangeEnd: widget.onApply,
                 precision: 2,
               ),
-              eqSliderRow(
-                'Out gain',
-                _chorusOutGain,
-                0.0,
-                1.0,
-                20,
-                (v) {
-                  setState(() => _chorusOutGain = v);
-                  _set('chorusOutGain', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Out gain',
+                initialValue: widget.chorusOutGain,
+                min: 0.0,
+                max: 1.0,
+                divisions: 20,
+                onChanged: (v) => _set('chorusOutGain', v),
+                onChangeEnd: widget.onApply,
                 precision: 2,
               ),
               eqTextFieldRow(
@@ -450,31 +413,25 @@ class _EqModulationSectionState extends State<EqModulationSection> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              eqSliderRow(
-                'Frequency',
-                _tremoloFreq,
-                0.1,
-                20.0,
-                40,
-                (v) {
-                  setState(() => _tremoloFreq = v);
-                  _set('tremoloFreq', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Frequency',
+                initialValue: widget.tremoloFreq,
+                min: 0.1,
+                max: 20.0,
+                divisions: 40,
+                onChanged: (v) => _set('tremoloFreq', v),
+                onChangeEnd: widget.onApply,
                 precision: 1,
                 suffix: 'Hz',
               ),
-              eqSliderRow(
-                'Depth',
-                _tremoloDepth,
-                0.0,
-                1.0,
-                20,
-                (v) {
-                  setState(() => _tremoloDepth = v);
-                  _set('tremoloDepth', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Depth',
+                initialValue: widget.tremoloDepth,
+                min: 0.0,
+                max: 1.0,
+                divisions: 20,
+                onChanged: (v) => _set('tremoloDepth', v),
+                onChangeEnd: widget.onApply,
                 precision: 2,
               ),
             ],
@@ -496,31 +453,25 @@ class _EqModulationSectionState extends State<EqModulationSection> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              eqSliderRow(
-                'Frequency',
-                _vibratoFreq,
-                0.1,
-                20.0,
-                40,
-                (v) {
-                  setState(() => _vibratoFreq = v);
-                  _set('vibratoFreq', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Frequency',
+                initialValue: widget.vibratoFreq,
+                min: 0.1,
+                max: 20.0,
+                divisions: 40,
+                onChanged: (v) => _set('vibratoFreq', v),
+                onChangeEnd: widget.onApply,
                 precision: 1,
                 suffix: 'Hz',
               ),
-              eqSliderRow(
-                'Depth',
-                _vibratoDepth,
-                0.0,
-                1.0,
-                20,
-                (v) {
-                  setState(() => _vibratoDepth = v);
-                  _set('vibratoDepth', v);
-                },
-                widget.onApply,
+              _IsolatedEqSlider(
+                label: 'Depth',
+                initialValue: widget.vibratoDepth,
+                min: 0.0,
+                max: 1.0,
+                divisions: 20,
+                onChanged: (v) => _set('vibratoDepth', v),
+                onChangeEnd: widget.onApply,
                 precision: 2,
               ),
             ],

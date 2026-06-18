@@ -40,8 +40,8 @@ class YouTubeSongGrid extends ConsumerWidget {
       child: GridView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: rows,
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 200,
           mainAxisSpacing: 16,
           crossAxisSpacing: 8,
           childAspectRatio: rowHeight / 310.0,
