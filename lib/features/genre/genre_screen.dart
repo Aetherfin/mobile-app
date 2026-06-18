@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/audio/play_actions.dart';
+import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../widgets/async_error_view.dart';
@@ -40,6 +45,51 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
     _scrollOffset.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  /// Fetch tracks for all albums in this genre, then play them.
+  Future<void> _playAll(
+    BuildContext context,
+    WidgetRef ref,
+    List<AfAlbum> albums,
+  ) async {
+    unawaited(HapticFeedback.mediumImpact());
+    final details = await Future.wait(
+      albums.map(
+        (a) => ref.read(albumDetailProvider(a.id).future),
+      ),
+    );
+    final tracks =
+        details
+            .whereType<({AfAlbum album, List<AfTrack> tracks})>()
+            .expand((d) => d.tracks)
+            .toList();
+    if (tracks.isNotEmpty && context.mounted) {
+      await ref.read(playActionsProvider).playQueue(tracks);
+    }
+  }
+
+  /// Fetch tracks for all albums in this genre, shuffle, then play.
+  Future<void> _shuffleAll(
+    BuildContext context,
+    WidgetRef ref,
+    List<AfAlbum> albums,
+  ) async {
+    unawaited(HapticFeedback.mediumImpact());
+    final details = await Future.wait(
+      albums.map(
+        (a) => ref.read(albumDetailProvider(a.id).future),
+      ),
+    );
+    final tracks =
+        details
+            .whereType<({AfAlbum album, List<AfTrack> tracks})>()
+            .expand((d) => d.tracks)
+            .toList()
+          ..shuffle();
+    if (tracks.isNotEmpty && context.mounted) {
+      await ref.read(playActionsProvider).playQueue(tracks);
+    }
   }
 
   @override
@@ -150,6 +200,39 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                                 color: AfColors.textSecondary,
                               ),
                             ),
+                            // ── Play All + Shuffle ──
+                            if (albums.isNotEmpty) ...[
+                              const SizedBox(height: AfSpacing.s16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () =>
+                                          _playAll(context, ref, albums),
+                                      icon: const Icon(
+                                        LucideIcons.play,
+                                        color: AfColors.textOnPrimary,
+                                        size: AfIconSizes.sm,
+                                      ),
+                                      label: const Text('Play All'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: AfSpacing.s12),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () =>
+                                          _shuffleAll(context, ref, albums),
+                                      style: AfTypography.outlinedAction,
+                                      icon: const Icon(
+                                        LucideIcons.shuffle,
+                                        size: AfIconSizes.sm,
+                                      ),
+                                      label: const Text('Shuffle'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),

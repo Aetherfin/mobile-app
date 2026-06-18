@@ -138,21 +138,11 @@ class _AlbumActionRowState extends ConsumerState<AlbumActionRow> {
               color: _isFavorite ? AfColors.semanticError : null,
               onTap: _toggleFavorite,
             ),
-            const SizedBox(width: AfSpacing.s8),
-            IconCircle(
-              icon: LucideIcons.download,
-              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Offline downloads coming soon'),
-                  duration: AfDurations.snackBarInfo,
-                ),
-              ),
-            ),
-            const SizedBox(width: AfSpacing.s8),
+            const SizedBox(width: AfSpacing.s12),
             IconCircle(icon: LucideIcons.ellipsis, onTap: widget.onMore),
           ],
         ),
-        const SizedBox(height: AfSpacing.s12),
+        const SizedBox(height: AfSpacing.s16),
         // ── Play All + Shuffle ────────────────────────────────────────
         Row(
           children: [
@@ -175,7 +165,10 @@ class _AlbumActionRowState extends ConsumerState<AlbumActionRow> {
                   ref.read(playActionsProvider).playQueue(shuffled);
                 },
                 style: AfTypography.outlinedAction,
-                icon: const Icon(LucideIcons.shuffle, size: 20),
+                icon: const Icon(
+                  LucideIcons.shuffle,
+                  size: AfIconSizes.sm,
+                ),
                 label: const Text('Shuffle'),
               ),
             ),
