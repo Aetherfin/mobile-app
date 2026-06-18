@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../design_tokens/tokens.dart';
@@ -51,48 +53,53 @@ class CollapseHeader extends SliverPersistentHeaderDelegate {
     final t = (shrinkOffset / _collapseThreshold).clamp(0.0, 1.0);
     final bgColor = Color.lerp(Colors.transparent, AfColors.surfaceBase, t)!;
 
-    return Container(
-      color: bgColor,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            AfSpacing.s16,
-            AfSpacing.s8 * (1 - t),
-            AfSpacing.s16,
-            AfSpacing.s8,
-          ),
-          child: Row(
-            children: [
-              if (t < 1.0)
-                Expanded(
-                  child: Transform.scale(
-                    scale: 1.0 - t * 0.15,
-                    alignment: Alignment.centerLeft,
-                    child: ShaderMask(
-                      shaderCallback: (bounds) => LinearGradient(
-                        colors: [spectral.primary, spectral.secondary],
-                      ).createShader(bounds),
-                      child: Text(
-                        title,
-                        style: AfTypography.display.copyWith(
-                          color: AfColors.textOnPrimary,
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          color: bgColor,
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                AfSpacing.s16,
+                AfSpacing.s8 * (1 - t),
+                AfSpacing.s16,
+                AfSpacing.s8,
+              ),
+              child: Row(
+                children: [
+                  if (t < 1.0)
+                    Expanded(
+                      child: Transform.scale(
+                        scale: 1.0 - t * 0.15,
+                        alignment: Alignment.centerLeft,
+                        child: ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: [spectral.primary, spectral.secondary],
+                          ).createShader(bounds),
+                          child: Text(
+                            title,
+                            style: AfTypography.display.copyWith(
+                              color: AfColors.textOnPrimary,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              if (t >= 1.0)
-                Expanded(
-                  child: Text(
-                    title,
-                    style: AfTypography.titleMedium.copyWith(
-                      color: AfColors.textPrimary,
+                  if (t >= 1.0)
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: AfTypography.titleMedium.copyWith(
+                          color: AfColors.textPrimary,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ?action,
-            ],
+                  ?action,
+                ],
+              ),
+            ),
           ),
         ),
       ),
