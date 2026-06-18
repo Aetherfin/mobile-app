@@ -173,7 +173,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                       ),
                       SliverToBoxAdapter(
                         child: SizedBox(
-                          height: 120,
+                          height: 100,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(
@@ -259,7 +259,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                               const SliverGridDelegateWithMaxCrossAxisExtent(
                                 maxCrossAxisExtent:
                                     AfLayout.albumGridMaxTileExtent,
-                                mainAxisExtent: 220,
+                                mainAxisExtent: 200,
                                 crossAxisSpacing: AfSpacing.s16,
                                 mainAxisSpacing: AfSpacing.s16,
                               ),

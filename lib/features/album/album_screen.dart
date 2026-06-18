@@ -86,7 +86,8 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen> {
             final album = detail.album;
             final tracks = detail.tracks;
             final width = MediaQuery.sizeOf(context).width;
-            final heroHeight = width; // 1:1
+            // Cap hero height at 400dp — prevents massive hero on tablets.
+            final heroHeight = width.clamp(0.0, 400.0);
 
             return Stack(
               children: [

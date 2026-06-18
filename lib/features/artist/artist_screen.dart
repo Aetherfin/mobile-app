@@ -107,7 +107,8 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                       ? () => context.push('/artist/${widget.artistId}/songs')
                       : null);
             final width = MediaQuery.sizeOf(context).width;
-            final heroHeight = width; // 1:1
+            // Cap hero height at 400dp — prevents massive hero on tablets.
+            final heroHeight = width.clamp(0.0, 400.0);
 
             // Use artist image or first album artwork as hero
             final heroUrl =
@@ -357,7 +358,7 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                       ),
                                       const SizedBox(height: AfSpacing.s8),
                                       SizedBox(
-                                        height: 220,
+                                        height: 200,
                                         child: ListView.separated(
                                           scrollDirection: Axis.horizontal,
                                           padding: const EdgeInsets.symmetric(
