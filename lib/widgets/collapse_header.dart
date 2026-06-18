@@ -51,49 +51,45 @@ class CollapseHeader extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     final t = (shrinkOffset / _collapseThreshold).clamp(0.0, 1.0);
+    final fontSize =
+        AfTypography.display.fontSize! -
+        t *
+            (AfTypography.display.fontSize! -
+                AfTypography.titleMedium.fontSize!);
+
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              AfSpacing.s16,
-              AfSpacing.s8 * (1 - t),
-              AfSpacing.s16,
-              AfSpacing.s4 + AfSpacing.s4 * (1 - t),
-            ),
-            child: Row(
-              children: [
-                if (t < 1.0)
+        child: Container(
+          color: spectral.primary.withValues(alpha: 0.08 + t * 0.12),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AfSpacing.s16,
+                AfSpacing.s4,
+                AfSpacing.s16,
+                AfSpacing.s4,
+              ),
+              child: Row(
+                children: [
                   Expanded(
-                    child: Transform.scale(
-                      scale: 1.0 - t * 0.15,
-                      alignment: Alignment.centerLeft,
-                      child: ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
-                          colors: [spectral.primary, spectral.secondary],
-                        ).createShader(bounds),
-                        child: Text(
-                          title,
-                          style: AfTypography.display.copyWith(
-                            color: AfColors.textOnPrimary,
-                          ),
+                    child: ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: [spectral.primary, spectral.secondary],
+                      ).createShader(bounds),
+                      child: Text(
+                        title,
+                        style: AfTypography.display.copyWith(
+                          fontSize: fontSize,
+                          color: AfColors.textOnPrimary,
                         ),
                       ),
                     ),
                   ),
-                if (t >= 1.0)
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: AfTypography.titleMedium.copyWith(
-                        color: AfColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                ?action,
-              ],
+                  ?action,
+                ],
+              ),
             ),
           ),
         ),
