@@ -35,11 +35,11 @@ class _MediaStopIntent extends Intent {
 ///
 /// Design:
 ///   - Full-bleed gradient background: deep dark (#0A0A0A → #111111)
-///   - Tab content with AnimatedSwitcher cross-fade
+///   - Tab content with directional slide + fade (left/right based on nav direction)
 ///   - Sleep timer watcher (zero-sized, invisible)
 ///   - Bottom nav bar
 ///   - PopScope for Android back handling (non-Home → Home; Home → exit)
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.shell});
   final StatefulNavigationShell shell;
 
@@ -60,24 +60,18 @@ class AppShell extends ConsumerWidget {
   // Maps YT Music nav index → shell branch index.
   static const _ytToBranch = [0, 2, 3];
 
-  /// Android system back / gesture handler.
-  ///
-  /// Default `go_router` behaviour at a shell root is to pop the
-  /// underlying `Navigator`, which has no entries — so the system back
-  /// closes the app immediately. That's jarring when the user is two tabs
-  /// deep and just wants to return to Home.
-  ///
-  /// Behaviour we want:
-  ///   • Any non-Home tab → switch to Home (don't exit).
-  ///   • Home tab → show "press back again to exit" confirmation.
-  ///
-  /// Implemented via `PopScope(canPop:false)` + `onPopInvokedWithResult`
-  /// instead of `WillPopScope` (deprecated in Flutter 3.41).
+  @override
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  int _previousIndex = 0;
+
   static DateTime? _lastBackPress;
 
   Future<bool> _onBackPressed(BuildContext context) async {
-    if (shell.currentIndex != 0) {
-      shell.goBranch(0);
+    if (widget.shell.currentIndex != 0) {
+      widget.shell.goBranch(0);
       return false;
     }
     final now = DateTime.now();
@@ -101,7 +95,7 @@ class AppShell extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final mode = ref.watch(appModeProvider);
     final isYt = mode == AppMode.youtubeMusic;
 
@@ -113,6 +107,15 @@ class AppShell extends ConsumerWidget {
     );
 
     final svc = ref.read(playerServiceProvider);
+
+    // Track tab index for directional animation.
+    final currentIndex = widget.shell.currentIndex;
+    if (currentIndex != _previousIndex) {
+      // Update after build to avoid setState during build.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _previousIndex = currentIndex);
+      });
+    }
 
     return Shortcuts(
       shortcuts: const <ShortcutActivator, Intent>{
@@ -167,10 +170,6 @@ class AppShell extends ConsumerWidget {
             }
             final shouldExit = await _onBackPressed(context);
             if (shouldExit) {
-              // We deliberately *do not* call `Navigator.of(context).pop()`
-              // here — that would pop the (empty) shell navigator and crash.
-              // `SystemNavigator.pop()` returns the user to the launcher,
-              // matching the historical Android "back from root" behaviour.
               await SystemNavigator.pop();
             }
           },
@@ -196,6 +195,10 @@ class AppShell extends ConsumerWidget {
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final miniBottom = AfSpacing.bottomNavHeight + bottomInset + AfSpacing.s4;
 
+    // Directional slide: new tab slides in from the direction of navigation.
+    final newIndex = widget.shell.currentIndex;
+    final slideDirection = newIndex >= _previousIndex ? 1.0 : -1.0;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBody: true,
@@ -212,8 +215,7 @@ class AppShell extends ConsumerWidget {
             ),
           ),
 
-          // Tab content — transparent so gradient shows through.
-          // AnimatedSwitcher cross-fades between tab changes.
+          // Tab content — directional slide + fade between tab changes.
           // ExcludeFocus when a blur sheet is open to prevent
           // keyboard focus escaping behind the sheet.
           ValueListenableBuilder<int>(
@@ -223,12 +225,23 @@ class AppShell extends ConsumerWidget {
             },
             child: RepaintBoundary(
               child: AnimatedSwitcher(
-                duration: AfDurations.quick,
-                switchInCurve: AfCurves.easeOut,
-                switchOutCurve: AfCurves.easeIn,
+                duration: AfDurations.standard,
+                switchInCurve: AfCurves.easeStandard,
+                switchOutCurve: AfCurves.easeOut,
+                transitionBuilder: (child, animation) {
+                  final isNew = child.key == ValueKey('shell-tab-$newIndex');
+                  final direction = isNew ? slideDirection : -slideDirection;
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: Offset(0.15 * direction, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
                 child: KeyedSubtree(
-                  key: ValueKey('shell-tab-${shell.currentIndex}'),
-                  child: shell,
+                  key: ValueKey('shell-tab-$newIndex'),
+                  child: widget.shell,
                 ),
               ),
             ),
@@ -258,16 +271,16 @@ class AppShell extends ConsumerWidget {
       ),
       bottomNavigationBar: AfBottomNav(
         currentIndex: isYt
-            ? _ytToBranch.indexOf(shell.currentIndex)
-            : shell.currentIndex,
+            ? AppShell._ytToBranch.indexOf(widget.shell.currentIndex)
+            : widget.shell.currentIndex,
         onSelect: (i) {
           if (isYt) {
-            shell.goBranch(_ytToBranch[i]);
+            widget.shell.goBranch(AppShell._ytToBranch[i]);
           } else {
-            shell.goBranch(i);
+            widget.shell.goBranch(i);
           }
         },
-        items: isYt ? _ytItems : _allItems,
+        items: isYt ? AppShell._ytItems : AppShell._allItems,
         accentColor: energy,
       ),
     );
