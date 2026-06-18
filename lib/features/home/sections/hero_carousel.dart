@@ -34,7 +34,7 @@ class _HeroAlbumCarouselState extends ConsumerState<HeroAlbumCarousel> {
   ) {
     final distance = (index - currentPage).abs();
     final parallaxOffset = (index - currentPage) * 30;
-    final scale = 1.0 - (distance.clamp(0.0, 1.0) * 0.04);
+    final scale = 1.0 + ((1.0 - distance.clamp(0.0, 1.0)) * 0.04);
     final opacity = 1.0 - (distance.clamp(0.0, 1.0) * 0.15);
     final isCentered = distance < 0.3;
 
