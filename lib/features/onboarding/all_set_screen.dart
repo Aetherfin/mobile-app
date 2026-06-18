@@ -31,8 +31,18 @@ class _AllSetScreenState extends ConsumerState<AllSetScreen>
   @override
   void initState() {
     super.initState();
-    _checkController.forward();
-    _stagger.forward();
+    final reducedMotion = WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations;
+    if (!reducedMotion) {
+      _checkController.forward();
+      _stagger.forward();
+    } else {
+      _checkController.value = 1.0;
+      _stagger.value = 1.0;
+    }
   }
 
   @override

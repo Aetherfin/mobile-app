@@ -91,7 +91,7 @@ class _LibraryScopeScreenState extends ConsumerState<LibraryScopeScreen> {
                       ),
                     ),
                     Text(
-                      'Pick which libraries Aetherfin should index.',
+                      'Choose which music libraries to load.',
                       style: AfTypography.bodyMedium.copyWith(
                         color: AfColors.textSecondary,
                       ),
@@ -155,7 +155,7 @@ class _LibraryScopeScreenState extends ConsumerState<LibraryScopeScreen> {
                             .set(_selected.toSet());
                         context.push('/onboarding/done');
                       },
-                      child: const Text('Continue'),
+                      child: const Text('Load music'),
                     ),
                     const SizedBox(height: AfSpacing.s24),
                   ],

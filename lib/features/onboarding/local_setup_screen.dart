@@ -98,11 +98,12 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
         // internal navigation and produces a blank screen.
         ref.read(localOnboardingCompletedProvider.notifier).set(true);
       }
-    } on Exception catch (e) {
+    } on Exception {
       if (mounted) {
         setState(() {
           _scanning = false;
-          _error = 'Scan failed: $e';
+          _error =
+              'Scan failed. Check that the folder exists and contains audio files (MP3, FLAC, AAC, OGG, or M4A).';
         });
       }
     }

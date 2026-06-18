@@ -64,15 +64,6 @@ class WelcomeScreen extends ConsumerWidget {
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: AfSpacing.s16),
-                Center(
-                  child: Text(
-                    'Step 1',
-                    style: AfTypography.caption.copyWith(
-                      color: AfColors.textTertiary,
-                    ),
-                  ),
-                ),
                 const Spacer(flex: 2),
 
                 // Logo + branding
@@ -150,7 +141,11 @@ class WelcomeScreen extends ConsumerWidget {
                         subtitle: 'Music on your device',
                         onTap: () async {
                           ref.read(appModeProvider.notifier).set(AppMode.local);
-                          await AppModeStore.save(AppMode.local);
+                          try {
+                            await AppModeStore.save(AppMode.local);
+                          } catch (e) {
+                            afLog('error', 'Failed to save app mode', error: e);
+                          }
                           if (context.mounted) {
                             await context.push('/onboarding/local-setup');
                             if (!context.mounted) return;
@@ -161,12 +156,16 @@ class WelcomeScreen extends ConsumerWidget {
                       _ModeCard(
                         icon: LucideIcons.play,
                         title: 'YouTube Music',
-                        subtitle: 'Stream from YouTube catalog',
+                        subtitle: 'Sign in with your Google account',
                         onTap: () async {
                           ref
                               .read(appModeProvider.notifier)
                               .set(AppMode.youtubeMusic);
-                          await AppModeStore.save(AppMode.youtubeMusic);
+                          try {
+                            await AppModeStore.save(AppMode.youtubeMusic);
+                          } catch (e) {
+                            afLog('error', 'Failed to save app mode', error: e);
+                          }
                           if (context.mounted) {
                             context.go('/home');
                           }
@@ -182,7 +181,11 @@ class WelcomeScreen extends ConsumerWidget {
                           ref
                               .read(appModeProvider.notifier)
                               .set(AppMode.server);
-                          await AppModeStore.save(AppMode.server);
+                          try {
+                            await AppModeStore.save(AppMode.server);
+                          } catch (e) {
+                            afLog('error', 'Failed to save app mode', error: e);
+                          }
                           if (context.mounted) {
                             await context.push('/onboarding/discover');
                             if (!context.mounted) return;

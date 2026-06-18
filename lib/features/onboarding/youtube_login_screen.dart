@@ -9,7 +9,6 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../core/youtube/youtube_auth.dart';
 import '../../design_tokens/tokens.dart';
-import '../../utils/display_error.dart';
 import '../../utils/log.dart';
 import '../../utils/navigation.dart';
 import '../../widgets/af_loading_indicator.dart';
@@ -207,7 +206,8 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
       );
       if (mounted) {
         setState(() {
-          _error = 'Login failed: ${displayError(e)}';
+          _error =
+              'Sign-in failed. Please try again. If the problem persists, try signing in through your browser first, then return to Aetherfin.';
           _isCompleting = false;
         });
       }

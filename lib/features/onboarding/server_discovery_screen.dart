@@ -162,7 +162,9 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
       afLog('error', 'server discovery failed', error: e, stackTrace: stack);
       if (!mounted) return;
       setState(() {
-        _manualError = 'Couldn\'t reach ${server.baseUrl}. $e';
+        _manualError =
+            'Couldn\'t reach ${server.baseUrl}. '
+            'Make sure the server is running and accessible from your device.';
         _busy = false;
       });
     }
@@ -285,7 +287,7 @@ class _ServerDiscoveryScreenState extends ConsumerState<ServerDiscoveryScreen> {
                 onPressed: _busy ? null : _useManual,
                 child: _busy
                     ? const AfLoadingIndicator(size: 18, strokeWidth: 2.5)
-                    : const Text('Continue'),
+                    : const Text('Connect'),
               ),
               const SizedBox(height: AfSpacing.s24),
             ],

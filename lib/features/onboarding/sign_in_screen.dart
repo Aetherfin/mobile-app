@@ -177,7 +177,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       // (`s`) as query params, and the message ends up on screen.
       final url = redactSensitiveQueryParams(e.requestOptions.uri);
       if (status == 401 || status == 403) {
-        return 'Wrong username or password (HTTP $status from $url).';
+        if (kDebugMode) {
+          return 'Wrong username or password (HTTP $status from $url).';
+        }
+        return 'Wrong username or password. Check your credentials and try again.';
       }
       if (status != null) {
         // Trim body to first 240 chars so a giant HTML 500 page doesn't
@@ -193,17 +196,26 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           return 'HTTP $status from $url\n'
               '${body.isNotEmpty ? body : "(no body)"}';
         }
-        return 'HTTP $status from $url. Check Jellyfin server logs.';
+        return 'Server returned an error (HTTP $status). Try again in a moment, or check that the server is running.';
       }
       switch (e.type) {
         case DioExceptionType.connectionTimeout:
         case DioExceptionType.sendTimeout:
         case DioExceptionType.receiveTimeout:
-          return 'Connection timed out reaching ${widget.server.baseUrl}.';
+          if (kDebugMode) {
+            return 'Connection timed out reaching ${widget.server.baseUrl}.';
+          }
+          return 'Connection timed out. Check that the server is running and reachable from your network.';
         case DioExceptionType.connectionError:
-          return 'Could not reach ${widget.server.baseUrl}. ${e.message ?? ""}';
+          if (kDebugMode) {
+            return 'Could not reach ${widget.server.baseUrl}. ${e.message ?? ""}';
+          }
+          return 'Could not reach the server. Check your network connection and server address.';
         case DioExceptionType.badCertificate:
-          return 'TLS certificate rejected for ${widget.server.baseUrl}.';
+          if (kDebugMode) {
+            return 'TLS certificate rejected for ${widget.server.baseUrl}.';
+          }
+          return 'TLS certificate error. If using a self-signed certificate, try connecting via HTTP instead of HTTPS.';
         default:
           return '${e.type.name}: ${e.message ?? e.error ?? "unknown"}';
       }
