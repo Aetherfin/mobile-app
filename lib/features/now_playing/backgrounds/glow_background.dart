@@ -48,9 +48,9 @@ class _GlowBackgroundState extends State<GlowBackground>
   @override
   Widget build(BuildContext context) {
     final oklch = srgbToOklch(widget.energy);
-    // ponytail: brighter spectral glow — L 0.55/0.35, chroma ×1.0/×0.65, alpha ×1.6
-    final glowColor = OklchColor(0.55, oklch.c * 1.0, oklch.h).toColor();
-    final deepGlow = OklchColor(0.35, oklch.c * 0.65, oklch.h).toColor();
+    // brighter + wider glow — L 0.60/0.42, radius 1.2
+    final glowColor = OklchColor(0.60, oklch.c * 1.0, oklch.h).toColor();
+    final deepGlow = OklchColor(0.42, oklch.c * 0.65, oklch.h).toColor();
 
     return AnimatedBuilder(
       animation: _glowAnimation,
@@ -62,13 +62,13 @@ class _GlowBackgroundState extends State<GlowBackground>
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment.center,
-                radius: 0.8,
+                radius: 1.2,
                 colors: [
-                  glowColor.withValues(alpha: 0.55 * opacity),
-                  deepGlow.withValues(alpha: 0.30 * opacity),
+                  glowColor.withValues(alpha: 0.65 * opacity),
+                  deepGlow.withValues(alpha: 0.40 * opacity),
                   AfColors.surfaceCanvas.withValues(alpha: 0.0),
                 ],
-                stops: const [0.0, 0.4, 1.0],
+                stops: const [0.0, 0.35, 1.0],
               ),
             ),
             child: child,
