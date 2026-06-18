@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../design_tokens/tokens.dart';
 
+/// Thin indeterminate progress indicator matching Aetherfin's accent color.
 class AfLoadingIndicator extends StatelessWidget {
   const AfLoadingIndicator({
     this.size = 20,

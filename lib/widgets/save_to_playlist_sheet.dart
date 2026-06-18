@@ -264,11 +264,14 @@ class _SaveToPlaylistSheetState extends ConsumerState<SaveToPlaylistSheet> {
             )
           else
             ListTile(
-              leading: const Icon(LucideIcons.plus, color: AfColors.indigo300),
+              leading: const Icon(
+                LucideIcons.plus,
+                color: AfColors.accentPrimary,
+              ),
               title: Text(
                 'New playlist',
                 style: AfTypography.bodyMedium.copyWith(
-                  color: AfColors.indigo300,
+                  color: AfColors.accentPrimary,
                 ),
               ),
               onTap: () => setState(() => _showNewPlaylist = true),
@@ -298,7 +301,7 @@ class _SaveToPlaylistSheetState extends ConsumerState<SaveToPlaylistSheet> {
                         key: ValueKey(p.id),
                         leading: const Icon(
                           LucideIcons.listMusic,
-                          color: AfColors.indigo300,
+                          color: AfColors.accentPrimary,
                         ),
                         title: Text(p.name, style: AfTypography.bodyMedium),
                         subtitle: Text(

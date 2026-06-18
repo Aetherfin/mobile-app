@@ -111,8 +111,7 @@ class _CertAcceptContent extends StatelessWidget {
               const SizedBox(height: AfSpacing.s2),
               SelectableText(
                 _formatFingerprint(cert),
-                style: AfTypography.bodySmall.copyWith(
-                  fontFamily: 'monospace',
+                style: AfTypography.monoSmall.copyWith(
                   color: AfColors.textSecondary,
                 ),
               ),
@@ -141,8 +140,7 @@ class _CertAcceptContent extends StatelessWidget {
                 const SizedBox(height: AfSpacing.s2),
                 SelectableText(
                   previousFingerprint!,
-                  style: AfTypography.bodySmall.copyWith(
-                    fontFamily: 'monospace',
+                  style: AfTypography.monoSmall.copyWith(
                     color: AfColors.textSecondary,
                   ),
                 ),

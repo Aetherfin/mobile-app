@@ -46,14 +46,19 @@ class EmptyState extends StatelessWidget {
                 ],
               ),
             ),
-            child: Icon(icon, size: 48, color: mutedColor),
+            child: ExcludeSemantics(
+              child: Icon(icon, size: 48, color: mutedColor),
+            ),
           ),
           const SizedBox(height: AfSpacing.s16),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: AfTypography.titleMedium.copyWith(
-              color: AfColors.textPrimary,
+          Semantics(
+            header: true,
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: AfTypography.titleMedium.copyWith(
+                color: AfColors.textPrimary,
+              ),
             ),
           ),
           if (body != null) ...[

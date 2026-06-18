@@ -81,7 +81,7 @@ class Artwork extends ConsumerWidget {
         color: AfColors.surfaceBase,
       ),
       child: Center(
-        child: Icon(LucideIcons.music, color: mutedColor, size: 28),
+        child: Icon(LucideIcons.music, color: mutedColor, size: AfIconSizes.lg),
       ),
     );
 

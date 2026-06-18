@@ -238,8 +238,8 @@ class _BlurBottomSheetOverlayState<T> extends State<_BlurBottomSheetOverlay<T>>
                                   Semantics(
                                     label: 'Drag to dismiss',
                                     child: Container(
-                                      width: 40,
-                                      height: 4,
+                                      width: AfSpacing.s40,
+                                      height: AfSpacing.s4,
                                       decoration: BoxDecoration(
                                         color: AfColors.textTertiary.withValues(
                                           alpha: 0.4,

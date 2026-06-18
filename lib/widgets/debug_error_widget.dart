@@ -79,7 +79,7 @@ class DebugErrorWidget extends StatelessWidget {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: AfColors.semanticError.withAlpha(26),
+                        color: AfColors.semanticError.withValues(alpha: 0.1),
                         borderRadius: AfRadii.borderSm,
                       ),
                       padding: const EdgeInsets.all(AfSpacing.s8),
@@ -130,7 +130,9 @@ class DebugErrorWidget extends StatelessWidget {
                             if (fileLine != null && isDebug) ...[
                               Container(
                                 decoration: BoxDecoration(
-                                  color: AfColors.semanticError.withAlpha(20),
+                                  color: AfColors.semanticError.withValues(
+                                    alpha: 0.08,
+                                  ),
                                   borderRadius: AfRadii.borderSm,
                                 ),
                                 padding: const EdgeInsets.symmetric(

@@ -112,7 +112,7 @@ class _AfBottomNavState extends ConsumerState<AfBottomNav>
           child: AnimatedContainer(
             duration: AfDurations.quick,
             curve: AfCurves.easeStandard,
-            height: 48,
+            height: AfSpacing.minHitTarget,
             padding: EdgeInsets.symmetric(
               horizontal: active ? AfSpacing.s16 : AfSpacing.s12,
             ),
@@ -130,7 +130,7 @@ class _AfBottomNavState extends ConsumerState<AfBottomNav>
                   child: Icon(
                     item.icon,
                     key: ValueKey(active),
-                    size: 24,
+                    size: AfIconSizes.md,
                     color: active ? accent : AfColors.textTertiary,
                   ),
                 ),

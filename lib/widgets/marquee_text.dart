@@ -89,6 +89,16 @@ class MarqueeTextState extends State<MarqueeText>
       return Text(widget.text, maxLines: 1, style: widget.style);
     }
 
+    // Respect reduced motion — fall back to truncated static text.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return Text(
+        widget.text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: widget.style,
+      );
+    }
+
     // Animation path — no LayoutBuilder, no parent rebuild overhead.
     return RepaintBoundary(
       child: ClipRect(

@@ -62,8 +62,11 @@ class _MiniPlayerContent extends ConsumerStatefulWidget {
 class _MiniPlayerContentState extends ConsumerState<_MiniPlayerContent>
     with SingleTickerProviderStateMixin {
   late final AnimationController _snapCtrl;
-  double _dragOffset = 0;
-  double _dragOffsetY = 0;
+
+  // ponytail: single ValueNotifier<Offset> replaces two doubles + setState
+  // to isolate repaints to just Transform.translate (~60fps snap tick).
+  final ValueNotifier<Offset> _dragOffsetNotifier = ValueNotifier(Offset.zero);
+
   double _snapFrom = 0;
   double _snapFromY = 0;
 
@@ -82,6 +85,7 @@ class _MiniPlayerContentState extends ConsumerState<_MiniPlayerContent>
 
   @override
   void dispose() {
+    _dragOffsetNotifier.dispose();
     _snapCtrl
       ..removeListener(_onSnapTick)
       ..dispose();
@@ -89,21 +93,20 @@ class _MiniPlayerContentState extends ConsumerState<_MiniPlayerContent>
   }
 
   void _onSnapTick() {
-    setState(() {
-      _dragOffset = _snapFrom * (1 - _snapCtrl.value);
-      _dragOffsetY = _snapFromY * (1 - _snapCtrl.value);
-    });
+    _dragOffsetNotifier.value = Offset(
+      _snapFrom * (1 - _snapCtrl.value),
+      _snapFromY * (1 - _snapCtrl.value),
+    );
   }
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
     if (_snapCtrl.isAnimating) return;
-    setState(() {
-      _dragOffset += details.delta.dx;
-    });
+    final o = _dragOffsetNotifier.value;
+    _dragOffsetNotifier.value = Offset(o.dx + details.delta.dx, o.dy);
   }
 
   void _onHorizontalDragEnd(DragEndDetails details) {
-    final effective = _logSensitivity(_dragOffset);
+    final effective = _logSensitivity(_dragOffsetNotifier.value.dx);
     if (effective.abs() > _skipThreshold) {
       HapticFeedback.lightImpact();
       final svc = ref.read(playerServiceProvider);
@@ -113,20 +116,20 @@ class _MiniPlayerContentState extends ConsumerState<_MiniPlayerContent>
         svc.skipToPrevious();
       }
     }
-    _snapFrom = _dragOffset;
+    _snapFrom = _dragOffsetNotifier.value.dx;
     _snapCtrl.forward(from: 0);
   }
 
   void _onVerticalDragUpdate(DragUpdateDetails details) {
     if (_snapCtrl.isAnimating) return;
-    setState(() {
-      _dragOffsetY += details.delta.dy;
-    });
+    final o = _dragOffsetNotifier.value;
+    _dragOffsetNotifier.value = Offset(o.dx, o.dy + details.delta.dy);
   }
 
   void _onVerticalDragEnd(DragEndDetails details) {
-    if (_dragOffsetY.abs() > _dismissThreshold) {
-      if (_dragOffsetY < 0) {
+    final dy = _dragOffsetNotifier.value.dy;
+    if (dy.abs() > _dismissThreshold) {
+      if (dy < 0) {
         // Swipe up → open now playing
         HapticFeedback.lightImpact();
         context.push('/now-playing');
@@ -135,7 +138,7 @@ class _MiniPlayerContentState extends ConsumerState<_MiniPlayerContent>
         ref.read(playerServiceProvider).stopAndClear();
       }
     }
-    _snapFromY = _dragOffsetY;
+    _snapFromY = dy;
     _snapCtrl.forward(from: 0);
   }
 
@@ -151,65 +154,77 @@ class _MiniPlayerContentState extends ConsumerState<_MiniPlayerContent>
       ),
     );
 
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onHorizontalDragStart: (_) {},
-      onHorizontalDragUpdate: _onHorizontalDragUpdate,
-      onHorizontalDragEnd: _onHorizontalDragEnd,
-      onVerticalDragUpdate: _onVerticalDragUpdate,
-      onVerticalDragEnd: _onVerticalDragEnd,
-      child: PressScale(
-        onTap: () => context.push('/now-playing'),
-        child: Transform.translate(
-          offset: Offset(_dragOffset, _dragOffsetY),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s8),
-            child: Container(
-              height: MiniNowPlaying.height,
-              decoration: BoxDecoration(
-                color: spectral.shadow,
-                borderRadius: AfRadii.borderXl,
-                border: Border.all(
-                  color: spectral.primary.withValues(alpha: 0.2),
-                  width: 0.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: AfSpacing.s4),
-                  _ArtworkRing(track: widget.track, accent: spectral.primary),
-                  const SizedBox(width: AfSpacing.s8),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.track.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AfTypography.bodyMedium.copyWith(
-                            color: AfColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: AfSpacing.s2),
-                        Text(
-                          widget.track.artistName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AfTypography.bodySmall.copyWith(
-                            color: AfColors.textSecondary,
-                          ),
-                        ),
-                      ],
+    return Semantics(
+      button: true,
+      label: 'Open now playing',
+      onIncrease: () => ref.read(playerServiceProvider).skipToNext(),
+      onDecrease: () => ref.read(playerServiceProvider).skipToPrevious(),
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragStart: (_) {},
+        onHorizontalDragUpdate: _onHorizontalDragUpdate,
+        onHorizontalDragEnd: _onHorizontalDragEnd,
+        onVerticalDragUpdate: _onVerticalDragUpdate,
+        onVerticalDragEnd: _onVerticalDragEnd,
+        child: PressScale(
+          onTap: () => context.push('/now-playing'),
+          child: ValueListenableBuilder<Offset>(
+            valueListenable: _dragOffsetNotifier,
+            builder: (context, offset, _) => Transform.translate(
+              offset: offset,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s8),
+                child: Container(
+                  height: MiniNowPlaying.height,
+                  decoration: BoxDecoration(
+                    color: spectral.shadow,
+                    borderRadius: AfRadii.borderXl,
+                    border: Border.all(
+                      color: spectral.primary.withValues(alpha: 0.2),
+                      width: 0.5,
                     ),
                   ),
-                  _MiniTransport(
-                    isPlaying: isPlaying,
-                    isBuffering: isBuffering,
-                    accent: spectral.primary,
+                  child: Row(
+                    children: [
+                      const SizedBox(width: AfSpacing.s4),
+                      _ArtworkRing(
+                        track: widget.track,
+                        accent: spectral.primary,
+                      ),
+                      const SizedBox(width: AfSpacing.s8),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.track.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AfTypography.bodyMedium.copyWith(
+                                color: AfColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: AfSpacing.s2),
+                            Text(
+                              widget.track.artistName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AfTypography.bodySmall.copyWith(
+                                color: AfColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _MiniTransport(
+                        isPlaying: isPlaying,
+                        isBuffering: isBuffering,
+                        accent: spectral.primary,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

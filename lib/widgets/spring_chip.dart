@@ -139,7 +139,7 @@ class _SpringChipState extends State<SpringChip>
           child: AnimatedContainer(
             duration: AfDurations.quick,
             curve: AfCurves.easeStandard,
-            height: 48,
+            height: AfSpacing.minHitTarget,
             padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
             decoration: BoxDecoration(
               color: widget.isSelected

@@ -311,7 +311,7 @@ class TrackRow extends ConsumerWidget {
               ],
               if (showHeart) ...[
                 const SizedBox(width: AfSpacing.s4),
-                FavoriteHeartButton(track: track),
+                ExcludeSemantics(child: FavoriteHeartButton(track: track)),
               ],
             ],
           ),

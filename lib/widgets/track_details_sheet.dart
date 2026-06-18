@@ -30,6 +30,7 @@ void showTrackDetailsSheet(BuildContext context, WidgetRef ref, AfTrack track) {
   );
 }
 
+/// Track details bottom sheet body showing metadata, quality, and file info.
 class TrackDetailsBody extends ConsumerWidget {
   const TrackDetailsBody({super.key, required this.track});
   final AfTrack track;
@@ -183,7 +184,7 @@ class TrackDetailsBody extends ConsumerWidget {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AfColors.indigo300,
+                  color: AfColors.accentPrimary,
                 ),
               ),
             ),
@@ -245,7 +246,7 @@ class _SectionTitle extends StatelessWidget {
       child: Text(
         label,
         style: AfTypography.caption.copyWith(
-          color: AfColors.indigo300,
+          color: AfColors.accentPrimary,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.8,
         ),

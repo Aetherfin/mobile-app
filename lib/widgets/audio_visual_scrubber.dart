@@ -191,6 +191,7 @@ class _AudioVisualScrubberState extends ConsumerState<AudioVisualScrubber>
       decreasedValue: decreasedStr,
       onIncrease: () => seekBy(const Duration(seconds: 10)),
       onDecrease: () => seekBy(const Duration(seconds: -10)),
+      slider: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onHorizontalDragStart: (d) {

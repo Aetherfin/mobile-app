@@ -66,60 +66,71 @@ class _BlurDialogOverlay<T> extends StatelessWidget {
         final t = animation.value;
         final blurSigma = lerpDouble(1, 24, t)!;
         final opacity = AfCurves.easeOut.transform(t).clamp(0.001, 0.999);
-        final scale = lerpDouble(0.92, 1.0, AfCurves.easeOut.transform(t))!;
+        final scale = lerpDouble(
+          0.92,
+          1.0,
+          AfCurves.easeOut.transform(t),
+        )!; // ponytail: 0.92 differs from PressScale 0.96 — intentional animation feel, do not unify
 
         return Material(
           type: MaterialType.transparency,
-          child: GestureDetector(
+          child: Semantics(
+            label: 'Dismiss dialog',
+            button: true,
             onTap: barrierDismissible
                 ? () => Navigator.of(context).pop()
                 : null,
-            behavior: HitTestBehavior.opaque,
-            child: Stack(
-              children: [
-                // ── Blur layer ──
-                Positioned.fill(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: blurSigma,
-                      sigmaY: blurSigma,
-                    ),
-                    child: Container(
-                      color: AfColors.surfaceScrim.withValues(
-                        alpha: opacity * 0.25,
+            child: GestureDetector(
+              onTap: barrierDismissible
+                  ? () => Navigator.of(context).pop()
+                  : null,
+              behavior: HitTestBehavior.opaque,
+              child: Stack(
+                children: [
+                  // ── Blur layer ──
+                  Positioned.fill(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: blurSigma,
+                        sigmaY: blurSigma,
+                      ),
+                      child: Container(
+                        color: AfColors.surfaceScrim.withValues(
+                          alpha: opacity * 0.25,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                // ── Dialog content ──
-                Center(
-                  child: Transform.scale(
-                    scale: scale,
-                    child: Opacity(
-                      opacity: opacity,
-                      child: GestureDetector(
-                        onTap: () {},
-                        child: FocusScope(
-                          autofocus: true,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AfSpacing.s24,
-                            ),
-                            child: Container(
-                              padding: const EdgeInsets.all(AfSpacing.s16),
-                              decoration: BoxDecoration(
-                                color: AfColors.surfaceRaised.withValues(
-                                  alpha: 0.85,
-                                ),
-                                borderRadius: AfRadii.borderLg,
-                                border: Border.all(
-                                  color: AfColors.glassBorderEmphasis,
-                                  width: 0.5,
-                                ),
+                  // ── Dialog content ──
+                  Center(
+                    child: Transform.scale(
+                      scale: scale,
+                      child: Opacity(
+                        opacity: opacity,
+                        child: GestureDetector(
+                          onTap: () {},
+                          child: FocusScope(
+                            autofocus: true,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AfSpacing.s24,
                               ),
-                              child: ListTileTheme(
-                                tileColor: Colors.transparent,
-                                child: child,
+                              child: Container(
+                                padding: const EdgeInsets.all(AfSpacing.s16),
+                                decoration: BoxDecoration(
+                                  color: AfColors.surfaceRaised.withValues(
+                                    alpha: 0.85,
+                                  ),
+                                  borderRadius: AfRadii.borderLg,
+                                  border: Border.all(
+                                    color: AfColors.glassBorderEmphasis,
+                                    width: 0.5,
+                                  ),
+                                ),
+                                child: ListTileTheme(
+                                  tileColor: Colors.transparent,
+                                  child: child,
+                                ),
                               ),
                             ),
                           ),
@@ -127,8 +138,8 @@ class _BlurDialogOverlay<T> extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

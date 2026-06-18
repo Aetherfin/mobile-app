@@ -123,15 +123,19 @@ class _FavoriteHeartButtonState extends ConsumerState<FavoriteHeartButton>
       color: isFavorite ? AfColors.semanticError : AfColors.textTertiary,
       size: widget.size,
     );
-    return IconButton(
-      icon: ScaleTransition(scale: _pulseScale, child: icon),
-      onPressed: _toggle,
-      tooltip: isFavorite ? 'Unlike' : 'Like',
-      padding: EdgeInsets.zero,
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints(
-        minWidth: AfSpacing.minHitTarget,
-        minHeight: AfSpacing.minHitTarget,
+    return Semantics(
+      toggled: isFavorite,
+      label: isFavorite ? 'Unlike' : 'Like',
+      child: IconButton(
+        icon: ScaleTransition(scale: _pulseScale, child: icon),
+        onPressed: _toggle,
+        tooltip: isFavorite ? 'Unlike' : 'Like',
+        padding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(
+          minWidth: AfSpacing.minHitTarget,
+          minHeight: AfSpacing.minHitTarget,
+        ),
       ),
     );
   }

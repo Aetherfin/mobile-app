@@ -33,101 +33,60 @@ class OpacityAppBar extends StatelessWidget {
       AfColors.surfaceCanvas.withValues(alpha: 0.75),
       t,
     )!;
-    return t > 0.01
-        ? ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-              child: Container(
-                color: bg,
-                padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top,
-                ),
-                child: SizedBox(
-                  height: kToolbarHeight,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        tooltip: 'Go back',
-                        icon: const Icon(
-                          LucideIcons.arrowLeft,
-                          color: AfColors.textPrimary,
-                          size: 24,
-                        ),
-                        onPressed: onBack,
-                      ),
-                      Expanded(
-                        child: Opacity(
-                          opacity: t,
-                          child: Text(
-                            title,
-                            textAlign: TextAlign.center,
-                            style: AfTypography.titleSmall,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                      if (onMore != null)
-                        IconButton(
-                          tooltip: 'More options',
-                          icon: const Icon(
-                            LucideIcons.ellipsis,
-                            color: AfColors.textPrimary,
-                            size: 24,
-                          ),
-                          onPressed: onMore,
-                        )
-                      else
-                        const SizedBox(width: AfSpacing.s48),
-                    ],
-                  ),
+    final content = _buildContent(context, bg, t);
+    if (t <= 0.01) return content;
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: content,
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, Color bg, double t) {
+    return Container(
+      color: bg,
+      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+      child: SizedBox(
+        height: kToolbarHeight,
+        child: Row(
+          children: [
+            IconButton(
+              tooltip: 'Go back',
+              icon: const Icon(
+                LucideIcons.arrowLeft,
+                color: AfColors.textPrimary,
+                size: 24,
+              ),
+              onPressed: onBack,
+            ),
+            Expanded(
+              child: Opacity(
+                opacity: t,
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: AfTypography.titleSmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
-          )
-        : Container(
-            color: bg,
-            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-            child: SizedBox(
-              height: kToolbarHeight,
-              child: Row(
-                children: [
-                  IconButton(
-                    tooltip: 'Go back',
-                    icon: const Icon(
-                      LucideIcons.arrowLeft,
-                      color: AfColors.textPrimary,
-                      size: 24,
-                    ),
-                    onPressed: onBack,
-                  ),
-                  Expanded(
-                    child: Opacity(
-                      opacity: t,
-                      child: Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        style: AfTypography.titleSmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                  if (onMore != null)
-                    IconButton(
-                      tooltip: 'More options',
-                      icon: const Icon(
-                        LucideIcons.ellipsis,
-                        color: AfColors.textPrimary,
-                        size: 24,
-                      ),
-                      onPressed: onMore,
-                    )
-                  else
-                    const SizedBox(width: AfSpacing.s48),
-                ],
-              ),
-            ),
-          );
+            if (onMore != null)
+              IconButton(
+                tooltip: 'More options',
+                icon: const Icon(
+                  LucideIcons.ellipsis,
+                  color: AfColors.textPrimary,
+                  size: 24,
+                ),
+                onPressed: onMore,
+              )
+            else
+              const SizedBox(width: AfSpacing.s48),
+          ],
+        ),
+      ),
+    );
   }
 }

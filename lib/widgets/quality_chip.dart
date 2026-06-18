@@ -33,10 +33,8 @@ class QualityChip extends StatelessWidget {
         ),
         child: Text(
           quality.chipLabel,
-          style: AfTypography.mono.copyWith(
-            color: AfColors.textSecondary,
-            fontSize: compact ? 10 : 11,
-          ),
+          style: (compact ? AfTypography.monoSmall : AfTypography.mono)
+              .copyWith(color: AfColors.textSecondary),
         ),
       ),
     );

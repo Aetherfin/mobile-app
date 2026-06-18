@@ -6,6 +6,7 @@ import '../design_tokens/tokens.dart';
 import 'artwork.dart';
 import 'press_scale.dart';
 
+/// Album card for the home screen carousel with artwork, title, and play pill.
 class HeroAlbumCard extends StatelessWidget {
   const HeroAlbumCard({
     super.key,
@@ -141,9 +142,7 @@ class _PlayPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Play $albumName',
+    return ExcludeSemantics(
       child: FocusPressScale(
         ensureHitTarget: false,
         onTap: onTap,
