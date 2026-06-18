@@ -969,13 +969,13 @@ void main() {
         expect(service.currentTrack?.id, equals('1'));
         verify(() => player.seek(Duration.zero)).called(1);
 
-        // Second completion → should ALSO restart (guard not set).
+        // Second completion → guard is set, so this is ignored.
         ctrls.completed.add(true);
         await Future<void>.delayed(Duration.zero);
 
         expect(service.currentTrack?.id, equals('1'));
-        // seek called again for the second loop iteration.
-        verify(() => player.seek(Duration.zero)).called(1);
+        // seek NOT called again for the second event — guard prevents re-entry.
+        verifyNever(() => player.seek(any()));
       },
     );
 

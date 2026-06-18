@@ -141,56 +141,18 @@ extension CompletedHandler on PlaybackController {
         if (_eofFallbackHandledTrackId == currentTrackId) return;
 
         final loopAtEvent = _loopModeManager.mode;
-        final playingAtEvent = _player.state.playing;
 
         if (loopAtEvent == Loop.file) {
-          _onTrackChangedOrRestarted();
-          try {
-            await _player.seek(Duration.zero);
-            if (!_player.state.playing) {
-              await _player.play();
-            }
-          } on Exception catch (e, stack) {
-            afLog(
-              'audio',
-              'Loop.file restart failed, rebuilding window',
-              error: e,
-              stackTrace: stack,
-            );
-            final track = _queueManager.currentTrack;
-            if (track != null) {
-              await _rebuildWindow(track);
-            }
-          }
-          updateMediaSession();
-          afLog('audio', 'Loop.file — restarted current track');
+          _completedHandledForTrackId = currentTrackId;
+          await _handleLoopFileCompleted();
           return;
         }
 
         if (loopAtEvent == Loop.off &&
             _queueManager.engine.isForNtimes &&
             _queueManager.engine.remainingRepeats > 0) {
-          _queueManager.engine.decrementRepeats();
-          afLog(
-            'audio',
-            'forNtimes: restarting track, '
-                '${_queueManager.engine.remainingRepeats} repeats remaining',
-          );
-          try {
-            _onTrackChangedOrRestarted();
-            await _player.seek(Duration.zero);
-            if (!playingAtEvent) {
-              await _player.play();
-            }
-          } on Exception catch (e, stack) {
-            afLog(
-              'audio',
-              'forNtimes: seek(0) failed',
-              error: e,
-              stackTrace: stack,
-            );
-          }
-          updateMediaSession();
+          _completedHandledForTrackId = currentTrackId;
+          await _handleForNtimesCompleted();
           return;
         }
 
@@ -199,82 +161,138 @@ extension CompletedHandler on PlaybackController {
         if (!_queueManager.engine.isAtQueueEnd) {
           await _advanceToNextTrack();
         } else {
-          var autoplayTriggered = false;
-          if (loopAtEvent == Loop.off && onGetSimilarTracks != null) {
-            final lastTrack = _queueManager.currentTrack;
-            if (lastTrack != null) {
-              _trimAutoplayedTracks();
-
-              try {
-                final similar = await onGetSimilarTracks!(lastTrack);
-                if (similar.isNotEmpty) {
-                  _queueManager.appendAll(similar);
-
-                  await _advanceToNextTrack();
-                  autoplayTriggered = true;
-                }
-              } on Exception catch (e, stack) {
-                afLog(
-                  'audio',
-                  'autoplay check failed',
-                  error: e,
-                  stackTrace: stack,
-                );
-              }
-            }
-          }
-
+          final autoplayTriggered = await _handleAutoplay(loopAtEvent);
           if (!autoplayTriggered) {
-            switch (loopAtEvent) {
-              case Loop.off:
-                _positionTracker.onStop();
-                _mpvLoadedTrackId = null;
-                try {
-                  await _player.stop();
-                } on Exception catch (e, stack) {
-                  afLog(
-                    'audio',
-                    'stop failed on queue completion',
-                    error: e,
-                    stackTrace: stack,
-                  );
-                }
-                _queueManager.endPlayback();
-                onTrackChanged?.call(null);
-                updateMediaSession();
-                afLog('audio', 'queue end, auto-stop (loop=off)');
-
-              case Loop.playlist:
-                _queueManager.engine.jumpTo(0);
-                _onTrackChangedOrRestarted();
-                final track = _queueManager.currentTrack;
-                if (track != null) {
-                  await _rebuildWindow(track);
-                }
-                updateMediaSession();
-                afLog('audio', 'queue end, looping playlist');
-              case Loop.file:
-                _onTrackChangedOrRestarted();
-                try {
-                  await _player.seek(Duration.zero);
-                  if (!_player.state.playing) {
-                    await _player.play();
-                  }
-                } on Exception catch (e, stack) {
-                  afLog(
-                    'audio',
-                    'Loop.file fallback restart failed',
-                    error: e,
-                    stackTrace: stack,
-                  );
-                }
-                afLog('audio', 'queue end, loop=file — restarted (fallback)');
-            }
+            await _handleQueueEnd(loopAtEvent);
           }
         }
       });
     } on Exception catch (e, stack) {
       afLog('audio', 'completed handler failed', error: e, stackTrace: stack);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Per-loop-mode completed handlers
+  // ---------------------------------------------------------------------------
+
+  Future<void> _handleLoopFileCompleted() async {
+    _onTrackChangedOrRestarted();
+    try {
+      await _player.seek(Duration.zero);
+      if (!_player.state.playing) {
+        await _player.play();
+      }
+    } on Exception catch (e, stack) {
+      afLog(
+        'audio',
+        'Loop.file restart failed, rebuilding window',
+        error: e,
+        stackTrace: stack,
+      );
+      final track = _queueManager.currentTrack;
+      if (track != null) {
+        await _rebuildWindow(track);
+      }
+    }
+    updateMediaSession();
+    afLog('audio', 'Loop.file — restarted current track');
+  }
+
+  Future<void> _handleForNtimesCompleted() async {
+    final playingAtEvent = _player.state.playing;
+    _queueManager.engine.decrementRepeats();
+    afLog(
+      'audio',
+      'forNtimes: restarting track, '
+          '${_queueManager.engine.remainingRepeats} repeats remaining',
+    );
+    try {
+      _onTrackChangedOrRestarted();
+      await _player.seek(Duration.zero);
+      if (!playingAtEvent) {
+        await _player.play();
+      }
+    } on Exception catch (e, stack) {
+      afLog(
+        'audio',
+        'forNtimes: seek(0) failed',
+        error: e,
+        stackTrace: stack,
+      );
+    }
+    updateMediaSession();
+  }
+
+  Future<bool> _handleAutoplay(Loop loopAtEvent) async {
+    if (loopAtEvent != Loop.off || onGetSimilarTracks == null) return false;
+
+    final lastTrack = _queueManager.currentTrack;
+    if (lastTrack == null) return false;
+
+    _trimAutoplayedTracks();
+    try {
+      final similar = await onGetSimilarTracks!(lastTrack);
+      if (similar.isNotEmpty) {
+        _queueManager.appendAll(similar);
+        await _advanceToNextTrack();
+        return true;
+      }
+    } on Exception catch (e, stack) {
+      afLog(
+        'audio',
+        'autoplay check failed',
+        error: e,
+        stackTrace: stack,
+      );
+    }
+    return false;
+  }
+
+  Future<void> _handleQueueEnd(Loop loopAtEvent) async {
+    switch (loopAtEvent) {
+      case Loop.off:
+        _positionTracker.onStop();
+        _mpvLoadedTrackId = null;
+        try {
+          await _player.stop();
+        } on Exception catch (e, stack) {
+          afLog(
+            'audio',
+            'stop failed on queue completion',
+            error: e,
+            stackTrace: stack,
+          );
+        }
+        _queueManager.endPlayback();
+        onTrackChanged?.call(null);
+        updateMediaSession();
+        afLog('audio', 'queue end, auto-stop (loop=off)');
+      case Loop.playlist:
+        _queueManager.engine.jumpTo(0);
+        _onTrackChangedOrRestarted();
+        final track = _queueManager.currentTrack;
+        if (track != null) {
+          await _rebuildWindow(track);
+        }
+        updateMediaSession();
+        afLog('audio', 'queue end, looping playlist');
+      case Loop.file:
+        _onTrackChangedOrRestarted();
+        try {
+          await _player.seek(Duration.zero);
+          if (!_player.state.playing) {
+            await _player.play();
+          }
+        } on Exception catch (e, stack) {
+          afLog(
+            'audio',
+            'Loop.file fallback restart failed',
+            error: e,
+            stackTrace: stack,
+          );
+        }
+        afLog('audio', 'queue end, loop=file — restarted (fallback)');
     }
   }
 }

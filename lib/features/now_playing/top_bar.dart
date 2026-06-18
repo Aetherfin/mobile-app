@@ -179,7 +179,7 @@ class _FrostedTopBarState extends ConsumerState<FrostedTopBar>
                               color: widget.lyricsExpanded.value
                                   ? spectral
                                   : AfColors.textPrimary,
-                              size: 20,
+                              size: AfIconSizes.sm,
                             ),
                             tooltip: 'Lyrics',
                             onPressed: widget.onToggleLyrics,

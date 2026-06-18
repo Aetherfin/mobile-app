@@ -757,6 +757,11 @@ final fftFrameProvider = StreamProvider.autoDispose<FftFrame?>((ref) {
 
 /// Sub-bass energy derived from the first 7 post-DC FFT bands.
 /// Used by the artwork pulse for kick-drum transient detection.
+// ponytail: not gated on NowPlaying visibility — the only consumer
+// (reactive_artwork) already autoDisposes when obscured, and the
+// 7-band iteration at 120fps is negligible CPU. Adding an
+// isNowPlayingVisible provider would require architectural changes
+// across the widget tree for ~0.1ms/frame savings.
 final bassEnergyProvider = Provider.autoDispose<double>((ref) {
   final frame = ref.watch(fftFrameProvider).value;
   if (frame == null || frame.bands.isEmpty) return 0.0;

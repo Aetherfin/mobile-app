@@ -5,10 +5,20 @@ import 'state_holder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/audio/offline_cache_service.dart';
+import '../core/audio/player_settings_store.dart';
 import '../core/jellyfin/models/server.dart';
 import '../core/lastfm/lastfm_client.dart';
 import '../utils/log.dart';
 import 'local_library_providers.dart';
+
+/// Instance of [PlayerSettingsStore] backed by the app's [SharedPreferences].
+///
+/// Must be overridden in [ProviderScope] with a pre-loaded instance during boot.
+final playerSettingsStoreProvider = Provider<PlayerSettingsStore>((ref) {
+  throw UnimplementedError(
+    'playerSettingsStoreProvider must be overridden in ProviderScope',
+  );
+});
 
 /// Visual style for the Now Playing screen background.
 enum PlayerBackgroundStyle {

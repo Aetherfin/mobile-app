@@ -89,7 +89,7 @@ class OutputDialogContent extends ConsumerWidget {
                           style: AfTypography.bodyMedium,
                         ),
                         trailing: isActive
-                            ? Icon(LucideIcons.check, color: spectral, size: 20)
+                            ? Icon(LucideIcons.check, color: spectral, size: AfIconSizes.sm)
                             : null,
                         onTap: () async {
                           await svc.setAudioDevice(device);

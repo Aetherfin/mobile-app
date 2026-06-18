@@ -15,12 +15,34 @@ extension QueueOperations on PlaybackController {
         _loopModeManager.mode != Loop.playlist) {
       return;
     }
+    await _queueLock.run(() async {
+      await _skipToIndex(() => _queueManager.engine.advanceIndex());
+    });
+  }
 
+  Future<void> skipToPrevious() async {
+    if (_disposed) return;
+    await _queueLock.run(() async {
+      await _skipToIndex(() => _queueManager.engine.retreatIndex());
+    });
+  }
+
+  Future<void> skipToQueueItem(int index) async {
+    if (_disposed) return;
+    await _queueLock.run(() async {
+      await _skipToIndex(() => _queueManager.engine.jumpTo(index));
+    });
+  }
+
+  /// Shared skip implementation. Moves the engine index via [changeIndex],
+  /// stops the current track, notifies callbacks, and rebuilds the 2-track
+  /// window for the new track.
+  Future<void> _skipToIndex(void Function() changeIndex) async {
     _positionTracker.onStop();
     try {
       await _player.stop();
     } on Exception catch (e) {
-      afLog('audio', 'Failed to stop player during skipToNext', error: e);
+      afLog('audio', 'Failed to stop player during skip', error: e);
     }
 
     final wasPlaying = _queueManager.currentTrack;
@@ -31,7 +53,7 @@ extension QueueOperations on PlaybackController {
     if (wasPlaying != null) {
       onTrackSkipped?.call(wasPlaying);
     }
-    _queueManager.engine.advanceIndex();
+    changeIndex();
     _queueManager.engine.resetRepeats();
     final nextTrack = _queueManager.currentTrack;
     if (nextTrack == null) {
@@ -48,85 +70,7 @@ extension QueueOperations on PlaybackController {
       await _rebuildWindow(nextTrack);
       updateMediaSession();
     } on Exception catch (e, stack) {
-      afLog('audio', 'skipToNext failed', error: e, stackTrace: stack);
-    }
-  }
-
-  Future<void> skipToPrevious() async {
-    if (_disposed) return;
-
-    _positionTracker.onStop();
-    try {
-      await _player.stop();
-    } on Exception catch (e) {
-      afLog('audio', 'Failed to stop player during skipToPrevious', error: e);
-    }
-
-    final wasPlaying = _queueManager.currentTrack;
-    _completedHandledForTrackId = null;
-    _eofFallbackHandledTrackId = null;
-    _mpvLoadedTrackId = null;
-    onMpvLoadedTrackChanged?.call(null);
-    if (wasPlaying != null) {
-      onTrackSkipped?.call(wasPlaying);
-    }
-    _queueManager.engine.retreatIndex();
-    _queueManager.engine.resetRepeats();
-    final prevTrack = _queueManager.currentTrack;
-    if (prevTrack == null) {
-      return;
-    }
-
-    _onTrackChangedOrRestarted();
-    _queueManager.emitCurrentTrack(prevTrack);
-    onTrackChanged?.call(prevTrack);
-    updateMediaSession();
-    unawaited(_reconfigureSpectrumOnTrackChange());
-
-    try {
-      await _rebuildWindow(prevTrack);
-      updateMediaSession();
-    } on Exception catch (e, stack) {
-      afLog('audio', 'skipToPrevious failed', error: e, stackTrace: stack);
-    }
-  }
-
-  Future<void> skipToQueueItem(int index) async {
-    if (_disposed) return;
-
-    _positionTracker.onStop();
-    try {
-      await _player.stop();
-    } on Exception catch (e) {
-      afLog('audio', 'Failed to stop player during skipToQueueItem', error: e);
-    }
-
-    final wasPlaying = _queueManager.currentTrack;
-    _completedHandledForTrackId = null;
-    _eofFallbackHandledTrackId = null;
-    _mpvLoadedTrackId = null;
-    onMpvLoadedTrackChanged?.call(null);
-    if (wasPlaying != null) {
-      onTrackSkipped?.call(wasPlaying);
-    }
-    _queueManager.engine.jumpTo(index);
-    _queueManager.engine.resetRepeats();
-    final targetTrack = _queueManager.currentTrack;
-    if (targetTrack == null) {
-      return;
-    }
-
-    _onTrackChangedOrRestarted();
-    _queueManager.emitCurrentTrack(targetTrack);
-    onTrackChanged?.call(targetTrack);
-    updateMediaSession();
-    unawaited(_reconfigureSpectrumOnTrackChange());
-
-    try {
-      await _rebuildWindow(targetTrack);
-      updateMediaSession();
-    } on Exception catch (e, stack) {
-      afLog('audio', 'skipToQueueItem failed', error: e, stackTrace: stack);
+      afLog('audio', 'skip failed', error: e, stackTrace: stack);
     }
   }
 

@@ -90,6 +90,29 @@ class SettingsKey<T> {
 /// [SettingsKey] descriptor system. Complex types like [AudioEffects] and
 /// [EqPreset] use custom JSON serialization.
 class PlayerSettingsStore {
+  /// Creates a [PlayerSettingsStore] backed by [prefs].
+  ///
+  /// Also sets the static backing store so that legacy static methods
+  /// (still used by tests) resolve to the same prefs instance.
+  PlayerSettingsStore(this.prefs) {
+    _staticPrefs ??= prefs;
+  }
+
+  /// The injected [SharedPreferences] instance.
+  final SharedPreferences prefs;
+
+  // ── Static backing for legacy static methods (tests) ──────────────────
+  static SharedPreferences? _staticPrefs;
+
+  /// Returns the active [SharedPreferences].
+  ///
+  /// Prefers the instance injected via the constructor (set in `_staticPrefs`).
+  /// Falls back to `SharedPreferences.getInstance()` for tests and callers
+  /// that don't go through the provider.
+  static Future<SharedPreferences> _ensurePrefs() async {
+    return _staticPrefs ?? await SharedPreferences.getInstance();
+  }
+
   // ── Typed key descriptors ────────────────────────────────────────────────
   static final kSampleRate = SettingsKey.intKey('af.audio_sample_rate');
   static final kFormat = SettingsKey.stringKey('af.audio_format');
@@ -138,13 +161,11 @@ class PlayerSettingsStore {
   static const kGraphicEq = 'af.graphic_eq_json';
   static const kParametricEq = 'af.parametric_eq_json';
 
-  static Future<SharedPreferences> _prefs() => SharedPreferences.getInstance();
-
   // ── Generic persistence ──────────────────────────────────────────────────
 
   /// Save a typed value through its descriptor.
   static Future<void> saveValue<T>(SettingsKey<T> desc, T value) async {
-    final p = await _prefs();
+    final p = await _ensurePrefs();
     final stored = desc.toStorage(value);
     switch (stored) {
       case final int v:
@@ -164,7 +185,7 @@ class PlayerSettingsStore {
 
   /// Load a typed value through its descriptor. Returns `null` if absent.
   static Future<T?> loadValue<T>(SettingsKey<T> desc) async {
-    final p = await _prefs();
+    final p = await _ensurePrefs();
     final raw = p.get(desc.key);
     if (raw == null) return null;
     return desc.fromStorage(raw);
@@ -209,7 +230,7 @@ class PlayerSettingsStore {
       saveValue(kReplayGain, mode.name);
 
   static Future<void> saveReplayGainFull(ReplayGainSettings settings) async {
-    final p = await _prefs();
+    final p = await _ensurePrefs();
     await saveValue(kReplayGain, settings.mode.name);
     await p.setDouble(kReplayGainPreamp.key, settings.preamp);
     await p.setDouble(kReplayGainFallback.key, settings.fallback);
@@ -270,7 +291,7 @@ class PlayerSettingsStore {
   /// (revert to "auto" behavior on next startup).
   static Future<void> saveDefaultAudioDevice(String? deviceName) async {
     if (deviceName == null) {
-      final p = await _prefs();
+      final p = await _ensurePrefs();
       await p.remove(kDefaultAudioDevice.key);
     } else {
       await saveValue(kDefaultAudioDevice, deviceName);
@@ -293,7 +314,7 @@ class PlayerSettingsStore {
   /// Serialize the user-visible audio effects to JSON and persist.
   /// Delegates to [_serializeAudioEffects] to avoid duplication.
   static Future<void> saveAudioEffects(AudioEffects fx) async {
-    final p = await _prefs();
+    final p = await _ensurePrefs();
     await p.setString(kAudioEffects, jsonEncode(_serializeAudioEffects(fx)));
   }
 
@@ -301,7 +322,7 @@ class PlayerSettingsStore {
 
   /// Save a named EQ preset (18-band params + bass/treble).
   static Future<void> saveEqPreset(String name, EqPreset preset) async {
-    final p = await _prefs();
+    final p = await _ensurePrefs();
     final all = loadEqPresets(p);
     all[name] = preset;
     final encoded = all.map((k, v) => MapEntry(k, v.toJson()));
@@ -310,7 +331,7 @@ class PlayerSettingsStore {
 
   /// Delete a named EQ preset.
   static Future<void> deleteEqPreset(String name) async {
-    final p = await _prefs();
+    final p = await _ensurePrefs();
     final all = loadEqPresets(p);
     all.remove(name);
     final encoded = all.map((k, v) => MapEntry(k, v.toJson()));
@@ -339,13 +360,13 @@ class PlayerSettingsStore {
 
   /// Load all user-saved EQ presets (async convenience).
   static Future<Map<String, EqPreset>> loadEqPresetsAsync() async {
-    final p = await _prefs();
+    final p = await _ensurePrefs();
     return loadEqPresets(p);
   }
 
   /// Save the name of the currently active preset (null to clear).
   static Future<void> saveActivePreset(String? name) async {
-    final p = await _prefs();
+    final p = await _ensurePrefs();
     if (name == null) {
       await p.remove(kActivePreset);
     } else {
@@ -721,8 +742,8 @@ class PlayerSettingsStore {
   /// Call this once after the player has been constructed and configured.
   /// Failures are logged but do not throw — a single bad value should not
   /// break startup.
-  static Future<void> applyPersisted(AfPlayerService svc) async {
-    final p = await _prefs();
+  Future<void> applyPersisted(AfPlayerService svc) async {
+    final p = prefs;
 
     // One-time cleanup of orphaned split keys from the 3-key era
     await migrateSplitKeys(p);

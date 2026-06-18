@@ -70,7 +70,7 @@ class SleepTimerDialogContentState
     if (widget.dismiss != null) {
       widget.dismiss!();
     } else {
-      context.pop();
+      if (context.canPop()) context.pop();
     }
   }
 
@@ -80,7 +80,7 @@ class SleepTimerDialogContentState
     if (widget.dismiss != null) {
       widget.dismiss!();
     } else {
-      context.pop();
+      if (context.canPop()) context.pop();
     }
   }
 

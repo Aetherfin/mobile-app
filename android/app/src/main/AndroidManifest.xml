@@ -189,7 +189,7 @@
         <!-- Bluetooth Connection Broadcast Receiver -->
         <receiver
             android:name=".BluetoothReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
@@ -199,7 +199,7 @@
         <!-- Home Screen App Widget (Glance) -->
         <receiver
             android:name=".widget.AetherfinGlanceReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

@@ -251,11 +251,14 @@ Future<void> main() async {
       }());
 
       // ── Phase 3: OS audio service ─────────────────────────────────────────
+      final settingsStore = PlayerSettingsStore(prefs);
+      _boot('PlayerSettingsStore initialized');
+
       final handler = AfPlayerService();
       _boot('AfPlayerService initialized');
 
       // ── Phase 3.5: Apply persisted settings before any user interaction ───
-      await PlayerSettingsStore.applyPersisted(handler);
+      await settingsStore.applyPersisted(handler);
       _boot('persisted settings applied');
 
       // ── Phase 4: Provider container + router wiring ───────────────────────
@@ -265,6 +268,7 @@ Future<void> main() async {
           deviceIdProvider.overrideWithValue(deviceId),
           initialAuthProvider.overrideWithValue(initialAuth),
           aetherfinVersionProvider.overrideWithValue(aetherfinVersion),
+          playerSettingsStoreProvider.overrideWithValue(settingsStore),
           if (persistedMode != null)
             appModeProvider.overrideWith(
               () => StateHolder<AppMode?>((ref) => persistedMode),

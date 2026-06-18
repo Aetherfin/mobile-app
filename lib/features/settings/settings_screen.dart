@@ -82,7 +82,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             children: [
                               IconButton(
                                 icon: const Icon(LucideIcons.arrowLeft),
-                                onPressed: () => context.pop(),
+                                onPressed: () {
+                                  if (context.canPop()) context.pop();
+                                },
                                 tooltip: 'Back',
                               ),
                               Text('Settings', style: AfTypography.display),
@@ -386,7 +388,7 @@ class _LastFmSettingsBody extends ConsumerWidget {
                 final syncFn = ref.read(lastFmSyncProvider);
                 final result = await syncFn();
                 if (context.mounted) {
-                  context.pop();
+                  if (context.canPop()) context.pop();
                 } // Close dialog
 
                 if (context.mounted) {
@@ -401,7 +403,7 @@ class _LastFmSettingsBody extends ConsumerWidget {
                 }
               } on Exception catch (e) {
                 if (context.mounted) {
-                  context.pop();
+                  if (context.canPop()) context.pop();
                 } // Close dialog
                 if (context.mounted) {
                   ScaffoldMessenger.of(

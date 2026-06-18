@@ -464,7 +464,7 @@ class _EqDspScreenState extends ConsumerState<EqDspScreen> {
             ),
             child: Row(
               children: [
-                Icon(icon, size: 20, color: AfColors.accentPrimary),
+                Icon(icon, size: AfIconSizes.sm, color: AfColors.accentPrimary),
                 const SizedBox(width: AfSpacing.s12),
                 Expanded(
                   child: Column(
@@ -488,7 +488,7 @@ class _EqDspScreenState extends ConsumerState<EqDspScreen> {
                 ),
                 const Icon(
                   LucideIcons.chevronRight,
-                  size: 16,
+                  size: AfIconSizes.xs,
                   color: AfColors.textTertiary,
                 ),
               ],

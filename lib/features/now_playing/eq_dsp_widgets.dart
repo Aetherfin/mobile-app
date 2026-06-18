@@ -98,7 +98,7 @@ class EqMasterBanner extends ConsumerWidget {
             ),
             child: Icon(
               LucideIcons.audioWaveform,
-              size: 20,
+              size: AfIconSizes.sm,
               color: enabled ? spectral.primary : AfColors.textTertiary,
             ),
           ),
@@ -287,7 +287,7 @@ class EqAccordionSection extends ConsumerWidget {
                           curve: AfCurves.easeStandard,
                           child: const Icon(
                             LucideIcons.chevronDown,
-                            size: 24,
+                            size: AfIconSizes.md,
                             color: AfColors.textTertiary,
                           ),
                         ),

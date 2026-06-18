@@ -79,6 +79,7 @@ class NativeMediaSessionBridge {
   DateTime _lastPush = DateTime.fromMillisecondsSinceEpoch(0);
   bool _lastPushedPlaying = false;
   bool _lastPushedBuffering = false;
+  Duration _lastPushedPosition = Duration.zero;
 
   // ── Owner callbacks ──────────────────────────────────────────────
   // These are set by [AfPlayerService] to route platform-originated
@@ -115,7 +116,8 @@ class NativeMediaSessionBridge {
     final now = DateTime.now();
     final stateChanged =
         _lastPushedPlaying != state.playing ||
-        _lastPushedBuffering != state.buffering;
+        _lastPushedBuffering != state.buffering ||
+        _lastPushedPosition != state.position;
 
     if (!stateChanged && now.difference(_lastPush) < _throttleDuration) {
       return;
@@ -124,6 +126,7 @@ class NativeMediaSessionBridge {
     _lastPush = now;
     _lastPushedPlaying = state.playing;
     _lastPushedBuffering = state.buffering;
+    _lastPushedPosition = state.position;
 
     // Fire artwork download trigger when the state indicates remote
     // artwork is needed but no local path is available.

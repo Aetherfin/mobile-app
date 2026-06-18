@@ -35,7 +35,7 @@ void showSpeedDialog(BuildContext context, WidgetRef ref) {
               style: AfTypography.bodyMedium,
             ),
             trailing: (s - current).abs() < 0.001
-                ? const Icon(LucideIcons.check, size: 20)
+                ? const Icon(LucideIcons.check, size: AfIconSizes.sm)
                 : null,
             onTap: () {
               unawaited(ref.read(playerServiceProvider).setAfSpeed(s));

@@ -122,7 +122,7 @@ class _AbLoopButton extends ConsumerWidget {
               alignment: Alignment.center,
               child: Icon(
                 LucideIcons.repeat1,
-                size: 20,
+                size: AfIconSizes.sm,
                 color: active ? spectral : AfColors.textTertiary,
               ),
             ),

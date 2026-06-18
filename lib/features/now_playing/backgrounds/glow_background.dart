@@ -26,6 +26,11 @@ class _GlowBackgroundState extends State<GlowBackground>
   late final AnimationController _pulseController;
   late Animation<double> _glowAnimation;
 
+  /// Pre-computed colors from the spectral energy — recomputed only when
+  /// [widget.energy] changes, not every animation tick.
+  late Color _glowColor;
+  late Color _deepGlow;
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +42,21 @@ class _GlowBackgroundState extends State<GlowBackground>
       CurvedAnimation(parent: _pulseController, curve: AfCurves.easeInOut),
     );
     _pulseController.repeat(reverse: true);
+    _computeColors(widget.energy);
+  }
+
+  @override
+  void didUpdateWidget(GlowBackground oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.energy != widget.energy) {
+      _computeColors(widget.energy);
+    }
+  }
+
+  void _computeColors(Color energy) {
+    final oklch = srgbToOklch(energy);
+    _glowColor = OklchColor(0.60, oklch.c * 1.0, oklch.h).toColor();
+    _deepGlow = OklchColor(0.42, oklch.c * 0.65, oklch.h).toColor();
   }
 
   @override
@@ -47,11 +67,6 @@ class _GlowBackgroundState extends State<GlowBackground>
 
   @override
   Widget build(BuildContext context) {
-    final oklch = srgbToOklch(widget.energy);
-    // brighter + wider glow — L 0.60/0.42, radius 1.2
-    final glowColor = OklchColor(0.60, oklch.c * 1.0, oklch.h).toColor();
-    final deepGlow = OklchColor(0.42, oklch.c * 0.65, oklch.h).toColor();
-
     return AnimatedBuilder(
       animation: _glowAnimation,
       builder: (context, child) {
@@ -64,8 +79,8 @@ class _GlowBackgroundState extends State<GlowBackground>
                 center: Alignment.center,
                 radius: 1.2,
                 colors: [
-                  glowColor.withValues(alpha: 0.65 * opacity),
-                  deepGlow.withValues(alpha: 0.40 * opacity),
+                  _glowColor.withValues(alpha: 0.65 * opacity),
+                  _deepGlow.withValues(alpha: 0.40 * opacity),
                   AfColors.surfaceCanvas.withValues(alpha: 0.0),
                 ],
                 stops: const [0.0, 0.35, 1.0],

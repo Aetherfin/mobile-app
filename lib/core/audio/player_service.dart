@@ -73,102 +73,8 @@ class AfPlayerService {
     // Wire cross-module callbacks
     _artworkManager.onArtworkChanged = _playback.updateMediaSession;
 
-    _player
-        .setMediaSession(
-          const MediaSession(
-            actions: {
-              MediaAction.play,
-              MediaAction.pause,
-              MediaAction.playPause,
-              MediaAction.next,
-              MediaAction.previous,
-              MediaAction.seek,
-              MediaAction.fastForward,
-              MediaAction.rewind,
-              MediaAction.setRepeatMode,
-              MediaAction.setShuffle,
-              MediaAction.like,
-            },
-            fastForwardInterval: Duration(
-              seconds: 30,
-            ), // ponytail: FF/RW intervals, not animation
-            rewindInterval: Duration(
-              seconds: 15,
-            ), // ponytail: FF/RW intervals, not animation
-            interruptionPolicy: InterruptionPolicy.pauseAndResume,
-            appName: 'Aetherfin',
-            artwork: MediaSessionArtwork.none,
-          ),
-        )
-        .catchError((Object e, StackTrace stack) {
-          _initFailed = true;
-          afLog('audio', 'setMediaSession failed', error: e, stackTrace: stack);
-        });
-
-    _wireMediaSessionCommands();
-
-    Future.microtask(() async {
-      try {
-        final action = await _bridge.getShortcutAction();
-        if (action != null) {
-          _handleShortcutAction(action);
-        }
-      } on Exception catch (e, stack) {
-        afLog('audio', 'getShortcutAction failed', error: e, stackTrace: stack);
-      }
-    });
-
-    _player.setAudioDriver('aaudio').catchError((Object e, StackTrace? stack) {
-      _initFailed = true;
-      afLog('error', 'setAudioDriver failed', error: e, stackTrace: stack);
-    });
-
-    if (kDebugMode) {
-      _player.setLogLevel(LogLevel.debug).catchError((Object e, StackTrace s) {
-        _initFailed = true;
-        afLog('audio', 'setLogLevel failed', error: e, stackTrace: s);
-      });
-    }
-
-    _player
-        .setAudioBuffer(
-          const Duration(milliseconds: 200),
-        ) // ponytail: audio buffer, not animation
-        .catchError((Object e, StackTrace? stack) {
-          _initFailed = true;
-          afLog('error', 'setAudioBuffer failed', error: e, stackTrace: stack);
-        });
-    _bindStreams();
-    _positionTracker.start();
-
-    Future.delayed(AfDurations.expressive, () async {
-      if (_disposed) return;
-      try {
-        final devices = _player.state.audioDevices;
-        // Restore the user's persisted default device, or fall back to "auto".
-        final savedDeviceName =
-            await PlayerSettingsStore.loadDefaultAudioDevice();
-        if (savedDeviceName != null) {
-          final match = devices.where((d) => d.name == savedDeviceName);
-          if (match.isNotEmpty) {
-            await _player.setAudioDevice(match.first);
-            return;
-          }
-        }
-        final auto = devices.firstWhere(
-          (d) => d.name == 'auto',
-          orElse: () => _player.state.audioDevice,
-        );
-        await _player.setAudioDevice(auto);
-      } on Exception catch (e, stack) {
-        afLog(
-          'audio',
-          'setAudioDevice(auto) failed',
-          error: e,
-          stackTrace: stack,
-        );
-      }
-    });
+    // Async setup — fire-and-forget like the original pattern.
+    _init();
   }
 
   @visibleForTesting
@@ -212,6 +118,126 @@ class AfPlayerService {
     _wireMediaSessionCommands();
 
     _bindStreams();
+  }
+
+  /// Async initialization extracted from the constructor.
+  ///
+  /// Runs immediately after field construction. Failures are logged
+  /// and do not propagate — a single failed init should not crash the app.
+  Future<void> _init() async {
+    unawaited(
+      _player
+          .setMediaSession(
+            const MediaSession(
+              actions: {
+                MediaAction.play,
+                MediaAction.pause,
+                MediaAction.playPause,
+                MediaAction.next,
+                MediaAction.previous,
+                MediaAction.seek,
+                MediaAction.fastForward,
+                MediaAction.rewind,
+                MediaAction.setRepeatMode,
+                MediaAction.setShuffle,
+                MediaAction.like,
+              },
+              fastForwardInterval: Duration(
+                seconds: 30,
+              ), // ponytail: FF/RW intervals, not animation
+              rewindInterval: Duration(
+                seconds: 15,
+              ), // ponytail: FF/RW intervals, not animation
+              interruptionPolicy: InterruptionPolicy.pauseAndResume,
+              appName: 'Aetherfin',
+              artwork: MediaSessionArtwork.none,
+            ),
+          )
+          .catchError((Object e, StackTrace stack) {
+            _initFailed = true;
+            afLog(
+              'audio',
+              'setMediaSession failed',
+              error: e,
+              stackTrace: stack,
+            );
+          }),
+    );
+
+    _wireMediaSessionCommands();
+
+    try {
+      final action = await _bridge.getShortcutAction();
+      if (action != null) {
+        _handleShortcutAction(action);
+      }
+    } on Exception catch (e, stack) {
+      afLog('audio', 'getShortcutAction failed', error: e, stackTrace: stack);
+    }
+
+    unawaited(
+      _player.setAudioDriver('aaudio').catchError((
+        Object e,
+        StackTrace? stack,
+      ) {
+        _initFailed = true;
+        afLog('error', 'setAudioDriver failed', error: e, stackTrace: stack);
+      }),
+    );
+
+    if (kDebugMode) {
+      unawaited(
+        _player.setLogLevel(LogLevel.debug).catchError((
+          Object e,
+          StackTrace s,
+        ) {
+          _initFailed = true;
+          afLog('audio', 'setLogLevel failed', error: e, stackTrace: s);
+        }),
+      );
+    }
+
+    unawaited(
+      _player
+          .setAudioBuffer(
+            const Duration(milliseconds: 200),
+          ) // ponytail: audio buffer, not animation
+          .catchError((Object e, StackTrace? stack) {
+            _initFailed = true;
+            afLog('error', 'setAudioBuffer failed', error: e, stackTrace: stack);
+          }),
+    );
+    _bindStreams();
+    _positionTracker.start();
+
+    Future.delayed(AfDurations.expressive, () async {
+      if (_disposed) return;
+      try {
+        final devices = _player.state.audioDevices;
+        // Restore the user's persisted default device, or fall back to "auto".
+        final savedDeviceName =
+            await PlayerSettingsStore.loadDefaultAudioDevice();
+        if (savedDeviceName != null) {
+          final match = devices.where((d) => d.name == savedDeviceName);
+          if (match.isNotEmpty) {
+            await _player.setAudioDevice(match.first);
+            return;
+          }
+        }
+        final auto = devices.firstWhere(
+          (d) => d.name == 'auto',
+          orElse: () => _player.state.audioDevice,
+        );
+        await _player.setAudioDevice(auto);
+      } on Exception catch (e, stack) {
+        afLog(
+          'audio',
+          'setAudioDevice(auto) failed',
+          error: e,
+          stackTrace: stack,
+        );
+      }
+    });
   }
 
   @visibleForTesting
@@ -794,7 +820,10 @@ class AfPlayerService {
   }
 
   void _onCompleted(bool completed) {
-    _playback.handleCompleted(completed);
+    safeFireAndForget(
+      () => _playback.handleCompleted(completed),
+      label: 'handleCompleted',
+    );
   }
 
   void _onRateChanged(double _) {

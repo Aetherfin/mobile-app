@@ -30,7 +30,7 @@ void showVolumeDialog(BuildContext context, WidgetRef ref) {
                 icon: Icon(
                   muted ? LucideIcons.volumeX : LucideIcons.volume2,
                   color: AfColors.textPrimary,
-                  size: 24,
+                  size: AfIconSizes.md,
                 ),
                 tooltip: 'Toggle mute',
                 onPressed: () {

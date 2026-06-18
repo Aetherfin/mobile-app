@@ -40,11 +40,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     super.initState();
     _entranceCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: AfDurations.ambient,
     );
     _glowCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: AfDurations.spectral,
     );
     _breathCtrl = AnimationController(
       vsync: this,

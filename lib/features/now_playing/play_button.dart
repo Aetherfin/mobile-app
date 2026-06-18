@@ -123,7 +123,7 @@ class _PlayButtonState extends ConsumerState<PlayButton>
                               : LucideIcons.play,
                           key: ValueKey(widget.isPlaying),
                           color: _contrastColor(widget.accent),
-                          size: 28,
+                          size: AfIconSizes.lg,
                         ),
                       ),
               ),

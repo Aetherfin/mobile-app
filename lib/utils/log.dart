@@ -19,6 +19,7 @@
 /// `afLog('error', 'foo failed', error: e, stackTrace: stack)`.
 library;
 
+import 'dart:async' show unawaited;
 import 'dart:developer' as developer;
 
 /// Emit a structured log line tagged `aetherfin:<category>`. The `category`
@@ -35,6 +36,29 @@ void afLog(
     name: 'aetherfin:$category',
     error: error,
     stackTrace: stackTrace,
+  );
+}
+
+/// Fire-and-forget wrapper that catches and logs errors.
+/// Use instead of `unawaited()` for async operations where errors
+/// should be logged but not propagated.
+void safeFireAndForget(
+  Future<void> Function() operation, {
+  String? label,
+}) {
+  unawaited(
+    (() async {
+      try {
+        await operation();
+      } catch (e, stack) {
+        afLog(
+          'error',
+          label ?? 'Fire-and-forget failed',
+          error: e,
+          stackTrace: stack,
+        );
+      }
+    })(),
   );
 }
 

@@ -350,13 +350,13 @@ class _EqParametricSectionState extends ConsumerState<EqParametricSection> {
             }
             unawaited(widget.onApply());
           },
-          icon: const Icon(LucideIcons.rotateCcw, size: 16),
+          icon: const Icon(LucideIcons.rotateCcw, size: AfIconSizes.xs),
           label: const Text('Reset'),
         ),
         const SizedBox(width: AfSpacing.s8),
         TextButton.icon(
           onPressed: _saveCurrentAsPreset,
-          icon: const Icon(LucideIcons.save, size: 16),
+          icon: const Icon(LucideIcons.save, size: AfIconSizes.xs),
           label: const Text('Save preset'),
         ),
       ],

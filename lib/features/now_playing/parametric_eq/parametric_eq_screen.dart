@@ -1151,7 +1151,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                 const SizedBox(width: AfSpacing.s8),
                 const Icon(
                   LucideIcons.chevronDown,
-                  size: 16,
+                  size: AfIconSizes.xs,
                   color: AfColors.textTertiary,
                 ),
               ],
@@ -1408,7 +1408,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
           children: [
             const Icon(
               LucideIcons.plus,
-              size: 16,
+              size: AfIconSizes.xs,
               color: AfColors.accentPrimary,
             ),
             const SizedBox(width: AfSpacing.s8),

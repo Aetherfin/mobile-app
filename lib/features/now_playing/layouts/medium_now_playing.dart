@@ -258,7 +258,7 @@ class _LyricsToggleSection extends StatelessWidget {
                 children: [
                   Icon(
                     LucideIcons.mic2,
-                    size: 16,
+                    size: AfIconSizes.xs,
                     color: lyricsAnim.value > 0
                         ? spectral
                         : AfColors.textSecondary,
