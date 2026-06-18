@@ -12,6 +12,7 @@ import '../../widgets/section_header.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/tile.dart';
 import '../../widgets/bottom_sheet.dart';
+import '../../widgets/collapse_header.dart';
 
 import 'sections/albums_tab.dart';
 import 'sections/artists_tab.dart';
@@ -84,6 +85,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final mode = ref.watch(appModeProvider);
     final isLocal = mode == AppMode.local;
     final isYouTubeMusic = mode == AppMode.youtubeMusic;
+    final sp = ref.watch(currentSpectralProvider);
 
     // YouTube Music mode: hide the Songs pill.
     final pills = isYouTubeMusic
@@ -125,9 +127,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         ]);
                       }
                     },
-                    color: ref.watch(
-                      currentSpectralProvider.select((s) => s.primary),
-                    ),
+                    color: sp.primary,
                     backgroundColor: AfColors.surfaceBase,
                     child: CustomScrollView(
                       controller: _scroll,
@@ -136,58 +136,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       ),
                       slivers: [
                         // ── Header row: gradient title + search icon ──
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                              AfSpacing.s16,
-                              AfSpacing.s16,
-                              AfSpacing.s16,
-                              AfSpacing.s12,
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: CollapseHeader(
+                            title: 'Library',
+                            spectral: (
+                              primary: sp.primary,
+                              secondary: sp.secondary,
                             ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: ShaderMask(
-                                    shaderCallback: (bounds) =>
-                                        const LinearGradient(
-                                          colors: [
-                                            AfColors.indigo400,
-                                            AfColors.indigo600,
-                                          ],
-                                        ).createShader(bounds),
-                                    child: Text(
-                                      'Library',
-                                      style: AfTypography.display.copyWith(
-                                        color: AfColors.textOnPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                PressScale(
-                                  onTap: () => _openSearch(context),
-                                  child: Semantics(
-                                    button: true,
-                                    label: 'Search library',
-                                    child: Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        color: AfColors.glassFill,
-                                        borderRadius: AfRadii.borderPill,
-                                        border: Border.all(
-                                          color: AfColors.glassBorderStrong,
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        LucideIcons.search,
-                                        color: AfColors.textSecondary,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            action: _SearchButton(
+                              onTap: () => _openSearch(context),
                             ),
                           ),
                         ),
@@ -227,6 +185,41 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+// ── Search Button ──
+
+class _SearchButton extends StatelessWidget {
+  const _SearchButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Search library',
+      child: PressScale(
+        onTap: onTap,
+        child: Semantics(
+          button: true,
+          label: 'Search library',
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AfColors.glassFill,
+              borderRadius: AfRadii.borderPill,
+              border: Border.all(color: AfColors.glassBorderStrong, width: 1),
+            ),
+            child: const Icon(
+              LucideIcons.search,
+              color: AfColors.textSecondary,
+              size: 18,
+            ),
+          ),
         ),
       ),
     );

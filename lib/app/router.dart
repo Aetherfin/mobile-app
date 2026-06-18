@@ -228,10 +228,7 @@ final _router = GoRouter(
             parent: animation,
             curve: AfCurves.easeEmphasized,
           );
-          return FadeTransition(
-            opacity: curved,
-            child: child,
-          );
+          return FadeTransition(opacity: curved, child: child);
         },
       ),
     ),

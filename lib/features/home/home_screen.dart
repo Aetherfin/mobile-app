@@ -11,6 +11,7 @@ import '../../state/providers.dart';
 import '../../state/youtube_music_providers.dart';
 import '../../widgets/async_error_view.dart';
 
+import '../../widgets/collapse_header.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/skeletons/home_skeleton.dart';
 import 'sections/hero_carousel.dart';
@@ -155,9 +156,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   // Collapsing "Listen" header with spectral gradient.
                   SliverPersistentHeader(
                     pinned: true,
-                    delegate: _CollapseHeaderDelegate(
+                    delegate: CollapseHeader(
+                      title: 'Listen',
                       spectral: (primary: primary, secondary: secondary),
-                      onCastTap: () => context.push('/cast'),
+                      action: _GlassCastButton(
+                        onTap: () => context.push('/cast'),
+                      ),
                     ),
                   ),
 
@@ -212,94 +216,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 // ---------------------------------------------------------------------------
 // Local helpers
 // ---------------------------------------------------------------------------
-
-/// Collapsing header delegate for the "Listen" title on the home screen.
-///
-/// Transitions from a large spectral-gradient title (expanded) to a compact
-/// solid-color title (collapsed) as the user scrolls. The cast button stays
-/// pinned on the right throughout.
-class _CollapseHeaderDelegate extends SliverPersistentHeaderDelegate {
-  _CollapseHeaderDelegate({required this.spectral, required this.onCastTap});
-
-  final ({Color primary, Color secondary}) spectral;
-  final VoidCallback onCastTap;
-
-  static const _expandedHeight = 80.0;
-  static const _collapsedHeight = 56.0;
-  static const _collapseThreshold = 100.0;
-
-  @override
-  double get minExtent => _collapsedHeight;
-  @override
-  double get maxExtent => _expandedHeight;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    final t = (shrinkOffset / _collapseThreshold).clamp(0.0, 1.0);
-    final bgColor = Color.lerp(Colors.transparent, AfColors.surfaceBase, t)!;
-
-    return Container(
-      color: bgColor,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            AfSpacing.s16,
-            AfSpacing.s8 * (1 - t),
-            AfSpacing.s16,
-            AfSpacing.s8,
-          ),
-          child: Row(
-            children: [
-              if (t < 1.0)
-                Expanded(
-                  child: Opacity(
-                    opacity: 1.0 - t,
-                    child: Transform.scale(
-                      scale: 1.0 - t * 0.15,
-                      alignment: Alignment.centerLeft,
-                      child: ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
-                          colors: [spectral.primary, spectral.secondary],
-                        ).createShader(bounds),
-                        child: Text(
-                          'Listen',
-                          style: AfTypography.display.copyWith(
-                            color: AfColors.textOnPrimary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              if (t >= 1.0)
-                Expanded(
-                  child: Text(
-                    'Listen',
-                    style: AfTypography.titleMedium.copyWith(
-                      color: AfColors.textPrimary,
-                    ),
-                  ),
-                ),
-              _GlassCastButton(onTap: onCastTap),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(covariant _CollapseHeaderDelegate oldDelegate) {
-    return spectral.primary != oldDelegate.spectral.primary ||
-        spectral.secondary != oldDelegate.spectral.secondary ||
-        onCastTap != oldDelegate.onCastTap;
-  }
-}
 
 /// Glass pill button for the cast icon in the header.
 class _GlassCastButton extends StatelessWidget {

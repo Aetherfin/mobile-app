@@ -11,6 +11,7 @@ import '../../widgets/async_error_view.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/skeletons/playlist_skeleton.dart';
 import '../../widgets/af_scrollbar.dart';
+import '../../widgets/collapse_header.dart';
 import '../../widgets/tile.dart';
 import 'import_m3u_dialog.dart';
 
@@ -120,55 +121,35 @@ class PlaylistListScreen extends ConsumerWidget {
             ),
             slivers: [
               // ── Header ──────────────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AfSpacing.s16,
-                    AfSpacing.s16,
-                    AfSpacing.s16,
-                    AfSpacing.s12,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ShaderMask(
-                          shaderCallback: (bounds) => LinearGradient(
-                            colors: [primary, muted],
-                          ).createShader(bounds),
-                          child: Text(
-                            'Playlists',
-                            style: AfTypography.display.copyWith(
-                              color: AfColors.textOnPrimary,
-                            ),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: CollapseHeader(
+                  title: 'Playlists',
+                  spectral: (primary: primary, secondary: muted),
+                  action: Tooltip(
+                    message: 'Import M3U',
+                    child: PressScale(
+                      onTap: () => ref
+                          .read(importM3UActionProvider)
+                          .import(context: context),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AfColors.glassFill,
+                          borderRadius: AfRadii.borderPill,
+                          border: Border.all(
+                            color: AfColors.glassBorderStrong,
+                            width: 1,
                           ),
                         ),
-                      ),
-                      Tooltip(
-                        message: 'Import M3U',
-                        child: PressScale(
-                          onTap: () => ref
-                              .read(importM3UActionProvider)
-                              .import(context: context),
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: AfColors.glassFill,
-                              borderRadius: AfRadii.borderPill,
-                              border: Border.all(
-                                color: AfColors.glassBorderStrong,
-                                width: 1,
-                              ),
-                            ),
-                            child: const Icon(
-                              LucideIcons.listPlus,
-                              color: AfColors.textSecondary,
-                              size: 18,
-                            ),
-                          ),
+                        child: const Icon(
+                          LucideIcons.listPlus,
+                          color: AfColors.textSecondary,
+                          size: 18,
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),

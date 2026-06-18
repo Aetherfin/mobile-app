@@ -7,6 +7,7 @@ import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../state/youtube_music_providers.dart';
+import '../../widgets/collapse_header.dart';
 import '../../widgets/press_scale.dart';
 import 'sections/about_section.dart';
 import 'sections/listening_stats_section.dart';
@@ -103,53 +104,33 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 slivers: [
                   // ── Header — title + settings button ─────────────────────────
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AfSpacing.s16,
-                        AfSpacing.s16,
-                        AfSpacing.s16,
-                        AfSpacing.s12,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: ShaderMask(
-                              shaderCallback: (bounds) => LinearGradient(
-                                colors: [spectral.primary, spectral.secondary],
-                              ).createShader(bounds),
-                              child: Text(
-                                'Profile',
-                                style: AfTypography.display.copyWith(
-                                  color: AfColors.textOnPrimary,
-                                ),
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: CollapseHeader(
+                      title: 'Profile',
+                      spectral: spectral,
+                      action: Tooltip(
+                        message: 'Settings',
+                        child: PressScale(
+                          onTap: () => context.push('/settings'),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AfColors.glassFill,
+                              borderRadius: AfRadii.borderPill,
+                              border: Border.all(
+                                color: AfColors.glassBorderStrong,
+                                width: 1,
                               ),
                             ),
-                          ),
-                          Tooltip(
-                            message: 'Settings',
-                            child: PressScale(
-                              onTap: () => context.push('/settings'),
-                              child: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: AfColors.glassFill,
-                                  borderRadius: AfRadii.borderPill,
-                                  border: Border.all(
-                                    color: AfColors.glassBorderStrong,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  LucideIcons.settings,
-                                  color: AfColors.textSecondary,
-                                  size: 18,
-                                ),
-                              ),
+                            child: const Icon(
+                              LucideIcons.settings,
+                              color: AfColors.textSecondary,
+                              size: 18,
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
