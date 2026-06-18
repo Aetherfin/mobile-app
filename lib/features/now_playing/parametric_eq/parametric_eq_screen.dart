@@ -871,10 +871,12 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
     if (!mounted) return;
     try {
       final svc = ref.read(playerServiceProvider);
-      final current = svc.audioEffects;
-      final merged = _eqState.toAudioEffects(current);
-      await svc.updateAudioEffects((_) => merged);
-      await PlayerSettingsStore.saveAudioEffects(merged);
+      final lavfi = _eqState.toLavfiStrings();
+      await svc.updateAudioEffects((current) {
+        if (lavfi.isEmpty) return current;
+        return current.copyWith(custom: [...current.custom, ...lavfi]);
+      });
+      await PlayerSettingsStore.saveAudioEffects(svc.audioEffects);
     } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

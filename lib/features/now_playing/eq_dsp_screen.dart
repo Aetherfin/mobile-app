@@ -63,11 +63,129 @@ class _EqDspScreenState extends ConsumerState<EqDspScreen> {
   Future<void> _apply() async {
     if (!_s.masterEnabled) return;
     final svc = ref.read(playerServiceProvider);
-    final current = svc.audioEffects;
-    final effects = _s.toAudioEffects(current);
     try {
-      await svc.updateAudioEffects((_) => effects);
-      await PlayerSettingsStore.saveAudioEffects(effects);
+      await Future.wait([
+        svc.updateBass((b) => b.copyWith(enabled: _s.bass != 0, g: _s.bass)),
+        svc.updateTreble(
+          (t) => t.copyWith(enabled: _s.treble != 0, g: _s.treble),
+        ),
+        svc.updateLoudnorm((ln) => ln.copyWith(enabled: _s.loudnorm)),
+        svc.updateAcompressor(
+          (c) => c.copyWith(
+            enabled: _s.compressor,
+            threshold: _s.compThreshold,
+            ratio: _s.compRatio,
+            attack: _s.compAttack,
+            release: _s.compRelease,
+          ),
+        ),
+        svc.updateRubberband(
+          (r) => r.copyWith(
+            enabled: _s.rubberbandEnabled,
+            pitch: _s.pitch,
+            tempo: _s.tempo,
+          ),
+        ),
+        svc.updateCrossfeed(
+          (c) =>
+              c.copyWith(enabled: _s.crossfeed, strength: _s.crossfeedStrength),
+        ),
+        svc.updateStereowiden(
+          (sw) =>
+              sw.copyWith(enabled: _s.stereoWiden, delay: _s.stereoWidenDelay),
+        ),
+        svc.updateAexciter(
+          (e) => e.copyWith(enabled: _s.exciter, amount: _s.exciterAmount),
+        ),
+        svc.updateCrystalizer(
+          (c) =>
+              c.copyWith(enabled: _s.crystalizer, i: _s.crystalizerIntensity),
+        ),
+        svc.updateVirtualbass(
+          (v) =>
+              v.copyWith(enabled: _s.virtualBass, cutoff: _s.virtualBassCutoff),
+        ),
+        svc.updateAgate(
+          (g) => g.copyWith(
+            enabled: _s.gate,
+            threshold: _s.gateThreshold,
+            ratio: _s.gateRatio,
+            attack: _s.gateAttack,
+            release: _s.gateRelease,
+          ),
+        ),
+        svc.updateDeesser(
+          (d) => d.copyWith(
+            enabled: _s.deesser,
+            i: _s.deesserIntensity,
+            m: _s.deesserMix,
+            f: _s.deesserFreq,
+          ),
+        ),
+        svc.updateAecho(
+          (e) => e.copyWith(
+            enabled: _s.echoEnabled,
+            in_gain: _s.echoInGain,
+            out_gain: _s.echoOutGain,
+            delays: _s.echoDelays,
+            decays: _s.echoDecays,
+          ),
+        ),
+        svc.updateAphaser(
+          (p) => p.copyWith(
+            enabled: _s.phaser,
+            in_gain: _s.phaserInGain,
+            out_gain: _s.phaserOutGain,
+            delay: _s.phaserDelay,
+            decay: _s.phaserDecay,
+            speed: _s.phaserSpeed,
+          ),
+        ),
+        svc.updateFlanger(
+          (f) => f.copyWith(
+            enabled: _s.flanger,
+            delay: _s.flangerDelay,
+            depth: _s.flangerDepth,
+            regen: _s.flangerRegen,
+            width: _s.flangerWidth,
+            speed: _s.flangerSpeed,
+          ),
+        ),
+        svc.updateChorus(
+          (c) => c.copyWith(
+            enabled: _s.chorus,
+            in_gain: _s.chorusInGain,
+            out_gain: _s.chorusOutGain,
+            delays: _s.chorusDelays,
+            decays: _s.chorusDecays,
+            speeds: _s.chorusSpeeds,
+            depths: _s.chorusDepths,
+          ),
+        ),
+        svc.updateTremolo(
+          (t) => t.copyWith(
+            enabled: _s.tremolo,
+            f: _s.tremoloFreq,
+            d: _s.tremoloDepth,
+          ),
+        ),
+        svc.updateVibrato(
+          (v) => v.copyWith(
+            enabled: _s.vibrato,
+            f: _s.vibratoFreq,
+            d: _s.vibratoDepth,
+          ),
+        ),
+        svc.updateAcrusher(
+          (c) => c.copyWith(
+            enabled: _s.crusher,
+            bits: _s.crusherBits,
+            mix: _s.crusherMix,
+            samples: _s.crusherSamples,
+          ),
+        ),
+      ]);
+      await PlayerSettingsStore.saveAudioEffects(svc.audioEffects);
     } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -127,9 +245,7 @@ class _EqDspScreenState extends ConsumerState<EqDspScreen> {
       _activePreset = null;
     });
     unawaited(
-      ref
-          .read(playerServiceProvider)
-          .updateAudioEffects((_) => const AudioEffects()),
+      ref.read(playerServiceProvider).setAudioEffects(const AudioEffects()),
     );
     unawaited(PlayerSettingsStore.saveAudioEffects(const AudioEffects()));
     unawaited(EqPresetManager.saveActivePreset(null));

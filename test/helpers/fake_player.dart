@@ -160,6 +160,7 @@ class MockPlayerStream extends Mock implements PlayerStream {}
   when(() => player.setMediaSession(any())).thenAnswer((_) async {});
   when(() => player.sendRawCommand(any())).thenAnswer((_) async {});
   when(() => player.getRawProperty(any())).thenAnswer((_) async => null);
+  when(() => player.getRawPropertyNode(any())).thenAnswer((_) async => null);
 
   // Playback control stubs (override in specific tests)
   when(player.play).thenAnswer((_) async {});

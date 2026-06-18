@@ -15,6 +15,7 @@ import '../eq_dsp_widgets.dart';
 import '../eq_preset.dart';
 import '../eq_preset_manager.dart';
 import 'package:aetherfin/core/audio/models/graphic_eq_state.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart' show SuperequalizerSettings;
 
 /// Standalone 18-band graphic EQ screen.
 ///
@@ -95,9 +96,12 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
   Future<void> _apply() async {
     final svc = ref.read(playerServiceProvider);
     try {
-      await svc.updateAudioEffects((current) {
-        return _state.toAudioEffects(current);
-      });
+      await svc.updateSuperequalizer(
+        (_) => SuperequalizerSettings(
+          enabled: _state.enabled,
+          params: _buildSeParams(),
+        ),
+      );
     } on Exception catch (e, stack) {
       afLog(
         'error',
@@ -111,9 +115,23 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
   Future<void> _save() async {
     final svc = ref.read(playerServiceProvider);
     final current = svc.audioEffects;
-    final merged = _state.toAudioEffects(current);
-    await svc.updateAudioEffects((_) => merged);
-    await PlayerSettingsStore.saveAudioEffects(merged);
+    final params = _buildSeParams();
+    final se = SuperequalizerSettings(enabled: _state.enabled, params: params);
+    await svc.updateSuperequalizer((_) => se);
+    await PlayerSettingsStore.saveAudioEffects(
+      current.copyWith(superequalizer: se),
+    );
+  }
+
+  /// Build superequalizer params map from the current band levels.
+  Map<String, double> _buildSeParams() {
+    final params = <String, double>{};
+    for (var i = 0; i < 18; i++) {
+      if (_state.levels[i] != 0.0) {
+        params[_bandKeys[i]] = _state.levels[i] + 0.5;
+      }
+    }
+    return params;
   }
 
   // ── Handlers ─────────────────────────────────────────────────────────

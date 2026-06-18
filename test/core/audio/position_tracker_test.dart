@@ -40,7 +40,7 @@ void main() {
       () {
         fakeAsync((async) {
           // Simulate active playback so the poll-skip optimization doesn't
-          // short-circuit before getRawProperty is called.
+          // short-circuit before getRawPropertyNode is called.
           when(() => player.state).thenReturn(const PlayerState(playing: true));
 
           const shouldAdvance = false;
@@ -61,8 +61,8 @@ void main() {
           // Mock raw properties for subsequent ticks
           // Tick 1 (+500ms): raw pos is 1200ms, emitted immediately.
           when(
-            () => player.getRawProperty('time-pos'),
-          ).thenAnswer((_) async => '1.2');
+            () => player.getRawPropertyNode('time-pos'),
+          ).thenAnswer((_) async => 1.2);
           async.elapse(const Duration(milliseconds: 500));
           async.flushMicrotasks();
           expect(emittedPositions, [const Duration(milliseconds: 1200)]);
@@ -70,8 +70,8 @@ void main() {
 
           // Tick 2 (+1000ms): raw pos is 1600ms, emitted immediately.
           when(
-            () => player.getRawProperty('time-pos'),
-          ).thenAnswer((_) async => '1.6');
+            () => player.getRawPropertyNode('time-pos'),
+          ).thenAnswer((_) async => 1.6);
           async.elapse(const Duration(milliseconds: 500));
           async.flushMicrotasks();
           expect(emittedPositions, [const Duration(milliseconds: 1600)]);
@@ -155,8 +155,8 @@ void main() {
 
         // Tick 1: Raw position is 1.0s. First time seen.
         when(
-          () => player.getRawProperty('time-pos'),
-        ).thenAnswer((_) async => '1.0');
+          () => player.getRawPropertyNode('time-pos'),
+        ).thenAnswer((_) async => 1.0);
         async.elapse(const Duration(milliseconds: 500));
         async.flushMicrotasks();
         expect(tracker.lastKnownPosition, const Duration(seconds: 1));
@@ -217,8 +217,8 @@ void main() {
 
           // Stale raw positions so it extrapolates
           when(
-            () => player.getRawProperty('time-pos'),
-          ).thenAnswer((_) async => '2.0');
+            () => player.getRawPropertyNode('time-pos'),
+          ).thenAnswer((_) async => 2.0);
 
           // Tick 1
           async.elapse(const Duration(milliseconds: 500));
@@ -271,40 +271,40 @@ void main() {
 
         // Null values
         when(
-          () => player.getRawProperty('time-pos'),
+          () => player.getRawPropertyNode('time-pos'),
         ).thenAnswer((_) async => null);
         when(
-          () => player.getRawProperty('duration'),
+          () => player.getRawPropertyNode('duration'),
         ).thenAnswer((_) async => null);
         expect(await tracker.getRawPosition(), Duration.zero);
         expect(await tracker.getRawDuration(), Duration.zero);
 
         // Non-parsable / garbage values
         when(
-          () => player.getRawProperty('time-pos'),
+          () => player.getRawPropertyNode('time-pos'),
         ).thenAnswer((_) async => 'garbage');
         when(
-          () => player.getRawProperty('duration'),
+          () => player.getRawPropertyNode('duration'),
         ).thenAnswer((_) async => 'invalid');
         expect(await tracker.getRawPosition(), Duration.zero);
         expect(await tracker.getRawDuration(), Duration.zero);
 
         // Negative values
         when(
-          () => player.getRawProperty('time-pos'),
-        ).thenAnswer((_) async => '-1.5');
+          () => player.getRawPropertyNode('time-pos'),
+        ).thenAnswer((_) async => -1.5);
         when(
-          () => player.getRawProperty('duration'),
-        ).thenAnswer((_) async => '-10');
+          () => player.getRawPropertyNode('duration'),
+        ).thenAnswer((_) async => -10);
         expect(await tracker.getRawPosition(), Duration.zero);
         expect(await tracker.getRawDuration(), Duration.zero);
 
         // Exceptions
         when(
-          () => player.getRawProperty('time-pos'),
+          () => player.getRawPropertyNode('time-pos'),
         ).thenThrow(Exception('mpv crash'));
         when(
-          () => player.getRawProperty('duration'),
+          () => player.getRawPropertyNode('duration'),
         ).thenThrow(Exception('mpv crash'));
         expect(await tracker.getRawPosition(), Duration.zero);
         expect(await tracker.getRawDuration(), Duration.zero);
@@ -327,8 +327,8 @@ void main() {
 
         // 1. Mock raw position to return 5s
         when(
-          () => player.getRawProperty('time-pos'),
-        ).thenAnswer((_) async => '5.0');
+          () => player.getRawPropertyNode('time-pos'),
+        ).thenAnswer((_) async => 5.0);
 
         // Elapse 400ms so that the next periodic timer tick (at T=500ms) falls within the seek reset window (300ms)
         async.elapse(const Duration(milliseconds: 400));
@@ -443,7 +443,7 @@ void main() {
             // Tick 1: _executePoll throws an Error (not Exception).
             // On Exception catch doesn't catch Error — without the
             // try/finally fix, _pollChain stays non-null forever.
-            when(() => player.getRawProperty('time-pos')).thenThrow(Error());
+            when(() => player.getRawPropertyNode('time-pos')).thenThrow(Error());
 
             async.elapse(const Duration(milliseconds: 500));
             async.flushMicrotasks();
@@ -451,8 +451,8 @@ void main() {
             // Tick 2: should succeed because try/finally cleared
             // _pollChain even though tick 1 errored.
             when(
-              () => player.getRawProperty('time-pos'),
-            ).thenAnswer((_) async => '2.0');
+              () => player.getRawPropertyNode('time-pos'),
+            ).thenAnswer((_) async => 2.0);
             async.elapse(const Duration(milliseconds: 500));
             async.flushMicrotasks();
             // If _pollChain was NOT cleared, 2.0s is never emitted.

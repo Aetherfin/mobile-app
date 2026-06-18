@@ -129,6 +129,7 @@ class AfPlayerService {
       _player
           .setMediaSession(
             const MediaSession(
+              autoApplyPlaylistNavigation: false,
               actions: {
                 MediaAction.play,
                 MediaAction.pause,
@@ -413,6 +414,10 @@ class AfPlayerService {
   Stream<AudioParams> get audioOutParamsStream => _player.stream.audioOutParams;
   AudioParams get audioOutParams => _player.state.audioOutParams;
 
+  /// Live demuxer cache state — buffered ranges, download rate, eof flags.
+  Stream<DemuxerCacheState> get demuxerCacheStateStream =>
+      _player.stream.demuxerCacheState;
+
   // ---------------------------------------------------------------------------
   // shouldAdvancePosition (needs cross-cutting state)
   // ---------------------------------------------------------------------------
@@ -669,6 +674,83 @@ class AfPlayerService {
     });
     afLog('audio', 'audioEffects updated');
   }
+
+  // ── Per-effect updaters (glitch-free, no full chain rebuild) ──────
+
+  Future<void> updateBass(BassSettings Function(BassSettings) mapper) =>
+      _player.updateAudioEffects((e) => e.updateBass(mapper));
+
+  Future<void> updateTreble(TrebleSettings Function(TrebleSettings) mapper) =>
+      _player.updateAudioEffects((e) => e.updateTreble(mapper));
+
+  Future<void> updateAcompressor(
+    AcompressorSettings Function(AcompressorSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateAcompressor(mapper));
+
+  Future<void> updateAgate(AgateSettings Function(AgateSettings) mapper) =>
+      _player.updateAudioEffects((e) => e.updateAgate(mapper));
+
+  Future<void> updateDeesser(
+    DeesserSettings Function(DeesserSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateDeesser(mapper));
+
+  Future<void> updateSuperequalizer(
+    SuperequalizerSettings Function(SuperequalizerSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateSuperequalizer(mapper));
+
+  Future<void> updateRubberband(
+    RubberbandSettings Function(RubberbandSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateRubberband(mapper));
+
+  Future<void> updateCrossfeed(
+    CrossfeedSettings Function(CrossfeedSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateCrossfeed(mapper));
+
+  Future<void> updateStereowiden(
+    StereowidenSettings Function(StereowidenSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateStereowiden(mapper));
+
+  Future<void> updateAexciter(
+    AexciterSettings Function(AexciterSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateAexciter(mapper));
+
+  Future<void> updateCrystalizer(
+    CrystalizerSettings Function(CrystalizerSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateCrystalizer(mapper));
+
+  Future<void> updateVirtualbass(
+    VirtualbassSettings Function(VirtualbassSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateVirtualbass(mapper));
+
+  Future<void> updateLoudnorm(
+    LoudnormSettings Function(LoudnormSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateLoudnorm(mapper));
+
+  Future<void> updateAphaser(
+    AphaserSettings Function(AphaserSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateAphaser(mapper));
+
+  Future<void> updateAecho(AechoSettings Function(AechoSettings) mapper) =>
+      _player.updateAudioEffects((e) => e.updateAecho(mapper));
+
+  Future<void> updateFlanger(
+    FlangerSettings Function(FlangerSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateFlanger(mapper));
+
+  Future<void> updateTremolo(
+    TremoloSettings Function(TremoloSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateTremolo(mapper));
+
+  Future<void> updateVibrato(
+    VibratoSettings Function(VibratoSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateVibrato(mapper));
+
+  Future<void> updateAcrusher(
+    AcrusherSettings Function(AcrusherSettings) mapper,
+  ) => _player.updateAudioEffects((e) => e.updateAcrusher(mapper));
+
+  Future<void> updateChorus(ChorusSettings Function(ChorusSettings) mapper) =>
+      _player.updateAudioEffects((e) => e.updateChorus(mapper));
 
   Future<void> setReplayGain(ReplayGainSettings settings) async {
     if (_disposed) return;

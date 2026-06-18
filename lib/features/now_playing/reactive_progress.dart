@@ -1,5 +1,8 @@
+import 'dart:async' show StreamSubscription;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
@@ -27,6 +30,32 @@ class ReactiveProgress extends ConsumerStatefulWidget {
 class _ReactiveProgressState extends ConsumerState<ReactiveProgress> {
   double? _scrubPreview;
   bool _isDragging = false;
+  double _bufferedPercent = 0.0;
+  Duration _prefetchDuration = Duration.zero;
+  StreamSubscription<double>? _bufferSub;
+  StreamSubscription<Duration>? _prefetchSub;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final svc = ref.read(playerServiceProvider);
+      _bufferSub = svc.bufferingPercentageStream.listen((pct) {
+        if (mounted) setState(() => _bufferedPercent = pct.clamp(0.0, 100.0));
+      });
+      _prefetchSub = svc.prefetchCacheDurationStream.listen((dur) {
+        if (mounted) setState(() => _prefetchDuration = dur);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _bufferSub?.cancel();
+    _prefetchSub?.cancel();
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(covariant ReactiveProgress oldWidget) {
@@ -34,6 +63,8 @@ class _ReactiveProgressState extends ConsumerState<ReactiveProgress> {
     if (oldWidget.track.id != widget.track.id) {
       _isDragging = false;
       _scrubPreview = null;
+      _bufferedPercent = 0.0;
+      _prefetchDuration = Duration.zero;
     }
   }
 
@@ -110,6 +141,32 @@ class _ReactiveProgressState extends ConsumerState<ReactiveProgress> {
               },
             ),
             const SizedBox(height: AfSpacing.s4),
+            // ── Buffered range bar ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s4),
+              child: SizedBox(
+                height: 3,
+                child: ClipRRect(
+                  borderRadius: AfRadii.borderPill,
+                  child: Stack(
+                    children: [
+                      // Track background
+                      Positioned.fill(
+                        child: ColoredBox(
+                          color: AfColors.textTertiary.withValues(alpha: 0.10),
+                        ),
+                      ),
+                      // Buffered fill
+                      FractionallySizedBox(
+                        widthFactor: (_bufferedPercent / 100.0).clamp(0.0, 1.0),
+                        child: const ColoredBox(color: AfColors.glassFillMedium),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AfSpacing.s4),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s4),
               child: Row(
@@ -121,6 +178,36 @@ class _ReactiveProgressState extends ConsumerState<ReactiveProgress> {
                       color: AfColors.textSecondary,
                     ),
                   ),
+                  // ── Prefetch duration indicator ──
+                  if (_prefetchDuration > Duration.zero &&
+                      _prefetchDuration < duration)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AfSpacing.s8,
+                        vertical: AfSpacing.s2,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: AfColors.glassFillStrong,
+                        borderRadius: AfRadii.borderPill,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            LucideIcons.cloudDownload,
+                            size: 10,
+                            color: AfColors.textTertiary,
+                          ),
+                          const SizedBox(width: AfSpacing.s2),
+                          Text(
+                            '${_prefetchDuration.inSeconds}s',
+                            style: AfTypography.overline.copyWith(
+                              color: AfColors.textTertiary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   Text(
                     formatRemaining(remaining),
                     style: AfTypography.mono.copyWith(

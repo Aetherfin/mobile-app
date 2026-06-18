@@ -17,7 +17,7 @@ final _secondsRegex = RegExp(
 );
 
 /// Stores a snapshot of playback position for elapsed-time extrapolation.
-/// Used when mpv's observe_property/getRawProperty for time-pos stalls.
+/// Used when mpv's observe_property/getRawPropertyNode for time-pos stalls.
 class _PositionAnchor {
   Duration lastKnownPos = Duration.zero;
   DateTime lastUpdateTime = clock.now();
@@ -137,6 +137,7 @@ class AfPositionTracker {
   /// - Whitespace: "  5.0  "
   ///
   /// Returns the parsed seconds, or `null` if the string can't be parsed.
+  // Retained as fallback; getRawPropertyNode is now preferred.
   @visibleForTesting
   static double? parseSeconds(String raw) {
     // Fast path: clean numeric string — handles 99.9% of mpv output.
@@ -152,11 +153,13 @@ class AfPositionTracker {
 
   Future<Duration> getRawPosition() async {
     try {
-      final raw = await _player.getRawProperty('time-pos');
-      if (raw == null) return Duration.zero;
-      final secs = parseSeconds(raw);
-      if (secs == null || secs < 0) return Duration.zero;
-      return Duration(milliseconds: (secs * 1000).round());
+      final node = await _player.getRawPropertyNode('time-pos');
+      if (node == null) return Duration.zero;
+      final seconds = (node is num)
+          ? node.toDouble()
+          : double.tryParse('$node') ?? 0.0;
+      if (seconds < 0) return Duration.zero;
+      return Duration(milliseconds: (seconds * 1000).round());
     } on Exception catch (e, stack) {
       afLog('audio', 'getRawPosition failed', error: e, stackTrace: stack);
       return Duration.zero;
@@ -165,11 +168,13 @@ class AfPositionTracker {
 
   Future<Duration> getRawDuration() async {
     try {
-      final raw = await _player.getRawProperty('duration');
-      if (raw == null) return Duration.zero;
-      final secs = parseSeconds(raw);
-      if (secs == null || secs <= 0) return Duration.zero;
-      return Duration(milliseconds: (secs * 1000).round());
+      final node = await _player.getRawPropertyNode('duration');
+      if (node == null) return Duration.zero;
+      final seconds = (node is num)
+          ? node.toDouble()
+          : double.tryParse('$node') ?? 0.0;
+      if (seconds <= 0) return Duration.zero;
+      return Duration(milliseconds: (seconds * 1000).round());
     } on Exception catch (e, stack) {
       afLog('audio', 'getRawDuration failed', error: e, stackTrace: stack);
       return Duration.zero;
@@ -223,7 +228,7 @@ class AfPositionTracker {
   Future<void> _pollAndEmitPosition() async {
     if (_isSeeking) return;
     // Skip poll when nothing is advancing — no need to hit the
-    // MethodChannel for getRawProperty('time-pos').  UI reads from
+    // MethodChannel for getRawPropertyNode('time-pos').  UI reads from
     // positionStreamProvider which holds the last emitted value.
     if (!_player.state.playing && !_shouldAdvancePosition()) {
       _emitPosition(_positionAnchor.lastKnownPos);
