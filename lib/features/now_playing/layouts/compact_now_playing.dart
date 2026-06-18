@@ -17,12 +17,14 @@ class CompactNowPlaying extends StatelessWidget {
   const CompactNowPlaying({
     super.key,
     required this.track,
+    required this.spectral,
     required this.expandedNotifier,
     required this.lyricsExpandedNotifier,
     required this.onToggleLyrics,
   });
 
   final AfTrack track;
+  final Spectral spectral;
   final ValueNotifier<bool> expandedNotifier;
   final ValueNotifier<bool> lyricsExpandedNotifier;
   final VoidCallback onToggleLyrics;
@@ -79,8 +81,8 @@ class CompactNowPlaying extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        AfColors.surfaceCanvas.withValues(alpha: 0.6),
-                        AfColors.surfaceCanvas,
+                        spectral.surfaceCanvas.withValues(alpha: 0.6),
+                        spectral.surfaceCanvas,
                       ],
                       stops: const [0.0, 0.5, 1.0],
                     ),

@@ -53,6 +53,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
   @override
   Widget build(BuildContext context) {
     final track = ref.watch(currentTrackProvider);
+    final spectral = ref.watch(currentSpectralProvider);
 
     if (track == null) {
       return const NowPlayingEmptyState();
@@ -87,6 +88,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
                 return switch (screenSize) {
                   AfScreenSize.compact => CompactNowPlaying(
                     track: track,
+                    spectral: spectral,
                     expandedNotifier: _expandedNotifier,
                     lyricsExpandedNotifier: _lyricsExpandedNotifier,
                     onToggleLyrics: _toggleLyrics,

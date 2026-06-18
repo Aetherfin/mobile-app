@@ -83,31 +83,48 @@ class _AbLoopButton extends ConsumerWidget {
     final abB = ref.watch(abLoopBProvider);
     final active = abA != null || abB != null;
     return Semantics(
-      label: 'A-B loop',
+      label: abB != null
+          ? 'A-B loop active, tap to clear'
+          : abA != null
+          ? 'A-B loop point A set, tap to set point B'
+          : 'A-B loop, tap to set start point',
       button: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          if (active) {
-            ref.read(playerServiceProvider).setAbLoopA(null);
-            ref.read(playerServiceProvider).setAbLoopB(null);
-            ref.read(abLoopAProvider.notifier).set(null);
-            ref.read(abLoopBProvider.notifier).set(null);
-            return;
-          }
-          final pos = ref.read(positionStreamProvider);
-          ref.read(playerServiceProvider).setAbLoopA(pos);
-          ref.read(abLoopAProvider.notifier).set(pos);
-        },
-        child: SizedBox(
-          width: 48,
-          height: 48,
-          child: Align(
-            alignment: Alignment.center,
-            child: Icon(
-              LucideIcons.repeat1,
-              size: 20,
-              color: active ? spectral : AfColors.textTertiary,
+      child: Tooltip(
+        message: abB != null
+            ? 'Clear A-B loop'
+            : abA != null
+            ? 'Set A-B loop end'
+            : 'Set A-B loop start',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            if (active) {
+              ref.read(playerServiceProvider).setAbLoopA(null);
+              ref.read(playerServiceProvider).setAbLoopB(null);
+              ref.read(abLoopAProvider.notifier).set(null);
+              ref.read(abLoopBProvider.notifier).set(null);
+              return;
+            }
+            final pos = ref.read(positionStreamProvider);
+            ref.read(playerServiceProvider).setAbLoopA(pos);
+            ref.read(abLoopAProvider.notifier).set(pos);
+          },
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: active
+                ? BoxDecoration(
+                    color: spectral.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  )
+                : null,
+            child: Align(
+              alignment: Alignment.center,
+              child: Icon(
+                LucideIcons.repeat1,
+                size: 20,
+                color: active ? spectral : AfColors.textTertiary,
+              ),
             ),
           ),
         ),

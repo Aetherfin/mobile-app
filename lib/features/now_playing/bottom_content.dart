@@ -8,6 +8,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
+import '../../utils/time_format.dart';
+import '../../widgets/artwork.dart';
 import '../../widgets/favorite_heart_button.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/marquee_text.dart';
@@ -194,28 +196,52 @@ class _BottomContentState extends ConsumerState<BottomContent>
                                       .skipToQueueItem(queue.indexOf(t)),
                                 );
                               },
-                              child: ListTile(
-                                dense: true,
-                                visualDensity: VisualDensity.compact,
-                                leading: Text(
-                                  '${index + 1}',
-                                  style: AfTypography.caption.copyWith(
-                                    color: AfColors.textTertiary,
-                                  ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AfSpacing.s16,
+                                  vertical: AfSpacing.s4,
                                 ),
-                                title: Text(
-                                  t.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AfTypography.bodyMedium,
-                                ),
-                                subtitle: Text(
-                                  t.artistName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AfTypography.caption.copyWith(
-                                    color: AfColors.textTertiary,
-                                  ),
+                                child: Row(
+                                  children: [
+                                    Artwork(
+                                      url: t.imageUrl,
+                                      size: 20,
+                                      radius: AfRadii.borderSm,
+                                    ),
+                                    const SizedBox(width: AfSpacing.s8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            t.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AfTypography.bodyMedium,
+                                          ),
+                                          const SizedBox(height: AfSpacing.s2),
+                                          Text(
+                                            t.artistName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AfTypography.caption
+                                                .copyWith(
+                                                  color: AfColors.textTertiary,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: AfSpacing.s8),
+                                    Text(
+                                      formatTrackDuration(t.duration),
+                                      style: AfTypography.caption.copyWith(
+                                        color: AfColors.textTertiary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
@@ -245,38 +271,44 @@ class MetadataOverlay extends ConsumerWidget {
       currentSpectralProvider.select((s) => (link: s.link, muted: s.muted)),
     );
     final sleepRemaining = ref.watch(sleepTimerRemainingProvider);
+    final loadedTrackId = ref.watch(mpvLoadedTrackIdProvider);
+    final isTransitioning = track.id != loadedTrackId;
     return Row(
       children: [
         // Title + artist
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              MarqueeText(text: track.title, style: AfTypography.titleMedium),
-              const SizedBox(height: AfSpacing.s4),
-              PressScale(
-                ensureHitTarget: false,
-                onTap: () => navigateToArtist(
-                  context,
-                  ref,
-                  artistId: track.artistId,
-                  artistName: track.artistName,
-                ),
-                child: Semantics(
-                  label: 'Go to artist ${track.artistName}',
-                  button: true,
-                  child: Text(
-                    track.artistName,
-                    style: AfTypography.bodySmall.copyWith(
-                      color: spectral.link,
+          child: AnimatedOpacity(
+            opacity: isTransitioning ? 0.5 : 1.0,
+            duration: AfDurations.quick,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                MarqueeText(text: track.title, style: AfTypography.titleMedium),
+                const SizedBox(height: AfSpacing.s4),
+                PressScale(
+                  ensureHitTarget: false,
+                  onTap: () => navigateToArtist(
+                    context,
+                    ref,
+                    artistId: track.artistId,
+                    artistName: track.artistName,
+                  ),
+                  child: Semantics(
+                    label: 'Go to artist ${track.artistName}',
+                    button: true,
+                    child: Text(
+                      track.artistName,
+                      style: AfTypography.bodySmall.copyWith(
+                        color: spectral.link,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         const SizedBox(width: AfSpacing.s12),
