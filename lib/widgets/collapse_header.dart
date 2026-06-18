@@ -49,7 +49,11 @@ class CollapseHeader extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     final t = (shrinkOffset / _collapseThreshold).clamp(0.0, 1.0);
-    final bgColor = Color.lerp(Colors.transparent, AfColors.surfaceBase, t)!;
+    final bgColor = Color.lerp(
+      AfColors.surfaceCanvas.withValues(alpha: 0.82),
+      AfColors.surfaceBase,
+      t,
+    )!;
 
     return Container(
       color: bgColor,
