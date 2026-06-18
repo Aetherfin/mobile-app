@@ -49,11 +49,7 @@ class CollapseHeader extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     final t = (shrinkOffset / _collapseThreshold).clamp(0.0, 1.0);
-    final bgColor = Color.lerp(
-      AfColors.surfaceCanvas.withValues(alpha: 0.82),
-      AfColors.surfaceBase,
-      t,
-    )!;
+    final bgColor = Color.lerp(Colors.transparent, AfColors.surfaceBase, t)!;
 
     return Container(
       color: bgColor,
@@ -70,20 +66,17 @@ class CollapseHeader extends SliverPersistentHeaderDelegate {
             children: [
               if (t < 1.0)
                 Expanded(
-                  child: Opacity(
-                    opacity: 1.0 - t,
-                    child: Transform.scale(
-                      scale: 1.0 - t * 0.15,
-                      alignment: Alignment.centerLeft,
-                      child: ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
-                          colors: [spectral.primary, spectral.secondary],
-                        ).createShader(bounds),
-                        child: Text(
-                          title,
-                          style: AfTypography.display.copyWith(
-                            color: AfColors.textOnPrimary,
-                          ),
+                  child: Transform.scale(
+                    scale: 1.0 - t * 0.15,
+                    alignment: Alignment.centerLeft,
+                    child: ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: [spectral.primary, spectral.secondary],
+                      ).createShader(bounds),
+                      child: Text(
+                        title,
+                        style: AfTypography.display.copyWith(
+                          color: AfColors.textOnPrimary,
                         ),
                       ),
                     ),
