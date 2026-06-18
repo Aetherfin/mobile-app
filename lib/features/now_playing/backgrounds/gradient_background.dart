@@ -23,7 +23,8 @@ class GradientBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final oklch = srgbToOklch(energy);
-    final shadowColor = OklchColor(0.18, oklch.c * 0.35, oklch.h).toColor();
+    // ponytail: brighter shadow — L 0.22, chroma ×0.45 for more visible gradient
+    final shadowColor = OklchColor(0.22, oklch.c * 0.45, oklch.h).toColor();
     const darkSurface = AfColors.surfaceCanvas;
 
     return Container(
