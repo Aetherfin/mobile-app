@@ -221,7 +221,7 @@ final _router = GoRouter(
       parentNavigatorKey: _rootKey,
       pageBuilder: (context, state) => CustomTransitionPage(
         child: const NowPlayingScreen(),
-        transitionDuration: AfDurations.standard,
+        transitionDuration: AfDurations.expressive,
         reverseTransitionDuration: AfDurations.standard,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           final curved = CurvedAnimation(
@@ -230,10 +230,7 @@ final _router = GoRouter(
           );
           return FadeTransition(
             opacity: curved,
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.95, end: 1.0).animate(curved),
-              child: child,
-            ),
+            child: child,
           );
         },
       ),

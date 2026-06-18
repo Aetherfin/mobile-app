@@ -257,10 +257,13 @@ class _ArtworkRing extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(_ringStroke + 1),
-            child: Artwork(
-              url: track.imageUrl,
-              size: _artworkSize,
-              radius: AfRadii.borderXl,
+            child: Hero(
+              tag: 'now-playing-artwork',
+              child: Artwork(
+                url: track.imageUrl,
+                size: _artworkSize,
+                radius: AfRadii.borderXl,
+              ),
             ),
           ),
           Positioned.fill(
