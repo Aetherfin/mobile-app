@@ -39,8 +39,18 @@ class CollapseHeader extends SliverPersistentHeaderDelegate {
             (AfTypography.display.fontSize! -
                 AfTypography.titleMedium.fontSize!);
 
-    return ColoredBox(
-      color: AfColors.surfaceBase,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            spectral.primary.withValues(alpha: 0.12),
+            spectral.secondary.withValues(alpha: 0.08),
+            AfColors.surfaceBase,
+          ],
+        ),
+      ),
       child: SafeArea(
         bottom: false,
         child: Padding(
