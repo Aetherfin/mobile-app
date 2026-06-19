@@ -22,7 +22,7 @@ dependencies:
 
   # Networking
   dio: 5.9.2
-  dio_cache_interceptor: 3.5.1
+  dio_cache_interceptor: ^4.0.6
 
   # Imagery
   cached_network_image: 3.4.1
@@ -31,7 +31,7 @@ dependencies:
   image_picker: ^1.1.2
 
   # Discovery
-  multicast_dns: 0.3.3
+  multicast_dns: 0.3.3+1
 
   # Local persistence
   flutter_secure_storage: 10.3.1
@@ -39,7 +39,7 @@ dependencies:
   path_provider: 2.1.6
 
   # Fonts
-  google_fonts: 6.3.3
+  google_fonts: ^8.1.0
 
   # Crypto (Subsonic token auth: md5(password + salt))
   crypto: 3.0.7
@@ -106,6 +106,9 @@ dependency_overrides:
   # Upstream: https://github.com/vqh2602/lucide-flutter-main
   lucide_icons_flutter:
     path: packages/lucide_icons_flutter_patched
+  # xml 7.x — dbus pins ^6.6.1 but only uses stable DOM APIs. Force 7.0.1
+  # for consistency with vector_graphics_compiler (already allows <=7.0.1).
+  xml: ^7.0.1
 
 flutter_native_splash:
   color: "#0B0B14"

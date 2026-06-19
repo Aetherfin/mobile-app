@@ -175,7 +175,8 @@ class SharedDioClient {
           policy: CachePolicy.forceCache,
           maxStale: const Duration(seconds: 30),
           priority: CachePriority.normal,
-          hitCacheOnErrorExcept: [401, 403],
+          hitCacheOnErrorCodes: [404, 405, 500, 501, 502, 503, 504],
+          hitCacheOnNetworkFailure: true,
         ),
       ),
     );
