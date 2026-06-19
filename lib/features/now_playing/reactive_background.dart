@@ -87,15 +87,10 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlayStyle,
-      child: Stack(
-        children: [
-          AnimatedBuilder(
-            animation: _colorAnimation,
-            builder: (context, _) =>
-                GlowBackground(energy: energy, child: const SizedBox.shrink()),
-          ),
-          widget.child,
-        ],
+      child: AnimatedBuilder(
+        animation: _colorAnimation,
+        builder: (context, _) =>
+            GlowBackground(energy: energy, child: widget.child),
       ),
     );
   }
