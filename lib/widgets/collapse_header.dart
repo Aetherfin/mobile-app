@@ -40,7 +40,7 @@ class CollapseHeader extends SliverPersistentHeaderDelegate {
                 AfTypography.titleMedium.fontSize!);
 
     return ColoredBox(
-      color: overlapsContent ? AfColors.surfaceCanvas : Colors.transparent,
+      color: AfColors.surfaceBase,
       child: SafeArea(
         bottom: false,
         child: Padding(
