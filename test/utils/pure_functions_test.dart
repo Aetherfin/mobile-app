@@ -32,6 +32,13 @@ void main() {
       expect(formatCompactCount(1000), '1.0K');
       expect(formatCompactCount(2247), '2.2K');
     });
+
+    test('boundaries and larger magnitudes', () {
+      expect(formatCompactCount(9999), '9.9K');
+      expect(formatCompactCount(10000), '10K');
+      expect(formatCompactCount(999999), '999K');
+      expect(formatCompactCount(1000000), '1.0M');
+    });
   });
 
   group('parseLrc', () {
