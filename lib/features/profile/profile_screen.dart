@@ -148,7 +148,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         parent: ClampingScrollPhysics(),
                       ),
                       slivers: [
-                        // ── Split info — avatar + info + inline stats ────
+                        // ── Profile card — avatar + info + inline stats ────
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AfSpacing.s16),
+                        ),
                         SliverToBoxAdapter(
                           child: SplitInfoSection(
                             name: name,
@@ -177,7 +180,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         // ── Quick stats — artists + playlists ────────────────────────
                         SliverToBoxAdapter(
                           child: Padding(
-                            padding: const EdgeInsets.only(top: AfSpacing.s16),
+                            padding: const EdgeInsets.only(top: AfSpacing.s12),
                             child: QuickStatsRow(
                               artistCount: _fmtCount(artistsAsync),
                               playlistCount: _fmtCount(playlistsAsync),
@@ -186,6 +189,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
 
                         // ── Pinned ───────────────────────────────────────────────────
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AfSpacing.s12),
+                        ),
                         const SliverToBoxAdapter(child: PinnedSectionHeader()),
                         SliverToBoxAdapter(
                           child: Padding(
@@ -196,13 +202,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                         // ── Listening Stats ──────────────────────────────────────────
                         SliverToBoxAdapter(
-                          child: ListeningStatsSection(
-                            isLastFmConnected: isLastFmConnected,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: AfSpacing.s12),
+                            child: ListeningStatsSection(
+                              isLastFmConnected: isLastFmConnected,
+                            ),
                           ),
                         ),
 
                         // ── About ───────────────────────────────────────────────────
-                        const SliverToBoxAdapter(child: AboutSection()),
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: AfSpacing.s12),
+                            child: AboutSection(),
+                          ),
+                        ),
 
                         const SliverToBoxAdapter(
                           child: SizedBox(

@@ -30,12 +30,7 @@ class ListeningStatsSection extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         const Padding(
-          padding: EdgeInsets.fromLTRB(
-            AfSpacing.s16,
-            AfSpacing.s24,
-            AfSpacing.s16,
-            0,
-          ),
+          padding: EdgeInsets.fromLTRB(AfSpacing.s16, 0, AfSpacing.s16, 0),
           child: SectionHeader(title: 'Listening Stats', uppercase: true),
         ),
         if (!isLastFmConnected)

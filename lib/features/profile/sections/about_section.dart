@@ -8,6 +8,7 @@ import '../../../widgets/press_scale.dart';
 import '../../../widgets/section_header.dart';
 
 /// About section with app info and links.
+/// Wrapped in a glass card for visual consistency with other profile sections.
 class AboutSection extends StatelessWidget {
   const AboutSection({super.key});
 
@@ -18,12 +19,7 @@ class AboutSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.fromLTRB(
-            AfSpacing.s16,
-            AfSpacing.s24,
-            AfSpacing.s16,
-            0,
-          ),
+          padding: EdgeInsets.fromLTRB(AfSpacing.s16, 0, AfSpacing.s16, 0),
           child: SectionHeader(title: 'About', uppercase: true),
         ),
         Padding(

@@ -13,6 +13,7 @@ import '../../../widgets/bottom_sheet.dart';
 import '../../../widgets/press_scale.dart';
 
 /// Split info section — avatar on left, user info + stats on right.
+/// Wrapped in a glass card for visual separation.
 class SplitInfoSection extends ConsumerWidget {
   const SplitInfoSection({
     super.key,
@@ -36,12 +37,13 @@ class SplitInfoSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AfSpacing.s16,
-        AfSpacing.s16,
-        AfSpacing.s16,
-        0,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+      padding: const EdgeInsets.all(AfSpacing.s16),
+      decoration: BoxDecoration(
+        color: AfColors.glassFill,
+        borderRadius: AfRadii.borderLg,
+        border: Border.all(color: AfColors.glassBorder, width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,

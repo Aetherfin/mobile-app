@@ -8,6 +8,7 @@ import '../../../widgets/artwork.dart';
 import '../../../widgets/section_header.dart';
 
 /// Quick stats row — two stat chips for artists and playlists.
+/// Wrapped in a glass card for visual separation.
 class QuickStatsRow extends StatelessWidget {
   const QuickStatsRow({
     super.key,
@@ -20,8 +21,14 @@ class QuickStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+      padding: const EdgeInsets.all(AfSpacing.s12),
+      decoration: BoxDecoration(
+        color: AfColors.glassFill,
+        borderRadius: AfRadii.borderLg,
+        border: Border.all(color: AfColors.glassBorder, width: 1),
+      ),
       child: Row(
         children: [
           Expanded(
@@ -46,6 +53,7 @@ class QuickStatsRow extends StatelessWidget {
 }
 
 /// Individual stat chip — icon + value + label.
+/// Uses glass fill background for visual consistency.
 class StatChip extends StatelessWidget {
   const StatChip({
     super.key,
@@ -63,7 +71,7 @@ class StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AfSpacing.s12),
       decoration: const BoxDecoration(
-        color: AfColors.surfaceBase,
+        color: AfColors.glassFillStrong,
         borderRadius: AfRadii.borderMd,
       ),
       child: Row(
@@ -96,24 +104,21 @@ class StatChip extends StatelessWidget {
 }
 
 /// Section header for the "Pinned" albums row.
+/// Wrapped in a glass card for visual separation.
 class PinnedSectionHeader extends StatelessWidget {
   const PinnedSectionHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.fromLTRB(
-        AfSpacing.s16,
-        AfSpacing.s24,
-        AfSpacing.s16,
-        0,
-      ),
+      padding: EdgeInsets.fromLTRB(AfSpacing.s16, 0, AfSpacing.s16, 0),
       child: SectionHeader(title: 'Pinned', uppercase: true),
     );
   }
 }
 
 /// Horizontal row of pinned/favorite albums.
+/// Wrapped in a glass card for visual separation.
 class PinnedAlbumsRow extends StatelessWidget {
   const PinnedAlbumsRow({super.key, required this.albums});
 
@@ -125,9 +130,10 @@ class PinnedAlbumsRow extends StatelessWidget {
       return Container(
         height: AfLayout.profileSectionCompact,
         margin: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
-        decoration: const BoxDecoration(
-          color: AfColors.surfaceBase,
-          borderRadius: AfRadii.borderMd,
+        decoration: BoxDecoration(
+          color: AfColors.glassFill,
+          borderRadius: AfRadii.borderLg,
+          border: Border.all(color: AfColors.glassBorder, width: 1),
         ),
         child: Center(
           child: Text(
@@ -140,59 +146,70 @@ class PinnedAlbumsRow extends StatelessWidget {
       );
     }
 
-    return SizedBox(
-      height: AfLayout.profileSectionTall,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
-        itemCount: albums.length,
-        separatorBuilder: (context, index) =>
-            const SizedBox(width: AfSpacing.s12),
-        itemBuilder: (context, i) {
-          final a = albums[i];
-          return Semantics(
-            button: true,
-            label: 'Go to album ${a.name}',
-            child: GestureDetector(
-              onTap: () => context.push('/album/${a.id}'),
-              child: SizedBox(
-                width: 120,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Album artwork
-                    AspectRatio(
-                      aspectRatio: 1,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          borderRadius: AfRadii.borderSm,
-                          color: AfColors.surfaceRaised,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
+      decoration: BoxDecoration(
+        color: AfColors.glassFill,
+        borderRadius: AfRadii.borderLg,
+        border: Border.all(color: AfColors.glassBorder, width: 1),
+      ),
+      child: ClipRRect(
+        borderRadius: AfRadii.borderLg,
+        child: SizedBox(
+          height: AfLayout.profileSectionTall + AfSpacing.s32,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.all(AfSpacing.s12),
+            itemCount: albums.length,
+            separatorBuilder: (context, index) =>
+                const SizedBox(width: AfSpacing.s8),
+            itemBuilder: (context, i) {
+              final a = albums[i];
+              return Semantics(
+                button: true,
+                label: 'Go to album ${a.name}',
+                child: GestureDetector(
+                  onTap: () => context.push('/album/${a.id}'),
+                  child: SizedBox(
+                    width: 110,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Album artwork
+                        AspectRatio(
+                          aspectRatio: 1,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              borderRadius: AfRadii.borderSm,
+                              color: AfColors.surfaceRaised,
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Artwork(
+                              url: a.imageUrl,
+                              size: 110,
+                              radius: AfRadii.borderSm,
+                            ),
+                          ),
                         ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Artwork(
-                          url: a.imageUrl,
-                          size: 120,
-                          radius: AfRadii.borderSm,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AfSpacing.s8),
+                        const SizedBox(height: AfSpacing.s8),
 
-                    // Album name
-                    Text(
-                      a.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AfTypography.bodySmall.copyWith(
-                        color: AfColors.textPrimary,
-                      ),
+                        // Album name
+                        Text(
+                          a.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AfTypography.caption.copyWith(
+                            color: AfColors.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ),
       ),
     );
   }
