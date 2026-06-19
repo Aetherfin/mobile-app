@@ -39,33 +39,36 @@ class CollapseHeader extends SliverPersistentHeaderDelegate {
             (AfTypography.display.fontSize! -
                 AfTypography.titleMedium.fontSize!);
 
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AfSpacing.s16,
-          AfSpacing.s4,
-          AfSpacing.s16,
-          AfSpacing.s4,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: ShaderMask(
-                shaderCallback: (bounds) => LinearGradient(
-                  colors: [spectral.primary, spectral.secondary],
-                ).createShader(bounds),
-                child: Text(
-                  title,
-                  style: AfTypography.display.copyWith(
-                    fontSize: fontSize,
-                    color: AfColors.textOnPrimary,
+    return ColoredBox(
+      color: AfColors.surfaceCanvas,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AfSpacing.s16,
+            AfSpacing.s4,
+            AfSpacing.s16,
+            AfSpacing.s4,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: ShaderMask(
+                  shaderCallback: (bounds) => LinearGradient(
+                    colors: [spectral.primary, spectral.secondary],
+                  ).createShader(bounds),
+                  child: Text(
+                    title,
+                    style: AfTypography.display.copyWith(
+                      fontSize: fontSize,
+                      color: AfColors.textOnPrimary,
+                    ),
                   ),
                 ),
               ),
-            ),
-            ?action,
-          ],
+              ?action,
+            ],
+          ),
         ),
       ),
     );
