@@ -2,9 +2,10 @@ import os
 import sys
 import json
 import glob
-import subprocess
+import uuid
+import mimetypes
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 # Read environment variables set by GitHub Actions
 BOT_TOKEN = os.environ.get('TG_BOT_TOKEN')
@@ -26,7 +27,7 @@ def send_request(url, data=None, headers=None, timeout=30):
         print(f"HTTP Error {e.code}: {e.read().decode('utf-8')}")
         sys.exit(1)
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error during request to {url} (timeout={timeout}s): {e}")
         sys.exit(1)
 
 
@@ -114,43 +115,39 @@ def _send_text(text, reply_markup=None):
 
 def _upload_to_gofile(file_path):
     try:
-        server_resp = subprocess.run(
-            ["curl", "-s", "https://api.gofile.io/servers"],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        if server_resp.returncode != 0:
-            print(f"Failed to get gofile server: {server_resp.stderr}")
-            return None
-
-        servers = json.loads(server_resp.stdout)
+        servers = send_request("https://api.gofile.io/servers", timeout=30)
         if servers.get("status") != "ok" or not servers.get("data", {}).get("servers"):
             print("No gofile servers available")
             return None
 
         server = servers["data"]["servers"][0]["name"]
+        upload_url = f"https://{server}.gofile.io/contents/uploadfile"
 
-        result = subprocess.run(
-            ["curl", "-s", "-F", f"file=@{file_path}", f"https://{server}.gofile.io/contents/uploadfile"],
-            capture_output=True,
-            text=True,
-            timeout=300
-        )
-        if result.returncode != 0:
-            print(f"curl failed: {result.stderr}")
-            return None
+        boundary = f"----PythonBoundary{uuid.uuid4().hex}"
+        content_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+        filename = os.path.basename(file_path)
+        with open(file_path, "rb") as f:
+            file_bytes = f.read()
+        body = (
+            f"--{boundary}\r\n"
+            f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'
+            f"Content-Type: {content_type}\r\n\r\n"
+        ).encode("utf-8") + file_bytes + f"\r\n--{boundary}--\r\n".encode("utf-8")
 
-        resp = json.loads(result.stdout)
+        req = Request(upload_url, data=body, method="POST")
+        req.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
+        with urlopen(req, timeout=300) as upload_resp:
+            resp = json.loads(upload_resp.read().decode("utf-8"))
+
         if resp.get("status") == "ok":
             url = resp["data"]["downloadPage"]
-            print(f"  Uploaded {os.path.basename(file_path)}: {url}")
+            print(f"  Uploaded {filename}: {url}")
             return url
         else:
             print(f"gofile error: {resp}")
             return None
-    except subprocess.TimeoutExpired:
-        print("Upload to gofile timed out")
+    except (HTTPError, URLError) as e:
+        print(f"Error uploading to gofile: {e}")
         return None
     except Exception as e:
         print(f"Error uploading to gofile: {e}")
@@ -223,12 +220,17 @@ def success_message():
     apk_name = None
     apk_size = None
     download_url = None
+    selected_apk_path = None
     if apk_files:
-        apk_path = apk_files[0]
-        apk_name = os.path.basename(apk_path)
-        apk_size = os.path.getsize(apk_path)
+        selected_apk_path = apk_files[0]
+        if len(apk_files) > 1:
+            print(f"Warning: Multiple APKs matched ({len(apk_files)}), uploading first sorted match:")
+            for matched_apk in apk_files:
+                print(f"  - {os.path.basename(matched_apk)}")
+        apk_name = os.path.basename(selected_apk_path)
+        apk_size = os.path.getsize(selected_apk_path)
         print(f"Uploading {apk_name} to gofile...")
-        download_url = _upload_to_gofile(apk_path)
+        download_url = _upload_to_gofile(selected_apk_path)
 
     _delete_message(msg_id)
 
