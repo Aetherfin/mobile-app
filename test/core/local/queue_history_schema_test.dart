@@ -6,6 +6,9 @@ import 'package:sqlite3/sqlite3.dart';
 import 'package:aetherfin/core/local/app_database.dart';
 
 void main() {
+  // Test opens multiple AppDatabase instances (group-level + migration test).
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+
   group('QueueHistory schema', () {
     late AppDatabase db;
 
