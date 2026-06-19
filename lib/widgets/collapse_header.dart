@@ -1,3 +1,5 @@
+import 'dart:ui' show lerpDouble;
+
 import 'package:flutter/material.dart';
 
 import '../design_tokens/tokens.dart';
@@ -22,6 +24,9 @@ class CollapseHeader extends StatelessWidget {
 
   static const double _collapseThreshold = 80.0;
 
+  static const double _expandedHeight = 80.0;
+  static const double _collapsedHeight = 44.0;
+
   double _getCollapseProgress() {
     if (!scrollController.hasClients) return 0.0;
     return (scrollController.offset / _collapseThreshold).clamp(0.0, 1.0);
@@ -39,15 +44,17 @@ class CollapseHeader extends StatelessWidget {
                 (AfTypography.display.fontSize! -
                     AfTypography.titleMedium.fontSize!);
         final iconScale = fontSize / AfTypography.display.fontSize!;
+        final barHeight = lerpDouble(_expandedHeight, _collapsedHeight, t)!;
+        final verticalPad = lerpDouble(AfSpacing.s8, AfSpacing.s2, t)!;
 
-        return SafeArea(
-          bottom: false,
+        return SizedBox(
+          height: barHeight,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               AfSpacing.s16,
-              AfSpacing.s4,
+              verticalPad,
               AfSpacing.s16,
-              AfSpacing.s4,
+              verticalPad,
             ),
             child: Row(
               children: [
