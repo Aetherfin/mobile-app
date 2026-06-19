@@ -8,7 +8,6 @@ import '../../../core/lyrics/lrc_parser.dart';
 import '../../../design_tokens/tokens.dart';
 import '../../../state/providers.dart';
 import '../../../widgets/af_loading_indicator.dart';
-import '../../../widgets/glass_card.dart';
 import '../../../widgets/marquee_text.dart';
 import '../../../widgets/press_scale.dart';
 import '../lyrics_panel.dart';
@@ -285,64 +284,58 @@ class _LyricsToggleSection extends StatelessWidget {
               }
               return Opacity(
                 opacity: lyricsAnim.value,
-                child: GlassCard(
+                child: ClipRRect(
                   borderRadius: AfRadii.borderMd,
-                  blurSigma: 20,
-                  color: AfColors.glassFillHeavy,
-                  padding: EdgeInsets.zero,
-                  child: ClipRRect(
-                    borderRadius: AfRadii.borderMd,
-                    child: lrc != null && lrc!.lines.isNotEmpty
-                        ? Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (lyricsSource != null)
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    AfSpacing.s16,
-                                    AfSpacing.s8,
-                                    AfSpacing.s16,
-                                    0,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        LucideIcons.radio,
-                                        size: 12,
+                  child: lrc != null && lrc!.lines.isNotEmpty
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (lyricsSource != null)
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  AfSpacing.s16,
+                                  AfSpacing.s8,
+                                  AfSpacing.s16,
+                                  0,
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      LucideIcons.radio,
+                                      size: 12,
+                                      color: AfColors.textTertiary,
+                                    ),
+                                    const SizedBox(width: AfSpacing.s4),
+                                    Text(
+                                      lyricsSource!.label,
+                                      style: AfTypography.caption.copyWith(
                                         color: AfColors.textTertiary,
                                       ),
-                                      const SizedBox(width: AfSpacing.s4),
-                                      Text(
-                                        lyricsSource!.label,
-                                        style: AfTypography.caption.copyWith(
-                                          color: AfColors.textTertiary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              Expanded(
-                                child: LyricsList(
-                                  lrc: lrc!,
-                                  spectralEnergy: spectral,
-                                  scrollController: scrollCtrl,
-                                  isSynced: isSynced,
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          )
-                        : lrcAsync.isLoading
-                        ? const Padding(
-                            padding: EdgeInsets.all(AfSpacing.s24),
-                            child: Center(
-                              child: AfLoadingIndicator(
-                                strokeWidth: 2,
-                                color: AfColors.textTertiary,
+                            Expanded(
+                              child: LyricsList(
+                                lrc: lrc!,
+                                spectralEnergy: spectral,
+                                scrollController: scrollCtrl,
+                                isSynced: isSynced,
                               ),
                             ),
-                          )
-                        : EmptyLyrics(track: track),
-                  ),
+                          ],
+                        )
+                      : lrcAsync.isLoading
+                      ? const Padding(
+                          padding: EdgeInsets.all(AfSpacing.s24),
+                          child: Center(
+                            child: AfLoadingIndicator(
+                              strokeWidth: 2,
+                              color: AfColors.textTertiary,
+                            ),
+                          ),
+                        )
+                      : EmptyLyrics(track: track),
                 ),
               );
             },

@@ -11,7 +11,6 @@ import '../../../design_tokens/tokens.dart';
 import '../../../state/providers.dart';
 import '../../../widgets/af_loading_indicator.dart';
 import '../../../widgets/favorite_heart_button.dart';
-import '../../../widgets/glass_card.dart';
 import '../../../widgets/marquee_text.dart';
 import '../../../widgets/press_scale.dart';
 import '../lyrics_panel.dart';
@@ -304,63 +303,57 @@ class _LyricsPane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return ClipRRect(
       borderRadius: AfRadii.borderMd,
-      blurSigma: 20,
-      color: AfColors.glassFillHeavy,
-      padding: EdgeInsets.zero,
-      child: ClipRRect(
-        borderRadius: AfRadii.borderMd,
-        child: lrc != null && lrc!.lines.isNotEmpty
-            ? Column(
-                children: [
-                  if (lyricsSource != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AfSpacing.s16,
-                        AfSpacing.s8,
-                        AfSpacing.s16,
-                        0,
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            LucideIcons.radio,
-                            size: 12,
+      child: lrc != null && lrc!.lines.isNotEmpty
+          ? Column(
+              children: [
+                if (lyricsSource != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AfSpacing.s16,
+                      AfSpacing.s8,
+                      AfSpacing.s16,
+                      0,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          LucideIcons.radio,
+                          size: 12,
+                          color: AfColors.textTertiary,
+                        ),
+                        const SizedBox(width: AfSpacing.s4),
+                        Text(
+                          lyricsSource!.label,
+                          style: AfTypography.caption.copyWith(
                             color: AfColors.textTertiary,
                           ),
-                          const SizedBox(width: AfSpacing.s4),
-                          Text(
-                            lyricsSource!.label,
-                            style: AfTypography.caption.copyWith(
-                              color: AfColors.textTertiary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  Expanded(
-                    child: LyricsList(
-                      lrc: lrc!,
-                      spectralEnergy: spectral,
-                      scrollController: scrollCtrl,
-                      isSynced: isSynced,
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              )
-            : lrcAsync.isLoading
-            ? const Padding(
-                padding: EdgeInsets.all(AfSpacing.s24),
-                child: Center(
-                  child: AfLoadingIndicator(
-                    strokeWidth: 2,
-                    color: AfColors.textTertiary,
+                Expanded(
+                  child: LyricsList(
+                    lrc: lrc!,
+                    spectralEnergy: spectral,
+                    scrollController: scrollCtrl,
+                    isSynced: isSynced,
                   ),
                 ),
-              )
-            : EmptyLyrics(track: track),
-      ),
+              ],
+            )
+          : lrcAsync.isLoading
+          ? const Padding(
+              padding: EdgeInsets.all(AfSpacing.s24),
+              child: Center(
+                child: AfLoadingIndicator(
+                  strokeWidth: 2,
+                  color: AfColors.textTertiary,
+                ),
+              ),
+            )
+          : EmptyLyrics(track: track),
     );
   }
 }
@@ -389,88 +382,82 @@ class _QueuePane extends ConsumerWidget {
 
     final upNext = queue.sublist(currentIndex + 1).take(30).toList();
 
-    return GlassCard(
-      borderRadius: AfRadii.borderMd,
-      blurSigma: 20,
-      color: AfColors.glassFillHeavy,
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AfSpacing.s16,
-              AfSpacing.s12,
-              AfSpacing.s16,
-              AfSpacing.s4,
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Up Next',
-                  style: AfTypography.titleSmall.copyWith(
-                    color: AfColors.textSecondary,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AfSpacing.s16,
+            AfSpacing.s12,
+            AfSpacing.s16,
+            AfSpacing.s4,
+          ),
+          child: Row(
+            children: [
+              Text(
+                'Up Next',
+                style: AfTypography.titleSmall.copyWith(
+                  color: AfColors.textSecondary,
+                ),
+              ),
+              const SizedBox(width: AfSpacing.s8),
+              Text(
+                '${upNext.length} tracks',
+                style: AfTypography.caption.copyWith(
+                  color: AfColors.textTertiary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, color: AfColors.surfaceHigh),
+        Flexible(
+          child: ListView.builder(
+            padding: const EdgeInsets.only(bottom: AfSpacing.s8),
+            itemCount: upNext.length,
+            itemBuilder: (context, index) {
+              final t = upNext[index];
+              final isCurrent = t.id == track.id;
+              return PressScale(
+                key: ValueKey(t.id),
+                onTap: () {
+                  unawaited(
+                    ref
+                        .read(playerServiceProvider)
+                        .skipToQueueItem(queue.indexOf(t)),
+                  );
+                },
+                child: ListTile(
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
+                  leading: Text(
+                    '${index + 1}',
+                    style: AfTypography.caption.copyWith(
+                      color: isCurrent ? accent : AfColors.textTertiary,
+                    ),
+                  ),
+                  title: Text(
+                    t.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AfTypography.bodyMedium.copyWith(
+                      color: isCurrent ? accent : AfColors.textPrimary,
+                    ),
+                  ),
+                  subtitle: Text(
+                    t.artistName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AfTypography.caption.copyWith(
+                      color: AfColors.textTertiary,
+                    ),
                   ),
                 ),
-                const SizedBox(width: AfSpacing.s8),
-                Text(
-                  '${upNext.length} tracks',
-                  style: AfTypography.caption.copyWith(
-                    color: AfColors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
-          const Divider(height: 1, color: AfColors.surfaceHigh),
-          Flexible(
-            child: ListView.builder(
-              padding: const EdgeInsets.only(bottom: AfSpacing.s8),
-              itemCount: upNext.length,
-              itemBuilder: (context, index) {
-                final t = upNext[index];
-                final isCurrent = t.id == track.id;
-                return PressScale(
-                  key: ValueKey(t.id),
-                  onTap: () {
-                    unawaited(
-                      ref
-                          .read(playerServiceProvider)
-                          .skipToQueueItem(queue.indexOf(t)),
-                    );
-                  },
-                  child: ListTile(
-                    dense: true,
-                    visualDensity: VisualDensity.compact,
-                    leading: Text(
-                      '${index + 1}',
-                      style: AfTypography.caption.copyWith(
-                        color: isCurrent ? accent : AfColors.textTertiary,
-                      ),
-                    ),
-                    title: Text(
-                      t.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AfTypography.bodyMedium.copyWith(
-                        color: isCurrent ? accent : AfColors.textPrimary,
-                      ),
-                    ),
-                    subtitle: Text(
-                      t.artistName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AfTypography.caption.copyWith(
-                        color: AfColors.textTertiary,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
