@@ -55,8 +55,10 @@ class _GlowBackgroundState extends State<GlowBackground>
 
   void _computeColors(Color energy) {
     final oklch = srgbToOklch(energy);
-    _glowColor = OklchColor(0.70, oklch.c * 1.2, oklch.h).toColor();
-    _deepGlow = OklchColor(0.50, oklch.c * 0.8, oklch.h).toColor();
+    // Keep L moderate (high L washes out saturation against near-black base).
+    // Boost chroma aggressively for vivid color that reads through the dark bg.
+    _glowColor = OklchColor(0.65, oklch.c * 1.5, oklch.h).toColor();
+    _deepGlow = OklchColor(0.45, oklch.c * 1.0, oklch.h).toColor();
   }
 
   @override
@@ -79,8 +81,8 @@ class _GlowBackgroundState extends State<GlowBackground>
                 center: Alignment.center,
                 radius: 1.2,
                 colors: [
-                  _glowColor.withValues(alpha: 0.80 * opacity),
-                  _deepGlow.withValues(alpha: 0.55 * opacity),
+                  _glowColor.withValues(alpha: opacity),
+                  _deepGlow.withValues(alpha: 0.75 * opacity),
                   AfColors.surfaceCanvas.withValues(alpha: 0.0),
                 ],
                 stops: const [0.0, 0.35, 1.0],
