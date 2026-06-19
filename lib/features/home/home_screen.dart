@@ -145,69 +145,69 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 MediaQuery.sizeOf(context).width,
               ),
             ),
-            child: RefreshIndicator(
-              onRefresh: _onRefresh,
-              color: primary,
-              backgroundColor: AfColors.surfaceBase,
-              child: CustomScrollView(
-                controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: ClampingScrollPhysics(),
+            child: Column(
+              children: [
+                CollapseHeader(
+                  title: 'Listen',
+                  spectral: (primary: primary, secondary: secondary),
+                  scrollController: _scrollController,
+                  action: _GlassCastButton(onTap: () => context.push('/cast')),
                 ),
-                slivers: [
-                  // Collapsing "Listen" header with spectral gradient.
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: CollapseHeader(
-                      title: 'Listen',
-                      spectral: (primary: primary, secondary: secondary),
-                      action: _GlassCastButton(
-                        onTap: () => context.push('/cast'),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    color: primary,
+                    backgroundColor: AfColors.surfaceBase,
+                    child: CustomScrollView(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: ClampingScrollPhysics(),
                       ),
+                      slivers: [
+                        // Hero album carousel.
+                        SliverToBoxAdapter(
+                          child: albumsAsync.when(
+                            data: (albums) => albums.isEmpty
+                                ? const SizedBox.shrink()
+                                : HeroAlbumCarousel(albums: albums),
+                            loading: () => const HomeCarouselSkeleton(),
+                            error: (e, _) => AsyncErrorView.compact(
+                              label: 'Couldn\u2019t load recent albums',
+                              error: e,
+                              height: 240,
+                              onRetry: () =>
+                                  ref.invalidate(recentlyAddedAlbumsProvider),
+                            ),
+                          ),
+                        ),
+
+                        RecentTracksSection(isLocal: isLocal),
+
+                        const LostMemoriesSection(),
+
+                        // Generous gap before discovery sections (layout rhythm).
+                        // LostMemories and Artists each add their own 24dp top
+                        // spacer; this extra 8dp widens the gap to 32dp total,
+                        // creating visual separation between "your music" and
+                        // "explore" groups.
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AfSpacing.s8),
+                        ),
+
+                        ArtistsSection(isLocal: isLocal),
+
+                        GenresSection(isLocal: isLocal),
+
+                        const SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: AfSpacing.bottomInsetWithMiniAndNav,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-
-                  // Hero album carousel.
-                  SliverToBoxAdapter(
-                    child: albumsAsync.when(
-                      data: (albums) => albums.isEmpty
-                          ? const SizedBox.shrink()
-                          : HeroAlbumCarousel(albums: albums),
-                      loading: () => const HomeCarouselSkeleton(),
-                      error: (e, _) => AsyncErrorView.compact(
-                        label: 'Couldn\u2019t load recent albums',
-                        error: e,
-                        height: 240,
-                        onRetry: () =>
-                            ref.invalidate(recentlyAddedAlbumsProvider),
-                      ),
-                    ),
-                  ),
-
-                  RecentTracksSection(isLocal: isLocal),
-
-                  const LostMemoriesSection(),
-
-                  // Generous gap before discovery sections (layout rhythm).
-                  // LostMemories and Artists each add their own 24dp top
-                  // spacer; this extra 8dp widens the gap to 32dp total,
-                  // creating visual separation between "your music" and
-                  // "explore" groups.
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: AfSpacing.s8),
-                  ),
-
-                  ArtistsSection(isLocal: isLocal),
-
-                  GenresSection(isLocal: isLocal),
-
-                  const SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: AfSpacing.bottomInsetWithMiniAndNav,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

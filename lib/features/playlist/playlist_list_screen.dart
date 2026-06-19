@@ -15,11 +15,24 @@ import '../../widgets/collapse_header.dart';
 import '../../widgets/tile.dart';
 import 'import_m3u_dialog.dart';
 
-class PlaylistListScreen extends ConsumerWidget {
+class PlaylistListScreen extends ConsumerStatefulWidget {
   const PlaylistListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PlaylistListScreen> createState() => _PlaylistListScreenState();
+}
+
+class _PlaylistListScreenState extends ConsumerState<PlaylistListScreen> {
+  late final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final mode = ref.watch(appModeProvider);
     final isYouTubeMusic = mode == AppMode.youtubeMusic;
     final ytAuth = isYouTubeMusic ? ref.watch(youtubeAuthProvider) : null;
@@ -107,83 +120,86 @@ class PlaylistListScreen extends ConsumerWidget {
     );
 
     return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(allPlaylistsProvider);
-          await ref.read(allPlaylistsProvider.future);
-        },
-        color: primary,
-        backgroundColor: AfColors.surfaceBase,
-        child: AfScrollbar(
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: ClampingScrollPhysics(),
+      child: Column(
+        children: [
+          CollapseHeader(
+            title: 'Playlists',
+            spectral: (primary: primary, secondary: muted),
+            scrollController: _scrollController,
+            action: Tooltip(
+              message: 'Import M3U',
+              child: PressScale(
+                onTap: () =>
+                    ref.read(importM3UActionProvider).import(context: context),
+                child: Container(
+                  width: AfSpacing.minHitTarget,
+                  height: AfSpacing.minHitTarget,
+                  decoration: BoxDecoration(
+                    color: AfColors.glassFill,
+                    borderRadius: AfRadii.borderPill,
+                    border: Border.all(
+                      color: AfColors.glassBorderStrong,
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    LucideIcons.listPlus,
+                    color: AfColors.textSecondary,
+                    size: 18,
+                  ),
+                ),
+              ),
             ),
-            slivers: [
-              // ── Header ──────────────────────────────────────────────────
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: CollapseHeader(
-                  title: 'Playlists',
-                  spectral: (primary: primary, secondary: muted),
-                  action: Tooltip(
-                    message: 'Import M3U',
-                    child: PressScale(
-                      onTap: () => ref
-                          .read(importM3UActionProvider)
-                          .import(context: context),
-                      child: Container(
-                        width: AfSpacing.minHitTarget,
-                        height: AfSpacing.minHitTarget,
-                        decoration: BoxDecoration(
-                          color: AfColors.glassFill,
-                          borderRadius: AfRadii.borderPill,
-                          border: Border.all(
-                            color: AfColors.glassBorderStrong,
-                            width: 1,
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(allPlaylistsProvider);
+                await ref.read(allPlaylistsProvider.future);
+              },
+              color: primary,
+              backgroundColor: AfColors.surfaceBase,
+              child: AfScrollbar(
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: ClampingScrollPhysics(),
+                  ),
+                  slivers: [
+                    // ── Playlist body ─────────────────────────────────────
+                    ...playlists.when(
+                      data: (list) => _buildSlivers(
+                        context,
+                        ref,
+                        list,
+                        smartCount,
+                        primary,
+                        muted,
+                      ),
+                      loading: () => [
+                        const SliverToBoxAdapter(child: PlaylistSkeleton()),
+                      ],
+                      error: (e, _) => [
+                        SliverToBoxAdapter(
+                          child: AsyncErrorView(
+                            label: 'Couldn\u2019t load playlists',
+                            error: e,
+                            onRetry: () => ref.invalidate(allPlaylistsProvider),
                           ),
                         ),
-                        child: const Icon(
-                          LucideIcons.listPlus,
-                          color: AfColors.textSecondary,
-                          size: 18,
-                        ),
+                      ],
+                    ),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: AfSpacing.bottomInsetWithMiniAndNav,
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-
-              // ── Playlist body ───────────────────────────────────────────
-              ...playlists.when(
-                data: (list) => _buildSlivers(
-                  context,
-                  ref,
-                  list,
-                  smartCount,
-                  primary,
-                  muted,
-                ),
-                loading: () => [
-                  const SliverToBoxAdapter(child: PlaylistSkeleton()),
-                ],
-                error: (e, _) => [
-                  SliverToBoxAdapter(
-                    child: AsyncErrorView(
-                      label: 'Couldn\u2019t load playlists',
-                      error: e,
-                      onRetry: () => ref.invalidate(allPlaylistsProvider),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SliverToBoxAdapter(
-                child: SizedBox(height: AfSpacing.bottomInsetWithMiniAndNav),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -6,7 +6,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../state/state_holder.dart';
-import '../../widgets/af_scrollbar.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/skeleton.dart';
@@ -104,84 +103,82 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 constraints: const BoxConstraints(
                   maxWidth: AfLayout.maxContentWidth,
                 ),
-                child: AfScrollbar(
-                  controller: _scroll,
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      if (isLocal) {
-                        ref.invalidate(localAlbumsProvider);
-                        ref.invalidate(localArtistsProvider);
-                        ref.invalidate(localGenresProvider);
-                        await Future.wait<Object?>([
-                          ref.read(localAlbumsProvider.future),
-                          ref.read(localArtistsProvider.future),
-                          ref.read(localGenresProvider.future),
-                        ]);
-                      } else {
-                        ref.invalidate(allAlbumsProvider);
-                        ref.invalidate(allArtistsProvider);
-                        ref.invalidate(allGenresProvider);
-                        await Future.wait<Object?>([
-                          ref.read(allAlbumsProvider.future),
-                          ref.read(allArtistsProvider.future),
-                          ref.read(allGenresProvider.future),
-                        ]);
-                      }
-                    },
-                    color: sp.primary,
-                    backgroundColor: AfColors.surfaceBase,
-                    child: CustomScrollView(
-                      controller: _scroll,
-                      physics: const AlwaysScrollableScrollPhysics(
-                        parent: ClampingScrollPhysics(),
-                      ),
-                      slivers: [
-                        // ── Header row: gradient title + search icon ──
-                        SliverPersistentHeader(
-                          pinned: true,
-                          delegate: CollapseHeader(
-                            title: 'Library',
-                            spectral: (
-                              primary: sp.primary,
-                              secondary: sp.secondary,
-                            ),
-                            action: _SearchButton(
-                              onTap: () => _openSearch(context),
-                            ),
-                          ),
-                        ),
-
-                        // ── Recently Added ──
-                        SliverToBoxAdapter(
-                          child: _RecentlyAddedSection(isLocal: isLocal),
-                        ),
-                        const SliverToBoxAdapter(
-                          child: SizedBox(height: AfSpacing.s12),
-                        ),
-
-                        // ── Pill Bar (pinned on scroll) ──
-                        SliverPersistentHeader(
-                          pinned: true,
-                          delegate: _PillBarDelegate(
-                            pills: pills,
-                            selected: _pill,
-                            onChanged: (v) => setState(() => _pill = v),
-                          ),
-                        ),
-                        const SliverToBoxAdapter(
-                          child: SizedBox(height: AfSpacing.s12),
-                        ),
-
-                        // ── Section Content ──
-                        switch (_pill) {
-                          SongsPill.songs => SongsTab(isLocal: isLocal),
-                          SongsPill.artists => ArtistsTab(isLocal: isLocal),
-                          SongsPill.albums => AlbumsTab(isLocal: isLocal),
-                          SongsPill.genres => GenresTab(isLocal: isLocal),
-                        },
-                      ],
+                child: Column(
+                  children: [
+                    CollapseHeader(
+                      title: 'Library',
+                      spectral: (primary: sp.primary, secondary: sp.secondary),
+                      scrollController: _scroll,
+                      action: _SearchButton(onTap: () => _openSearch(context)),
                     ),
-                  ),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () async {
+                          if (isLocal) {
+                            ref.invalidate(localAlbumsProvider);
+                            ref.invalidate(localArtistsProvider);
+                            ref.invalidate(localGenresProvider);
+                            await Future.wait<Object?>([
+                              ref.read(localAlbumsProvider.future),
+                              ref.read(localArtistsProvider.future),
+                              ref.read(localGenresProvider.future),
+                            ]);
+                          } else {
+                            ref.invalidate(allAlbumsProvider);
+                            ref.invalidate(allArtistsProvider);
+                            ref.invalidate(allGenresProvider);
+                            await Future.wait<Object?>([
+                              ref.read(allAlbumsProvider.future),
+                              ref.read(allArtistsProvider.future),
+                              ref.read(allGenresProvider.future),
+                            ]);
+                          }
+                        },
+                        color: sp.primary,
+                        backgroundColor: AfColors.surfaceBase,
+                        child: CustomScrollView(
+                          controller: _scroll,
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: ClampingScrollPhysics(),
+                          ),
+                          slivers: [
+                            // ── Recently Added ──
+                            SliverToBoxAdapter(
+                              child: _RecentlyAddedSection(isLocal: isLocal),
+                            ),
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: AfSpacing.s12),
+                            ),
+
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: AfSpacing.s12),
+                            ),
+
+                            // ── Pill Bar (pinned on scroll) ──
+                            SliverPersistentHeader(
+                              pinned: true,
+                              delegate: _PillBarDelegate(
+                                pills: pills,
+                                selected: _pill,
+                                onChanged: (v) => setState(() => _pill = v),
+                              ),
+                            ),
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: AfSpacing.s12),
+                            ),
+
+                            // ── Section Content ──
+                            switch (_pill) {
+                              SongsPill.songs => SongsTab(isLocal: isLocal),
+                              SongsPill.artists => ArtistsTab(isLocal: isLocal),
+                              SongsPill.albums => AlbumsTab(isLocal: isLocal),
+                              SongsPill.genres => GenresTab(isLocal: isLocal),
+                            },
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );

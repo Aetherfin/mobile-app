@@ -2,92 +2,76 @@ import 'package:flutter/material.dart';
 
 import '../design_tokens/tokens.dart';
 
-/// Collapsing header delegate for tab screens (Home, Library, Playlists, Profile).
+/// Fixed collapsing header for tab screens (Home, Library, Playlists, Profile).
 ///
-/// Expanded: large spectral-gradient title.
-/// Collapsed: smaller spectral-gradient title. Only the size changes.
-class CollapseHeader extends SliverPersistentHeaderDelegate {
+/// Renders above the scroll view — content never scrolls behind it.
+/// Expands/collapses based on scroll offset.
+class CollapseHeader extends StatelessWidget {
   const CollapseHeader({
+    super.key,
     required this.title,
     required this.spectral,
+    required this.scrollController,
     this.action,
   });
 
   final String title;
   final ({Color primary, Color secondary}) spectral;
+  final ScrollController scrollController;
   final Widget? action;
 
-  static const double _expandedHeight = 80.0;
-  static const double _collapsedHeight = 44.0;
   static const double _collapseThreshold = 80.0;
 
-  @override
-  double get minExtent => _collapsedHeight;
-  @override
-  double get maxExtent => _expandedHeight;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    final t = (shrinkOffset / _collapseThreshold).clamp(0.0, 1.0);
-    final fontSize =
-        AfTypography.display.fontSize! -
-        t *
-            (AfTypography.display.fontSize! -
-                AfTypography.titleMedium.fontSize!);
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            spectral.primary.withValues(alpha: 0.12),
-            spectral.secondary.withValues(alpha: 0.08),
-            AfColors.surfaceBase,
-          ],
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AfSpacing.s16,
-            AfSpacing.s4,
-            AfSpacing.s16,
-            AfSpacing.s4,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: ShaderMask(
-                  shaderCallback: (bounds) => LinearGradient(
-                    colors: [spectral.primary, spectral.secondary],
-                  ).createShader(bounds),
-                  child: Text(
-                    title,
-                    style: AfTypography.display.copyWith(
-                      fontSize: fontSize,
-                      color: AfColors.textOnPrimary,
-                    ),
-                  ),
-                ),
-              ),
-              ?action,
-            ],
-          ),
-        ),
-      ),
-    );
+  double _getCollapseProgress() {
+    if (!scrollController.hasClients) return 0.0;
+    return (scrollController.offset / _collapseThreshold).clamp(0.0, 1.0);
   }
 
   @override
-  bool shouldRebuild(covariant CollapseHeader oldDelegate) {
-    return title != oldDelegate.title ||
-        spectral.primary != oldDelegate.spectral.primary ||
-        spectral.secondary != oldDelegate.spectral.secondary;
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: scrollController,
+      builder: (context, _) {
+        final t = _getCollapseProgress();
+        final fontSize =
+            AfTypography.display.fontSize! -
+            t *
+                (AfTypography.display.fontSize! -
+                    AfTypography.titleMedium.fontSize!);
+        final iconScale = fontSize / AfTypography.display.fontSize!;
+
+        return SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AfSpacing.s16,
+              AfSpacing.s4,
+              AfSpacing.s16,
+              AfSpacing.s4,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [spectral.primary, spectral.secondary],
+                    ).createShader(bounds),
+                    child: Text(
+                      title,
+                      style: AfTypography.display.copyWith(
+                        fontSize: fontSize,
+                        color: AfColors.textOnPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+                if (action != null)
+                  Transform.scale(scale: iconScale, child: action),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
