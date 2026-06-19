@@ -83,7 +83,7 @@ class CastPickerScreen extends ConsumerWidget {
                               : device.name,
                         ),
                         color: isActive
-                            ? AfColors.indigo300
+                            ? AfColors.accentPrimary
                             : AfColors.textSecondary,
                       ),
                       title: Text(
@@ -103,7 +103,7 @@ class CastPickerScreen extends ConsumerWidget {
                       trailing: isActive
                           ? const Icon(
                               LucideIcons.check,
-                              color: AfColors.indigo300,
+                              color: AfColors.accentPrimary,
                             )
                           : null,
                       tileColor: AfColors.surfaceBase,

@@ -552,7 +552,10 @@ Widget eqTextFieldRow(
     child: Row(
       children: [
         // ponytail: 96 is closest AfSpacing token
-        SizedBox(width: 96, child: Text(label, style: AfTypography.bodySmall)),
+        SizedBox(
+          width: AfSpacing.s96,
+          child: Text(label, style: AfTypography.bodySmall),
+        ),
         const SizedBox(width: AfSpacing.s8),
         Expanded(
           child: TextFormField(

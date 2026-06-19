@@ -358,7 +358,7 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                       ),
                                       const SizedBox(height: AfSpacing.s8),
                                       SizedBox(
-                                        height: 200,
+                                        height: AfLayout.albumGridMaxTileExtent,
                                         child: ListView.separated(
                                           scrollDirection: Axis.horizontal,
                                           padding: const EdgeInsets.symmetric(

@@ -251,7 +251,7 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                       ),
                       SliverToBoxAdapter(
                         child: SizedBox(
-                          height: 100,
+                          height: AfLayout.genreCardHeight,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(

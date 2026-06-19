@@ -18,7 +18,7 @@ class PlaylistSkeleton extends StatelessWidget {
         children: [
           SkeletonBlock(
             width: screenWidth,
-            height: 200,
+            height: AfLayout.albumGridMaxTileExtent,
             borderRadius: BorderRadius.zero,
           ),
           const SizedBox(height: AfSpacing.s16),

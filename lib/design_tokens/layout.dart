@@ -72,6 +72,53 @@ abstract final class AfLayout {
 
   /// Mini player height (artwork + progress ring + transport).
   static const double miniPlayerHeight = 64;
+
+  // ---------------------------------------------------------------------------
+  // Layout-specific heights (home sections, EQ, profile)
+  // ---------------------------------------------------------------------------
+
+  /// Height of the horizontal artist circle scroll row.
+  static const double artistCircleScrollHeight = 180;
+
+  /// Diameter of a single artist circle.
+  static const double artistCircleSize = 100;
+
+  /// Height of a genre card in grids.
+  static const double genreCardHeight = 100;
+
+  /// Size of the spectral glow behind hero artwork.
+  static const double heroGlowSize = 160;
+
+  /// Height of the lost-memories horizontal list.
+  static const double lostMemoriesHeight = 140;
+
+  /// Size of a recent album artwork tile.
+  static const double recentAlbumArtworkSize = 120;
+
+  /// Height of the audio-visual scrubber / FFT bar area.
+  static const double scrubberHeight = 100;
+
+  /// Height of the parametric EQ curve view.
+  static const double eqCurveHeight = 120;
+
+  /// Profile section height — compact (empty / placeholder).
+  static const double profileSectionCompact = 120;
+
+  /// Profile section height — tall (with content).
+  static const double profileSectionTall = 160;
+
+  // ---------------------------------------------------------------------------
+  // Icon containers
+  // ---------------------------------------------------------------------------
+
+  /// Small icon container (44 dp).
+  static const double iconContainerSm = 44;
+
+  /// Medium icon container (72 dp) — empty states, avatars.
+  static const double iconContainerMd = 72;
+
+  /// Large icon container (80 dp) — logo, empty-state hero.
+  static const double iconContainerLg = 80;
 }
 
 /// Screen size tiers for adaptive layouts.

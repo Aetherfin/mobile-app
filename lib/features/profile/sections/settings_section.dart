@@ -123,7 +123,7 @@ class PinnedAlbumsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     if (albums.isEmpty) {
       return Container(
-        height: 120,
+        height: AfLayout.profileSectionCompact,
         margin: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
         decoration: const BoxDecoration(
           color: AfColors.surfaceBase,
@@ -141,7 +141,7 @@ class PinnedAlbumsRow extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 160,
+      height: AfLayout.profileSectionTall,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),

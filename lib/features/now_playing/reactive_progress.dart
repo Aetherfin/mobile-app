@@ -100,15 +100,22 @@ class _ReactiveProgressState extends ConsumerState<ReactiveProgress> {
         ? duration - displayPosition
         : Duration.zero;
 
+    final positionLabel =
+        '${displayPosition.inMinutes}:${(displayPosition.inSeconds % 60).toString().padLeft(2, '0')}';
+    final durationLabel =
+        '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}';
+
     return Semantics(
       liveRegion: true,
+      label: 'Seek',
+      value: '$positionLabel of $durationLabel',
       child: RepaintBoundary(
         child: Column(
           children: [
             AudioVisualScrubber(
               progress: displayProgress,
               playedColor: energy,
-              height: 100.0,
+              height: AfLayout.scrubberHeight,
               onScrub: (p) => setState(() {
                 _isDragging = true;
                 _scrubPreview = p;

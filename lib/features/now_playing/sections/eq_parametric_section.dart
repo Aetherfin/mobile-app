@@ -273,7 +273,7 @@ class _EqParametricSectionState extends ConsumerState<EqParametricSection> {
 
   Widget _buildCurveView(Color spectral) {
     return SizedBox(
-      height: 120,
+      height: AfLayout.eqCurveHeight,
       child: ParametricEqCurveView(
         bands: _bands,
         accentColor: spectral,

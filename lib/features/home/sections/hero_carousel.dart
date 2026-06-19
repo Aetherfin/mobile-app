@@ -73,10 +73,10 @@ class _HeroAlbumCarouselState extends ConsumerState<HeroAlbumCarousel> {
                   ),
                   // Spectral glow accent
                   Positioned(
-                    left: -40,
-                    bottom: -40,
-                    width: 160,
-                    height: 160,
+                    left: -AfSpacing.s40,
+                    bottom: -AfSpacing.s40,
+                    width: AfLayout.heroGlowSize,
+                    height: AfLayout.heroGlowSize,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,

@@ -133,8 +133,8 @@ class PlaylistListScreen extends ConsumerWidget {
                           .read(importM3UActionProvider)
                           .import(context: context),
                       child: Container(
-                        width: 44,
-                        height: 44,
+                        width: AfSpacing.minHitTarget,
+                        height: AfSpacing.minHitTarget,
                         decoration: BoxDecoration(
                           color: AfColors.glassFill,
                           borderRadius: AfRadii.borderPill,
@@ -281,8 +281,8 @@ class PlaylistListScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 72,
-                  height: 72,
+                  width: AfLayout.iconContainerMd,
+                  height: AfLayout.iconContainerMd,
                   decoration: BoxDecoration(
                     color: primary.withValues(alpha: 0.08),
                     shape: BoxShape.circle,

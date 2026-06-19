@@ -12,6 +12,7 @@ import '../../widgets/section_header.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/tile.dart';
 import '../../widgets/bottom_sheet.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/collapse_header.dart';
 
 import 'sections/albums_tab.dart';
@@ -207,8 +208,8 @@ class _SearchButton extends StatelessWidget {
           button: true,
           label: 'Search library',
           child: Container(
-            width: 44,
-            height: 44,
+            width: AfSpacing.minHitTarget,
+            height: AfSpacing.minHitTarget,
             decoration: BoxDecoration(
               color: AfColors.glassFill,
               borderRadius: AfRadii.borderPill,
@@ -337,20 +338,20 @@ class _RecentlyAddedSection extends ConsumerWidget {
               child: Row(
                 children: [
                   SkeletonBlock(
-                    width: 120.0,
-                    height: 120.0,
+                    width: AfLayout.recentAlbumArtworkSize,
+                    height: AfLayout.recentAlbumArtworkSize,
                     borderRadius: AfRadii.borderMd,
                   ),
                   SizedBox(width: AfSpacing.s12),
                   SkeletonBlock(
-                    width: 120.0,
-                    height: 120.0,
+                    width: AfLayout.recentAlbumArtworkSize,
+                    height: AfLayout.recentAlbumArtworkSize,
                     borderRadius: AfRadii.borderMd,
                   ),
                   SizedBox(width: AfSpacing.s12),
                   SkeletonBlock(
-                    width: 120.0,
-                    height: 120.0,
+                    width: AfLayout.recentAlbumArtworkSize,
+                    height: AfLayout.recentAlbumArtworkSize,
                     borderRadius: AfRadii.borderMd,
                   ),
                 ],
@@ -361,9 +362,9 @@ class _RecentlyAddedSection extends ConsumerWidget {
       ),
       error: (_, _) => const Padding(
         padding: EdgeInsets.symmetric(horizontal: AfSpacing.s16),
-        child: Text(
-          'Couldn\'t load recently added',
-          textAlign: TextAlign.center,
+        child: EmptyState(
+          icon: LucideIcons.disc3,
+          title: 'Couldn\u2019t load recently added',
         ),
       ),
     );

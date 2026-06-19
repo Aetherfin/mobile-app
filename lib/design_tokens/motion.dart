@@ -85,6 +85,12 @@ abstract final class AfDurations {
 
   /// 4000 ms — error SnackBar (operation failed, network error).
   static const Duration snackBarError = Duration(seconds: 4);
+
+  /// 4000 ms — onboarding breath animation only.
+  static const Duration longBreath = Duration(milliseconds: 4000);
+
+  /// 3000 ms — onboarding glow breath animation only.
+  static const Duration glowBreath = Duration(milliseconds: 3000);
 }
 
 /// Stagger conventions for grid / list reveals.

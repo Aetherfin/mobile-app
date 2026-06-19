@@ -67,8 +67,8 @@ class SmartPlaylistDetailScreen extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 72,
-                    height: 72,
+                    width: AfLayout.iconContainerMd,
+                    height: AfLayout.iconContainerMd,
                     decoration: BoxDecoration(
                       color: AfColors.textTertiary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,

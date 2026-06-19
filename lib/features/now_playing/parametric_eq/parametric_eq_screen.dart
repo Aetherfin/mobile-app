@@ -965,7 +965,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
       borderRadius: AfRadii.borderLg,
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
-        height: 200,
+        height: AfLayout.albumGridMaxTileExtent,
         child: Stack(
           children: [
             // dB labels on left edge

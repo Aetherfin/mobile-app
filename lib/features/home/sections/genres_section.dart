@@ -78,7 +78,7 @@ class GenresSection extends ConsumerWidget {
           data: (genres) {
             if (genres.isEmpty) {
               return SizedBox(
-                height: 100,
+                height: AfLayout.genreCardHeight,
                 child: Center(
                   child: Text('No genres yet', style: AfTypography.bodySmall),
                 ),
@@ -144,7 +144,7 @@ class GenresSection extends ConsumerWidget {
           error: (e, _) => AsyncErrorView.compact(
             label: 'Couldn\'t load genres',
             error: e,
-            height: 100,
+            height: AfLayout.genreCardHeight,
             onRetry: () => ref.invalidate(
               isLocal ? localGenresProvider : allGenresProvider,
             ),

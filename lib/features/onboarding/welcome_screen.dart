@@ -211,8 +211,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
       child: Semantics(
         label: 'Aetherfin logo',
         child: Container(
-          width: 80,
-          height: 80,
+          width: AfLayout.iconContainerLg,
+          height: AfLayout.iconContainerLg,
           decoration: BoxDecoration(
             color: AfColors.surfaceBase.withValues(alpha: 0.6),
             borderRadius: AfRadii.borderRounded,

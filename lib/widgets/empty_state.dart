@@ -35,8 +35,8 @@ class EmptyState extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 80,
-            height: 80,
+            width: AfLayout.iconContainerLg,
+            height: AfLayout.iconContainerLg,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(

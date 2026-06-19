@@ -15,7 +15,7 @@ class AudioVisualScrubber extends ConsumerStatefulWidget {
     super.key,
     this.height = 120,
     required this.progress,
-    this.playedColor = AfColors.indigo300,
+    this.playedColor = AfColors.accentPrimary,
     this.unplayedColor = AfColors.textTertiary,
     this.onScrub,
     this.onScrubEnd,

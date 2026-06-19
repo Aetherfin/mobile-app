@@ -49,17 +49,21 @@ void showVolumeDialog(BuildContext context, WidgetRef ref) {
               thumbColor: spectral.primary,
               overlayColor: spectral.primary.withValues(alpha: 0.1),
             ),
-            child: Slider(
-              value: volume.clamp(0, 150),
-              min: 0,
-              max: 150,
-              divisions: 30,
-              label: '${volume.round()}%',
-              onChanged: (v) {
-                volume = v;
-                setDialogState(() {});
-              },
-              onChangeEnd: svc.setVolume,
+            child: Semantics(
+              label: 'Volume',
+              value: '${volume.round()}%',
+              child: Slider(
+                value: volume.clamp(0, 150),
+                min: 0,
+                max: 150,
+                divisions: 30,
+                label: '${volume.round()}%',
+                onChanged: (v) {
+                  volume = v;
+                  setDialogState(() {});
+                },
+                onChangeEnd: svc.setVolume,
+              ),
             ),
           ),
           Text(

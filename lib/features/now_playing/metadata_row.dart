@@ -39,7 +39,7 @@ class MetadataRow extends ConsumerWidget {
                 artistName: track.artistName,
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: AfSpacing.s12),
                 child: Text(
                   track.artistName,
                   style: AfTypography.bodyLarge.copyWith(

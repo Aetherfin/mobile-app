@@ -42,7 +42,7 @@ class LostMemoriesSection extends ConsumerWidget {
             ),
             const SizedBox(height: AfSpacing.s12),
             SizedBox(
-              height: 140,
+              height: AfLayout.lostMemoriesHeight,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
@@ -69,7 +69,7 @@ class LostMemoriesSection extends ConsumerWidget {
           padding: EdgeInsets.symmetric(horizontal: AfSpacing.s16),
           child: SkeletonBlock(
             width: double.infinity,
-            height: 140,
+            height: AfLayout.lostMemoriesHeight,
             borderRadius: AfRadii.borderMd,
           ),
         ),

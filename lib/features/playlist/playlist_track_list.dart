@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/track_row.dart';
 
 /// Playlist track list with drag-to-reorder and swipe-to-remove.
@@ -39,7 +40,15 @@ class PlaylistTrackList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (tracks.isEmpty) return const SizedBox.shrink();
+    if (tracks.isEmpty) {
+      return const Center(
+        child: EmptyState(
+          icon: LucideIcons.listMusic,
+          title: 'No tracks',
+          body: 'Add tracks to this playlist',
+        ),
+      );
+    }
 
     return Container(
       decoration: const BoxDecoration(

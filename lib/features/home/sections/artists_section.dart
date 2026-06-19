@@ -57,7 +57,7 @@ class ArtistsSection extends ConsumerWidget {
           error: (e, _) => AsyncErrorView.compact(
             label: 'Couldn\'t load artists',
             error: e,
-            height: 180,
+            height: AfLayout.artistCircleScrollHeight,
             onRetry: () => ref.invalidate(
               isLocal ? localArtistsProvider : allArtistsProvider,
             ),
@@ -65,7 +65,7 @@ class ArtistsSection extends ConsumerWidget {
           data: (artists) {
             if (artists.isEmpty) {
               return SizedBox(
-                height: 180,
+                height: AfLayout.artistCircleScrollHeight,
                 child: Center(
                   child: Text('No artists yet', style: AfTypography.bodySmall),
                 ),
@@ -99,7 +99,7 @@ class ArtistsSection extends ConsumerWidget {
                 if (rest.isNotEmpty) ...[
                   const SizedBox(height: AfSpacing.s12),
                   SizedBox(
-                    height: 120,
+                    height: AfLayout.recentAlbumArtworkSize,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(
@@ -148,7 +148,7 @@ class _HeroArtistCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
-      height: 200,
+      height: AfLayout.albumGridMaxTileExtent,
       decoration: BoxDecoration(
         borderRadius: AfRadii.borderLg,
         gradient: LinearGradient(
@@ -324,8 +324,8 @@ class _ExpressiveArtistCard extends StatelessWidget {
       children: [
         // Circular artwork with gradient border
         Container(
-          width: 100,
-          height: 100,
+          width: AfLayout.artistCircleSize,
+          height: AfLayout.artistCircleSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
