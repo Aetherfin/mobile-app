@@ -41,17 +41,7 @@ export 'async_lock.dart' show AfAsyncLock;
 /// - [StreamUrlCache] — URL caching (unchanged)
 class AfPlayerService {
   AfPlayerService() : _player = Player() {
-    _positionTracker = AfPositionTracker(
-      player: _player,
-      shouldAdvancePosition: () => _shouldAdvancePosition,
-    );
-    _artworkManager = AfArtworkManager();
-    _audioDeviceManager = AfAudioDeviceManager(player: _player);
-    _queueManager = AfQueueManager();
-    _prefetcher = StreamPrefetcher();
-    _loopModeManager = LoopModeManager();
-    _authHeadersManager = AuthHeadersManager();
-    _queueLock = AfAsyncLock();
+    _initManagers(_player);
 
     _bridge = NativeMediaSessionBridge();
     _wireBridgeCallbacks(_bridge);
@@ -70,7 +60,6 @@ class AfPlayerService {
       bridge: _bridge,
     );
 
-    // Wire cross-module callbacks
     _artworkManager.onArtworkChanged = _playback.updateMediaSession;
 
     // Async setup — fire-and-forget like the original pattern.
@@ -82,17 +71,7 @@ class AfPlayerService {
     required PlayerApi player,
     NativeMediaSessionBridge? bridge,
   }) : _player = player {
-    _positionTracker = AfPositionTracker(
-      player: player,
-      shouldAdvancePosition: () => _shouldAdvancePosition,
-    );
-    _artworkManager = AfArtworkManager();
-    _audioDeviceManager = AfAudioDeviceManager(player: player);
-    _queueManager = AfQueueManager();
-    _prefetcher = StreamPrefetcher();
-    _loopModeManager = LoopModeManager();
-    _authHeadersManager = AuthHeadersManager();
-    _queueLock = AfAsyncLock();
+    _initManagers(player);
 
     if (bridge != null) {
       _bridge = bridge;
@@ -118,6 +97,21 @@ class AfPlayerService {
     _wireMediaSessionCommands();
 
     _bindStreams();
+  }
+
+  /// Shared manager initialization for both production and test constructors.
+  void _initManagers(PlayerApi player) {
+    _positionTracker = AfPositionTracker(
+      player: player,
+      shouldAdvancePosition: () => _shouldAdvancePosition,
+    );
+    _artworkManager = AfArtworkManager();
+    _audioDeviceManager = AfAudioDeviceManager(player: player);
+    _queueManager = AfQueueManager();
+    _prefetcher = StreamPrefetcher();
+    _loopModeManager = LoopModeManager();
+    _authHeadersManager = AuthHeadersManager();
+    _queueLock = AfAsyncLock();
   }
 
   /// Async initialization extracted from the constructor.

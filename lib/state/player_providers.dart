@@ -40,6 +40,7 @@ class _WireDisposables {
   StreamSubscription<bool>? pausedForCacheSub;
   StreamSubscription<bool>? queueSavingPlayingSub;
   StreamSubscription<bool>? infraPlayingSub;
+  ProviderSubscription<void>? backendListenSub;
   JellyfinPlaybackReporter? reporter;
   LastFmPlaybackReporter? lastfmReporter;
   ActiveQueueStore? activeQueueStore;
@@ -54,6 +55,7 @@ class _WireDisposables {
     await pausedForCacheSub?.cancel();
     await queueSavingPlayingSub?.cancel();
     await infraPlayingSub?.cancel();
+    backendListenSub?.close();
     await reporter?.dispose();
     await lastfmReporter?.dispose();
   }
@@ -61,7 +63,7 @@ class _WireDisposables {
 
 void wirePlayerService(Ref ref, AfPlayerService svc) {
   final d = _WireDisposables();
-  _wireQueueLoading(ref, svc);
+  _wireQueueLoading(ref, svc, d);
   _wireQueueSaving(ref, svc, d);
   _wireServiceCallbacks(ref, svc);
   _wireInfrastructure(ref, svc, d);
@@ -74,7 +76,11 @@ void wirePlayerService(Ref ref, AfPlayerService svc) {
 
 // ── Queue loading ──────────────────────────────────────────────────────────
 
-Future<void> _wireQueueLoading(Ref ref, AfPlayerService svc) async {
+Future<void> _wireQueueLoading(
+  Ref ref,
+  AfPlayerService svc,
+  _WireDisposables d,
+) async {
   Future<void> loadSavedQueue() async {
     final backend = ref.read(musicBackendProvider);
     if (backend == null) return;
@@ -140,7 +146,10 @@ Future<void> _wireQueueLoading(Ref ref, AfPlayerService svc) async {
   }
 
   // Load saved queue when the user signs in later
-  ref.listen<MusicBackend?>(musicBackendProvider, (prev, next) {
+  d.backendListenSub = ref.listen<MusicBackend?>(musicBackendProvider, (
+    prev,
+    next,
+  ) {
     if (prev == null && next != null) {
       unawaited(loadSavedQueue());
     }

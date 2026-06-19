@@ -27,6 +27,10 @@ class WelcomeScreen extends ConsumerStatefulWidget {
 
 class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     with TickerProviderStateMixin {
+  // ponytail: breathing durations don't match any AfDurations tier
+  static const _breathDuration = Duration(milliseconds: 4000);
+  static const _glowBreathDuration = Duration(milliseconds: 3000);
+
   // Phase 1: Entrance choreography
   late final AnimationController _entranceCtrl; // 1200ms
   late final AnimationController _glowCtrl; // 800ms
@@ -46,13 +50,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
       vsync: this,
       duration: AfDurations.spectral,
     );
-    _breathCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 4000),
-    );
+    _breathCtrl = AnimationController(vsync: this, duration: _breathDuration);
     _glowBreathCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3000),
+      duration: _glowBreathDuration,
     );
 
     final reduced = WidgetsBinding

@@ -334,7 +334,7 @@ class _LastFmSettingsBody extends ConsumerWidget {
           icon: LucideIcons.key,
           title: 'API Credentials',
           subtitle: hasCredentials
-              ? 'Key: ${apiKey.substring(0, apiKey.length > 8 ? 8 : apiKey.length)}…'
+              ? 'Key: ${apiKey.isNotEmpty ? '••••••••' : ''}'
               : 'Not configured — set to scrobble',
           onTap: () => showLastFmApiConfigDialog(context, ref),
         ),

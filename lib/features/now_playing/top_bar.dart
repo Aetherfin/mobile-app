@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -92,9 +90,9 @@ class _FrostedTopBarState extends ConsumerState<FrostedTopBar>
     return AnimatedBuilder(
       animation: _expandAnim,
       builder: (context, _) {
-        // ponytail: interpolated radius, no matching AfRadii token
-        final radius = BorderRadius.circular(
-          ui.lerpDouble(AfRadii.xl, AfRadii.lg, _expandAnim.value)!,
+        // ponytail: interpolated radius between xl and lg — no single token matches
+        final radius = BorderRadius.all(
+          Radius.lerp(AfRadii.rXl, AfRadii.rLg, _expandAnim.value)!,
         );
 
         return Padding(

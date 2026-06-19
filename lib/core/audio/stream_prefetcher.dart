@@ -76,19 +76,22 @@ class StreamPrefetcher {
 
   /// Returns the cached prefetch file for [trackId], if it exists and is valid.
   Future<File?> getCachedFile(String trackId) async {
-    final file = _cachedFiles.remove(trackId);
+    final file = _cachedFiles[trackId];
     if (file == null) return null;
     try {
       if (await file.exists()) {
         final stat = await file.stat();
         final ageMinutes = DateTime.now().difference(stat.modified).inMinutes;
         if (ageMinutes <= _maxCacheAgeMinutes) {
-          _cachedFiles[trackId] = file; // promote to end (LRU)
           return file;
         } else {
           // File is too old, remove it
+          _cachedFiles.remove(trackId);
           await _removeFromCache(trackId);
         }
+      } else {
+        _cachedFiles.remove(trackId);
+        await _removeFromCache(trackId);
       }
     } on Exception catch (e, stack) {
       afLog(

@@ -78,7 +78,9 @@ class CoOccurrenceRepository {
 
   Future<void> prune({int keep = 10000}) async {
     await db.customStatement(
-      'DELETE FROM track_co_occurrences WHERE rowid NOT IN (SELECT rowid FROM track_co_occurrences ORDER BY count DESC LIMIT ?1)',
+      'DELETE FROM track_co_occurrences WHERE rowid IN ('
+      'SELECT rowid FROM track_co_occurrences ORDER BY count ASC '
+      'LIMIT -1 OFFSET ?1)',
       [keep],
     );
   }

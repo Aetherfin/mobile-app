@@ -33,6 +33,7 @@ extension CompletedHandler on PlaybackController {
   // ---------------------------------------------------------------------------
 
   Future<void> _advanceToNextTrack() async {
+    final completedTrack = _queueManager.currentTrack;
     _queueManager.engine.advanceIndex();
     _onTrackChangedOrRestarted();
 
@@ -43,7 +44,7 @@ extension CompletedHandler on PlaybackController {
       unawaited(
         Future.microtask(() {
           try {
-            onTrackCompleted?.call(current);
+            onTrackCompleted?.call(completedTrack ?? current);
           } catch (e, stack) {
             afLog(
               'error',

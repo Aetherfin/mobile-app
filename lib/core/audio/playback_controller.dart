@@ -272,68 +272,68 @@ class PlaybackController {
   }) async {
     if (tracks.isEmpty) return;
 
-    _resolveStreamUrl = resolveStreamUrl;
-    _prefetcher.cancelCurrentPrefetch();
-    _prefetchStartedForTrackId = null;
-    _completedHandledForTrackId = null;
-    _eofFallbackHandledTrackId = null;
-    _mpvLoadedTrackId = null;
-    onMpvLoadedTrackChanged?.call(null);
+    return _queueLock.run(() async {
+      _resolveStreamUrl = resolveStreamUrl;
+      _prefetcher.cancelCurrentPrefetch();
+      _prefetchStartedForTrackId = null;
+      _completedHandledForTrackId = null;
+      _eofFallbackHandledTrackId = null;
+      _mpvLoadedTrackId = null;
+      onMpvLoadedTrackChanged?.call(null);
 
-    _positionTracker.onStop();
-    try {
-      await _player.stop();
-    } on Exception catch (e) {
-      afLog('audio', 'Failed to stop player on playQueue entry', error: e);
-    }
+      _positionTracker.onStop();
+      try {
+        await _player.stop();
+      } on Exception catch (e) {
+        afLog('audio', 'Failed to stop player on playQueue entry', error: e);
+      }
 
-    if (streamHeaders.isNotEmpty) {
-      _authHeadersManager.setHeaders(streamHeaders);
-      _artworkManager.setAuthHeaders(streamHeaders);
-    }
+      if (streamHeaders.isNotEmpty) {
+        _authHeadersManager.setHeaders(streamHeaders);
+        _artworkManager.setAuthHeaders(streamHeaders);
+      }
 
-    final safeIndex = startIndex.clamp(0, tracks.length - 1);
-    _queueManager.replaceQueue(tracks, safeIndex);
+      final safeIndex = startIndex.clamp(0, tracks.length - 1);
+      _queueManager.replaceQueue(tracks, safeIndex);
 
-    final startTrack = tracks[safeIndex];
-    _queueManager.emitCurrentTrack(startTrack);
-    onTrackChanged?.call(startTrack);
-    afLog(
-      'data',
-      'playQueue source=live size=${tracks.length} '
-          'startIndex=$safeIndex first="${startTrack.title}"',
-    );
-
-    final cachedFile = await _prefetcher.getCachedFile(startTrack.id);
-    final String url;
-    if (cachedFile != null) {
-      url = cachedFile.uri.toString();
+      final startTrack = tracks[safeIndex];
+      _queueManager.emitCurrentTrack(startTrack);
+      onTrackChanged?.call(startTrack);
       afLog(
-        'audio',
-        'playQueue: using prefetched file for "${startTrack.title}"',
+        'data',
+        'playQueue source=live size=${tracks.length} '
+            'startIndex=$safeIndex first="${startTrack.title}"',
       );
-    } else {
-      final cachedUrl = _getCachedStreamUrl(startTrack.id);
-      if (cachedUrl != null) {
-        url = cachedUrl;
+
+      final cachedFile = await _prefetcher.getCachedFile(startTrack.id);
+      final String url;
+      if (cachedFile != null) {
+        url = cachedFile.uri.toString();
         afLog(
           'audio',
-          'playQueue: using cached stream URL for "${startTrack.title}"',
+          'playQueue: using prefetched file for "${startTrack.title}"',
         );
       } else {
-        url = await resolveStreamUrl(startTrack);
-        _cacheStreamUrl(startTrack.id, url);
+        final cachedUrl = _getCachedStreamUrl(startTrack.id);
+        if (cachedUrl != null) {
+          url = cachedUrl;
+          afLog(
+            'audio',
+            'playQueue: using cached stream URL for "${startTrack.title}"',
+          );
+        } else {
+          url = await resolveStreamUrl(startTrack);
+          _cacheStreamUrl(startTrack.id, url);
+        }
       }
-    }
-    final medias = <Media>[
-      Media(url, httpHeaders: _authHeaders.isNotEmpty ? _authHeaders : null),
-    ];
-    afLog(
-      'aetherfin:audio',
-      'playQueue: url=${url.length > 80 ? url.substring(0, 80) : url}...',
-    );
+      final medias = <Media>[
+        Media(url, httpHeaders: _authHeaders.isNotEmpty ? _authHeaders : null),
+      ];
+      afLog(
+        'aetherfin:audio',
+        'playQueue: url=${url.length > 80 ? url.substring(0, 80) : url}...',
+      );
 
-    return _queueLock.run(() async {
       try {
         _onTrackChangedOrRestarted();
 

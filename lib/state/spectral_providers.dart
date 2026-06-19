@@ -6,6 +6,7 @@ import '../core/audio/spectral_extractor.dart';
 import '../design_tokens/colors.dart';
 import '../utils/log.dart';
 import '../utils/oklch.dart';
+import 'state_holder.dart';
 import 'local_library_providers.dart';
 import 'music_backend_providers.dart';
 import 'player_providers.dart';
@@ -16,7 +17,9 @@ final spectralExtractorProvider = Provider<SpectralExtractor>((ref) {
 
 /// Holds the last successfully extracted spectral — used to preserve
 /// colors during artwork transitions instead of flashing to fallback.
-Spectral _lastSpectral = Spectral.fallback;
+final _lastSpectralProvider = NotifierProvider<StateHolder<Spectral>, Spectral>(
+  () => StateHolder<Spectral>((ref) => Spectral.fallback),
+);
 
 final currentSpectralProvider = Provider<Spectral>((ref) {
   final track = ref.watch(currentTrackProvider);
@@ -24,11 +27,11 @@ final currentSpectralProvider = Provider<Spectral>((ref) {
   final async = ref.watch(spectralFromUrlProvider(imageUrl));
   return async.maybeWhen(
     data: (s) {
-      _lastSpectral = s;
+      ref.read(_lastSpectralProvider.notifier).set(s);
       return s;
     },
     // Loading or error — keep previous spectral (no flash to fallback).
-    orElse: () => _lastSpectral,
+    orElse: () => ref.watch(_lastSpectralProvider),
   );
 });
 

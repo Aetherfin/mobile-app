@@ -117,7 +117,10 @@ class JellyfinClient implements MusicBackend {
             _jellyfinToken = null;
             error.requestOptions.extra['_jf401Retry'] = true;
             try {
-              await _reauthenticate();
+              _reauthInFlight ??= _reauthenticate().whenComplete(
+                () => _reauthInFlight = null,
+              );
+              await _reauthInFlight;
               final response = await _dio.fetch(error.requestOptions);
               handler.resolve(response);
               return;
@@ -212,6 +215,7 @@ class JellyfinClient implements MusicBackend {
   final List<int>? _passwordBytes;
   String? _jellyfinToken;
   bool _isReauthenticating = false;
+  Future<void>? _reauthInFlight;
 
   /// Aetherfin's running app version (e.g. `0.2.3`). Sent verbatim in the
   /// `MediaBrowser` Authorization `Version="…"` field and in the

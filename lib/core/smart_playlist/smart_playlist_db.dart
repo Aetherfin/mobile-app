@@ -27,37 +27,39 @@ class SmartPlaylistDb {
   }
 
   Future<SmartPlaylist> save(SmartPlaylist playlist) async {
-    final isNew =
-        await (db.select(db.smartPlaylists)
-              ..where((t) => t.id.equals(playlist.id))
-              ..limit(1))
-            .get()
-            .then((rows) => rows.isEmpty);
-    final id = isNew && playlist.id.isEmpty ? const Uuid().v4() : playlist.id;
-    final updated = playlist.copyWith(
-      id: id,
-      createdAt: isNew ? DateTime.now() : playlist.createdAt,
-      updatedAt: DateTime.now(),
-    );
+    return db.transaction(() async {
+      final isNew =
+          await (db.select(db.smartPlaylists)
+                ..where((t) => t.id.equals(playlist.id))
+                ..limit(1))
+              .get()
+              .then((rows) => rows.isEmpty);
+      final id = isNew && playlist.id.isEmpty ? const Uuid().v4() : playlist.id;
+      final updated = playlist.copyWith(
+        id: id,
+        createdAt: isNew ? DateTime.now() : playlist.createdAt,
+        updatedAt: DateTime.now(),
+      );
 
-    await db
-        .into(db.smartPlaylists)
-        .insert(
-          SmartPlaylistsCompanion.insert(
-            id: updated.id,
-            name: updated.name,
-            combinator: Value(updated.combinator),
-            rulesJson: Value(updated.rulesJson),
-            sort: Value(updated.sort),
-            sortOrder: Value(updated.sortOrder),
-            maxLimit: Value(updated.limit),
-            createdAt: updated.createdAt.millisecondsSinceEpoch,
-            updatedAt: updated.updatedAt.millisecondsSinceEpoch,
-          ),
-          mode: InsertMode.replace,
-        );
+      await db
+          .into(db.smartPlaylists)
+          .insert(
+            SmartPlaylistsCompanion.insert(
+              id: updated.id,
+              name: updated.name,
+              combinator: Value(updated.combinator),
+              rulesJson: Value(updated.rulesJson),
+              sort: Value(updated.sort),
+              sortOrder: Value(updated.sortOrder),
+              maxLimit: Value(updated.limit),
+              createdAt: updated.createdAt.millisecondsSinceEpoch,
+              updatedAt: updated.updatedAt.millisecondsSinceEpoch,
+            ),
+            mode: InsertMode.replace,
+          );
 
-    return updated;
+      return updated;
+    });
   }
 
   Future<void> delete(String id) async {

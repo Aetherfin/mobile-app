@@ -12,7 +12,7 @@ import 'auth_providers.dart';
 import 'local_library_providers.dart';
 import 'youtube_music_providers.dart';
 
-final musicBackendProvider = Provider.autoDispose<MusicBackend?>((ref) {
+final musicBackendProvider = Provider<MusicBackend?>((ref) {
   final auth = ref.watch(authProvider);
   final appMode = ref.watch(appModeProvider);
 

@@ -84,6 +84,7 @@ class LocalDb {
         [likePattern],
       );
     });
+    invalidateFavoriteIdsCache();
   }
 
   Future<List<Map<String, dynamic>>> getFolders() async {

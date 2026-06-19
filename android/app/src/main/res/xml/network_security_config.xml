@@ -1,21 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Aetherfin is a personal-music-server client. Users routinely point it
-  at LAN Jellyfin instances over plain HTTP (e.g. http://server.local:8096,
-  http://192.168.1.50:8097), so cleartext traffic must be permitted.
-
-  Android's `<domain>` matcher does NOT support CIDR ranges, only exact
-  IP / hostname strings, which makes a narrow allowlist for the entire
-  RFC 1918 space impractical. We open cleartext globally here.
+  at LAN Jellyfin/Navidrome instances over plain HTTP (e.g. localhost,
+  http://192.168.x.x:8096). Cleartext is blocked by default and only
+  allowed for localhost/loopback — the network_security_config cannot
+  express CIDR ranges, so users connecting to LAN servers on HTTP will
+  see a cleartext error unless the app's TOFU/TLS flow handles it.
 
   Trust anchors keep the system CA store for HTTPS traffic. We do NOT
   trust user-installed certs by default (that would let a malicious MITM
-  cert intercept HTTPS Jellyfin servers).
+  cert intercept HTTPS Jellyfin servers). User certs are trusted only
+  in debug builds via debug-overrides.
 -->
 <network-security-config>
-    <base-config cleartextTrafficPermitted="true">
+    <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>
     </base-config>
+
+    <!-- Allow cleartext for self-hosted servers on localhost -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
+
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
 </network-security-config>

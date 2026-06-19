@@ -159,7 +159,9 @@ class _ReactiveProgressState extends ConsumerState<ReactiveProgress> {
                       // Buffered fill
                       FractionallySizedBox(
                         widthFactor: (_bufferedPercent / 100.0).clamp(0.0, 1.0),
-                        child: const ColoredBox(color: AfColors.glassFillMedium),
+                        child: const ColoredBox(
+                          color: AfColors.glassFillMedium,
+                        ),
                       ),
                     ],
                   ),

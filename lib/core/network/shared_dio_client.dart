@@ -137,11 +137,10 @@ class SharedDioClient {
         client.badCertificateCallback =
             badCertCallback ??
             (X509Certificate cert, String host, int port) {
-              afLog(
-                'http',
-                'Bad certificate for $host:$port — issuer: ${cert.issuer}',
-              );
-              return true; // Allow (self-hosted servers use self-signed certs)
+              // Default: reject untrusted certificates.
+              // Users with self-signed certs must configure TOFU via
+              // configureTlsTrust() which sets the real callback.
+              return false;
             };
         return client;
       };

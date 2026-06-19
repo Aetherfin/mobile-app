@@ -101,161 +101,158 @@ class _BottomContentState extends ConsumerState<BottomContent>
 
     return AnimatedBuilder(
       animation: _expandAnim,
-      builder: (context, _) {
+      builder: (context, child) {
         // Interpolate max height: compact ~36% → expanded ~70% (below top bar)
         final screenH = MediaQuery.sizeOf(context).height;
         final compactH = screenH * 0.36;
         final expandedH = screenH - kToolbarHeight - 80; // below top bar
         final currentH = compactH + (expandedH - compactH) * _expandAnim.value;
 
-        return SizedBox(
-          height: currentH,
-          child: Semantics(
-            label: 'Now playing bottom content',
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onVerticalDragEnd: (details) {
-                final vy = details.primaryVelocity ?? 0;
-                if (vy < -200 || (vy < 0 && !_expanded)) {
-                  if (!_expanded) _toggleExpand();
-                } else if (vy > 200 || (vy > 0 && _expanded)) {
-                  if (_expanded) _toggleExpand();
-                }
-              },
-              child: GlassCard(
-                // ponytail: top-only corner, no matching AfRadii token
-                borderRadius: const BorderRadius.vertical(top: AfRadii.rLg),
-                blurSigma: 30,
-                color: AfColors.glassFillHeavy,
-                padding: EdgeInsets.zero,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AfSpacing.s16,
-                        AfSpacing.s12,
-                        AfSpacing.s16,
-                        AfSpacing.s8,
+        return SizedBox(height: currentH, child: child);
+      },
+      child: Semantics(
+        label: 'Now playing bottom content',
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onVerticalDragEnd: (details) {
+            final vy = details.primaryVelocity ?? 0;
+            if (vy < -200 || (vy < 0 && !_expanded)) {
+              if (!_expanded) _toggleExpand();
+            } else if (vy > 200 || (vy > 0 && _expanded)) {
+              if (_expanded) _toggleExpand();
+            }
+          },
+          child: GlassCard(
+            // ponytail: top-only corner, no matching AfRadii token
+            borderRadius: const BorderRadius.vertical(top: AfRadii.rLg),
+            blurSigma: 30,
+            color: AfColors.glassFillHeavy,
+            padding: EdgeInsets.zero,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AfSpacing.s16,
+                    AfSpacing.s12,
+                    AfSpacing.s16,
+                    AfSpacing.s8,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ── Metadata overlay (title + artist) ──
+                      RepaintBoundary(
+                        child: MetadataOverlay(track: widget.track),
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // ── Metadata overlay (title + artist) ──
-                          RepaintBoundary(
-                            child: MetadataOverlay(track: widget.track),
-                          ),
-                          const SizedBox(height: AfSpacing.s12),
-                          // ── Progress bar ──
-                          ReactiveProgress(track: widget.track),
-                          const SizedBox(height: AfSpacing.s12),
-                          // ── Transport controls ──
-                          ReactiveTransport(track: widget.track),
-                        ],
-                      ),
-                    ),
+                      const SizedBox(height: AfSpacing.s12),
+                      // ── Progress bar ──
+                      ReactiveProgress(track: widget.track),
+                      const SizedBox(height: AfSpacing.s12),
+                      // ── Transport controls ──
+                      ReactiveTransport(track: widget.track),
+                    ],
+                  ),
+                ),
 
-                    // ── Expandable queue section ──
-                    if (_expanded && upNext.isNotEmpty) ...[
-                      const Divider(height: 1, color: AfColors.surfaceHigh),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AfSpacing.s16,
-                          vertical: AfSpacing.s8,
+                // ── Expandable queue section ──
+                if (_expanded && upNext.isNotEmpty) ...[
+                  const Divider(height: 1, color: AfColors.surfaceHigh),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AfSpacing.s16,
+                      vertical: AfSpacing.s8,
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Up Next',
+                          style: AfTypography.titleSmall.copyWith(
+                            color: AfColors.textSecondary,
+                          ),
                         ),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Up Next',
-                              style: AfTypography.titleSmall.copyWith(
-                                color: AfColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(width: AfSpacing.s8),
-                            Text(
-                              '${upNext.length} tracks',
-                              style: AfTypography.caption.copyWith(
-                                color: AfColors.textTertiary,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(width: AfSpacing.s8),
+                        Text(
+                          '${upNext.length} tracks',
+                          style: AfTypography.caption.copyWith(
+                            color: AfColors.textTertiary,
+                          ),
                         ),
-                      ),
-                      Flexible(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.only(bottom: AfSpacing.s8),
-                          itemCount: upNext.length,
-                          itemBuilder: (context, index) {
-                            final t = upNext[index];
-                            return PressScale(
-                              key: ValueKey(t.id),
-                              onTap: () {
-                                unawaited(
-                                  ref
-                                      .read(playerServiceProvider)
-                                      .skipToQueueItem(queue.indexOf(t)),
-                                );
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AfSpacing.s16,
-                                  vertical: AfSpacing.s4,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Artwork(
-                                      url: t.imageUrl,
-                                      size: 20,
-                                      radius: AfRadii.borderSm,
-                                    ),
-                                    const SizedBox(width: AfSpacing.s8),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            t.title,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: AfTypography.bodyMedium,
-                                          ),
-                                          const SizedBox(height: AfSpacing.s2),
-                                          Text(
-                                            t.artistName,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: AfTypography.caption
-                                                .copyWith(
-                                                  color: AfColors.textTertiary,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: AfSpacing.s8),
-                                    Text(
-                                      formatTrackDuration(t.duration),
-                                      style: AfTypography.caption.copyWith(
-                                        color: AfColors.textTertiary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.only(bottom: AfSpacing.s8),
+                      itemCount: upNext.length,
+                      itemBuilder: (context, index) {
+                        final t = upNext[index];
+                        return PressScale(
+                          key: ValueKey(t.id),
+                          onTap: () {
+                            unawaited(
+                              ref
+                                  .read(playerServiceProvider)
+                                  .skipToQueueItem(queue.indexOf(t)),
                             );
                           },
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AfSpacing.s16,
+                              vertical: AfSpacing.s4,
+                            ),
+                            child: Row(
+                              children: [
+                                Artwork(
+                                  url: t.imageUrl,
+                                  size: 20,
+                                  radius: AfRadii.borderSm,
+                                ),
+                                const SizedBox(width: AfSpacing.s8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        t.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AfTypography.bodyMedium,
+                                      ),
+                                      const SizedBox(height: AfSpacing.s2),
+                                      Text(
+                                        t.artistName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AfTypography.caption.copyWith(
+                                          color: AfColors.textTertiary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: AfSpacing.s8),
+                                Text(
+                                  formatTrackDuration(t.duration),
+                                  style: AfTypography.caption.copyWith(
+                                    color: AfColors.textTertiary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

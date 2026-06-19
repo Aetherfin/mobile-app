@@ -89,11 +89,12 @@ class JellyfinPlaybackReporter {
                   skipped: const Value(false),
                 ),
               )
-              .catchError((Object e) {
+              .catchError((Object e, StackTrace stack) {
                 afLog(
                   'playback-reporter',
                   'Failed to insert playback history',
                   error: e,
+                  stackTrace: stack,
                 );
                 return 0;
               }),
@@ -115,11 +116,12 @@ class JellyfinPlaybackReporter {
                   skipped: const Value(true),
                 ),
               )
-              .catchError((Object e) {
+              .catchError((Object e, StackTrace stack) {
                 afLog(
                   'playback-reporter',
                   'Failed to insert skip history',
                   error: e,
+                  stackTrace: stack,
                 );
                 return 0;
               }),
@@ -305,11 +307,12 @@ class JellyfinPlaybackReporter {
                   skipped: const Value(false),
                 ),
               )
-              .catchError((Object e) {
+              .catchError((Object e, StackTrace stack) {
                 afLog(
                   'playback-reporter',
                   'Failed to insert playback history (dispose)',
                   error: e,
+                  stackTrace: stack,
                 );
                 return 0;
               }),

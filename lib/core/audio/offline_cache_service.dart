@@ -185,14 +185,24 @@ class OfflineCacheService {
 
   /// Total size of all cached files in bytes.
   Future<int> cacheSize() async {
-    final entries = await _db.select(_db.cacheEntries).get();
-    return entries.fold<int>(0, (sum, e) => sum + e.fileSize);
+    final r = await _db
+        .customSelect(
+          'SELECT COALESCE(SUM(file_size), 0) AS s FROM cache_entries',
+          readsFrom: {_db.cacheEntries},
+        )
+        .getSingle();
+    return r.read<int>('s');
   }
 
   /// Number of cached tracks.
   Future<int> cachedCount() async {
-    final rows = await _db.select(_db.cacheEntries).get();
-    return rows.length;
+    final r = await _db
+        .customSelect(
+          'SELECT COUNT(*) AS c FROM cache_entries',
+          readsFrom: {_db.cacheEntries},
+        )
+        .getSingle();
+    return r.read<int>('c');
   }
 
   /// Remove all cached files and clear the manifest.

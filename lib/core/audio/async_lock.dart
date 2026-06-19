@@ -17,7 +17,7 @@ class AfAsyncLock {
           try {
             final result = await action();
             completer.complete(result);
-          } on Exception catch (e, st) {
+          } on Object catch (e, st) {
             completer.completeError(e, st);
           }
         })
@@ -31,6 +31,7 @@ class AfAsyncLock {
           if (!completer.isCompleted) {
             completer.completeError(error, stack);
           }
+          Error.throwWithStackTrace(error, stack);
         });
     return completer.future;
   }

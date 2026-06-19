@@ -89,6 +89,21 @@ class _AnimatedSpectralScopeState extends ConsumerState<AnimatedSpectralScope>
 Spectral _lerpSpectral(Spectral a, Spectral b, double t) {
   if (t == 0) return a;
   if (t == 1) return b;
+  // Quick equality check — skip 12 Color.lerp calls when colors match.
+  if (a.primary == b.primary &&
+      a.secondary == b.secondary &&
+      a.energy == b.energy &&
+      a.shadow == b.shadow &&
+      a.surfaceCanvas == b.surfaceCanvas &&
+      a.glow == b.glow &&
+      a.muted == b.muted &&
+      a.surfaceBase == b.surfaceBase &&
+      a.surfaceRaised == b.surfaceRaised &&
+      a.textPrimary == b.textPrimary &&
+      a.textSecondary == b.textSecondary &&
+      a.textOnPrimary == b.textOnPrimary) {
+    return a;
+  }
   return Spectral(
     // ── Lerp every frame (12 fields) ──
     primary: Color.lerp(a.primary, b.primary, t)!,

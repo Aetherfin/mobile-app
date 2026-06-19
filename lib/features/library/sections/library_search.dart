@@ -25,6 +25,8 @@ class LibrarySearch extends ConsumerStatefulWidget {
 }
 
 class _LibrarySearchState extends ConsumerState<LibrarySearch> {
+  // ponytail: 300ms debounce, not a standard AfDurations tier
+  static const _debounceDuration = Duration(milliseconds: 300);
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   String _query = '';
@@ -173,8 +175,7 @@ class _LibrarySearchState extends ConsumerState<LibrarySearch> {
                   ),
                   onChanged: (v) {
                     _debounce?.cancel();
-                    // ponytail: 300ms debounce, not a standard AfDurations tier
-                    _debounce = Timer(const Duration(milliseconds: 300), () {
+                    _debounce = Timer(_debounceDuration, () {
                       setState(() => _query = v.trim().toLowerCase());
                     });
                   },

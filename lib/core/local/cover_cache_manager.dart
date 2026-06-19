@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -34,6 +35,7 @@ class CoverCacheManager {
 
   Map<String, int> _accessTimestamps = {};
   bool _dirty = false;
+  Timer? _saveTimer;
 
   // ── Metadata persistence ──────────────────────────────────────────────
 
@@ -81,6 +83,7 @@ class CoverCacheManager {
   void trackAccess(String path) {
     _accessTimestamps[path] = DateTime.now().microsecondsSinceEpoch;
     _dirty = true;
+    _scheduleSave();
   }
 
   /// Evict least-recently-accessed files until total size <= maxBytes.
@@ -154,6 +157,18 @@ class CoverCacheManager {
     _accessTimestamps.clear();
     _dirty = true;
     await _saveMeta();
+  }
+
+  /// Release resources — cancels any pending debounced save.
+  void dispose() {
+    _saveTimer?.cancel();
+  }
+
+  void _scheduleSave() {
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(seconds: 5), () {
+      if (_dirty) _saveMeta();
+    });
   }
 
   /// Remove entries from the access log whose files no longer exist.

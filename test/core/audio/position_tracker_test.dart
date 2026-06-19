@@ -443,7 +443,9 @@ void main() {
             // Tick 1: _executePoll throws an Error (not Exception).
             // On Exception catch doesn't catch Error — without the
             // try/finally fix, _pollChain stays non-null forever.
-            when(() => player.getRawPropertyNode('time-pos')).thenThrow(Error());
+            when(
+              () => player.getRawPropertyNode('time-pos'),
+            ).thenThrow(Error());
 
             async.elapse(const Duration(milliseconds: 500));
             async.flushMicrotasks();

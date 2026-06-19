@@ -40,6 +40,24 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
     _colorAnimation = ColorTween(begin: _current, end: _current).animate(
       CurvedAnimation(parent: _controller, curve: AfCurves.easeStandard),
     );
+    ref.listenManual(currentSpectralProvider, (prev, next) {
+      _animateToTarget(next);
+    }, fireImmediately: false);
+  }
+
+  void _animateToTarget(Spectral spectral) {
+    final oklch = srgbToOklch(spectral.energy);
+    final color = OklchColor(0.35, 0.12, oklch.h).toColor();
+    if (color == _target) return;
+    _target = color;
+    _current = _colorAnimation.value ?? _current;
+    _colorAnimation = ColorTween(begin: _current, end: color).animate(
+      CurvedAnimation(parent: _controller, curve: AfCurves.easeStandard),
+    );
+    _controller
+      ..reset()
+      ..forward();
+    _current = color;
   }
 
   @override
@@ -53,25 +71,7 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
     final spectral = ref.watch(currentSpectralProvider);
     final energy = spectral.energy;
 
-    final oklch = srgbToOklch(energy);
-    final target = OklchColor(0.35, 0.12, oklch.h).toColor();
-
-    // ponytail: mutation in build() — safe because guarded by `target != _target`.
-    // Runs exactly once per spectral change. Alternatives (ref.listen in initState,
-    // addPostFrameCallback) either don't work in ConsumerState or add frame delay.
-    if (target != _target) {
-      _target = target;
-      _current = _colorAnimation.value ?? _current;
-      _colorAnimation = ColorTween(begin: _current, end: target).animate(
-        CurvedAnimation(parent: _controller, curve: AfCurves.easeStandard),
-      );
-      _controller
-        ..reset()
-        ..forward();
-      _current = target;
-    }
-
-    final luminance = target.computeLuminance();
+    final luminance = _target.computeLuminance();
     final overlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: luminance > 0.5

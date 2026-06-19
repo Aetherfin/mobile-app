@@ -75,9 +75,9 @@ class TrackStatsRepository {
             lastPlayed: Value(now),
           ),
           onConflict: DoUpdate.withExcluded((old, excluded) {
-            final newCount = old.playCount + const Constant(1);
+            final newCount = old.skipCount + const Constant(1);
             return TrackStatsCompanion.custom(
-              skipCount: old.skipCount + const Constant(1),
+              skipCount: newCount,
               avgCompletion:
                   ((old.avgCompletion * old.playCount.dartCast<double>()) +
                       excluded.avgCompletion) /
