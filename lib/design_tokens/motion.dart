@@ -100,7 +100,4 @@ abstract final class AfStagger {
 
   /// 8 items max — items 9+ all run at the same offset as item 8.
   static const int maxStaggered = 8;
-
-  /// Per-item animation duration (fade + 12dp translate).
-  static const Duration itemDuration = AfDurations.quick;
 }

@@ -67,13 +67,6 @@ abstract final class AfLayout {
   static const double pageHorizontalWide = 32;
 
   // ---------------------------------------------------------------------------
-  // Mini player
-  // ---------------------------------------------------------------------------
-
-  /// Mini player height (artwork + progress ring + transport).
-  static const double miniPlayerHeight = 64;
-
-  // ---------------------------------------------------------------------------
   // Layout-specific heights (home sections, EQ, profile)
   // ---------------------------------------------------------------------------
 
@@ -99,7 +92,7 @@ abstract final class AfLayout {
   static const double scrubberHeight = 100;
 
   /// Height of the parametric EQ curve view.
-  static const double eqCurveHeight = 120;
+  static const double eqCurveHeight = 300;
 
   /// Profile section height — compact (empty / placeholder).
   static const double profileSectionCompact = 120;

@@ -320,7 +320,7 @@ Dialog-based (not bottom sheets) for album 3-dot and track long-press. Frosted g
 - **Don't** use `Timer.periodic` for progress reporting — use serialized `while` loop.
 - **Don't** use `Future.delayed` for auto-advance — use stream callbacks.
 - **Don't** use `.then()` for jump+play — use `async/await`.
-- **Don't** use `NoTransitionPage` for tab switches — use `AnimatedSwitcher` with `AfDurations.quick`.
+- **Don't** use `NoTransitionPage` for tab switches — use `FadeInUp` from `animate_do` with `AfDurations.quick`.
 - **Don't** hardcode animation durations (e.g. `Duration(milliseconds: 300)`) — use `AfDurations.standard` etc.
 - **Don't** hardcode colors, spacing, border radii, or font sizes — use the design tokens.
 - **Don't** use `jellyfinClientProvider` for backend ops in UI — use `musicBackendProvider`.
