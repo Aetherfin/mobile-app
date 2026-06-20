@@ -1,10 +1,15 @@
 import 'dart:math' as math;
 
+// ignore_for_file: unused_element_parameter
+// _IsolatedSliderRow is kept as a reusable component; its unused optional
+// params are intentional for future use by other screens.
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/audio/player_settings_store.dart';
 import '../../../design_tokens/pro_audio.dart';
@@ -14,7 +19,6 @@ import '../../../utils/display_error.dart';
 import '../../../utils/log.dart';
 import '../../../widgets/af_dialog.dart';
 import '../../../widgets/af_loading_indicator.dart';
-import '../../../widgets/press_scale.dart';
 import 'package:aetherfin/core/audio/models/parametric_eq_state.dart';
 import '../parametric_presets.dart';
 
@@ -634,8 +638,13 @@ class ParametricEqScreen extends ConsumerStatefulWidget {
 class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
   ParametricEqState _eqState = ParametricEqState();
   int _selectedBand = 0;
+  bool _masterEnabled = false;
+  String? _activePreset;
   bool _loaded = false;
   bool _disposed = false;
+
+  // ponytail: shared_preferences key for master toggle persistence
+  static const _kMasterEnabledKey = 'af.parametric_eq_master_enabled';
 
   @override
   void initState() {
@@ -655,9 +664,15 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
       final svc = ref.read(playerServiceProvider);
       final current = svc.audioEffects;
       final loaded = ParametricEqState.fromCustomFilters(current.custom);
+
+      // Load master enabled state from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final masterEnabled = prefs.getBool(_kMasterEnabledKey) ?? false;
+
       if (!_disposed && mounted) {
         setState(() {
           _eqState = loaded;
+          _masterEnabled = masterEnabled;
           _loaded = true;
           // Clamp selected band
           if (_selectedBand >= _eqState.bands.length) {
@@ -665,9 +680,8 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
           }
         });
       } else if (_disposed) {
-        // Widget was disposed during load, but we can still update the state
-        // in case it's rebuilt
         _eqState = loaded;
+        _masterEnabled = masterEnabled;
         _loaded = true;
       }
     } catch (e, stack) {
@@ -677,7 +691,6 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
         error: e,
         stackTrace: stack,
       );
-      // Fall back to defaults so the screen is still usable
       if (!_disposed && mounted) {
         setState(() {
           _eqState = ParametricEqState();
@@ -863,7 +876,16 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
     setState(() {
       _eqState = ParametricEqState();
       _selectedBand = 0;
+      _activePreset = null;
     });
+    _saveAndApply();
+  }
+
+  void _onMasterToggle(bool value) {
+    setState(() => _masterEnabled = value);
+    SharedPreferences.getInstance().then(
+      (p) => p.setBool(_kMasterEnabledKey, value),
+    );
     _saveAndApply();
   }
 
@@ -871,10 +893,24 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
     if (!mounted) return;
     try {
       final svc = ref.read(playerServiceProvider);
-      final lavfi = _eqState.toLavfiStrings();
+
+      // Strip existing parametric EQ lavfi strings from custom filters
+      final currentCustom = svc.audioEffects.custom;
+      final nonParametric = currentCustom
+          .where((f) => !_isParametricLavfi(f))
+          .toList();
+
+      // Re-add parametric EQ strings only if master is enabled
+      final List<String> newCustom;
+      if (_masterEnabled) {
+        final lavfi = _eqState.toLavfiStrings();
+        newCustom = [...nonParametric, ...lavfi];
+      } else {
+        newCustom = nonParametric;
+      }
+
       await svc.updateAudioEffects((current) {
-        if (lavfi.isEmpty) return current;
-        return current.copyWith(custom: [...current.custom, ...lavfi]);
+        return current.copyWith(custom: newCustom);
       });
       await PlayerSettingsStore.saveAudioEffects(svc.audioEffects);
     } on Exception catch (e) {
@@ -884,6 +920,73 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
         );
       }
     }
+  }
+
+  /// Check if a lavfi filter string belongs to the parametric EQ.
+  static bool _isParametricLavfi(String filter) =>
+      filter.startsWith('lavfi-equalizer=') ||
+      filter.startsWith('lavfi-bass=') ||
+      filter.startsWith('lavfi-treble=') ||
+      filter.startsWith('lavfi-highpass=') ||
+      filter.startsWith('lavfi-lowpass=');
+
+  // ── Slider Conversion Helpers ───────────────────────────────────────────
+
+  static double _freqToSlider(double freq) {
+    final logMin = math.log(20) / math.log(10);
+    final logMax = math.log(20000) / math.log(10);
+    final logVal = math.log(freq.clamp(20.0, 20000.0)) / math.log(10);
+    return ((logVal - logMin) / (logMax - logMin)).clamp(0.0, 1.0);
+  }
+
+  static double _freqFromSlider(double pos) {
+    final logMin = math.log(20) / math.log(10);
+    final logMax = math.log(20000) / math.log(10);
+    final logVal = logMin + pos * (logMax - logMin);
+    return math.pow(10, logVal).toDouble().clamp(20.0, 20000.0);
+  }
+
+  static double _gainToSlider(double gain) {
+    return ((gain - (-24)) / (12 - (-24))).clamp(0.0, 1.0);
+  }
+
+  static double _gainFromSlider(double pos) {
+    return (-24 + pos * 36).clamp(-24.0, 12.0);
+  }
+
+  static double _qToSlider(double q) {
+    return ((q - 0.3) / (12.0 - 0.3)).clamp(0.0, 1.0);
+  }
+
+  static double _qFromSlider(double pos) {
+    return (0.3 + pos * 11.7).clamp(0.3, 12.0);
+  }
+
+  // ── Step Button Helpers ─────────────────────────────────────────────────
+
+  void _stepFrequency(int direction) {
+    final band = _eqState.bands[_selectedBand];
+    final newFreq =
+        (direction > 0 ? band.frequency * 1.1 : band.frequency / 1.1).clamp(
+          20.0,
+          20000.0,
+        );
+    _onFrequencyChanged(newFreq);
+    _saveAndApply();
+  }
+
+  void _stepGain(int direction) {
+    final band = _eqState.bands[_selectedBand];
+    final newGain = (band.gain + direction * 0.5).clamp(-24.0, 12.0);
+    _onGainChanged(newGain);
+    _saveAndApply();
+  }
+
+  void _stepQ(int direction) {
+    final band = _eqState.bands[_selectedBand];
+    final newQ = (band.q + direction * 0.1).clamp(0.3, 12.0);
+    _onQChanged(newQ);
+    _saveAndApply();
   }
 
   // ── Build ────────────────────────────────────────────────────────────────
@@ -904,9 +1007,11 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
       );
     }
 
+    final spectral = ref.watch(currentSpectralProvider);
     final band = _eqState.bands[_selectedBand];
     final isCutType =
         band.type == BandType.lowCut || band.type == BandType.highCut;
+    final color = _bandColor(_selectedBand);
 
     return Scaffold(
       backgroundColor: AfColors.surfaceCanvas,
@@ -931,33 +1036,137 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
         physics: const ClampingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
         children: [
-          // ── Frequency Response Curve ──────────────────────────────────
-          _buildCurveSection(),
-          const SizedBox(height: AfSpacing.s12),
-
-          // ── Preset Chips ──────────────────────────────────────────────
-          _buildPresetChips(),
-          const SizedBox(height: AfSpacing.s12),
-
-          // ── Band Selector ─────────────────────────────────────────────
-          _buildBandSelector(),
+          // ── Master Enable Toggle ─────────────────────────────────────
+          _buildMasterToggle(),
           const SizedBox(height: AfSpacing.s8),
 
-          // ── Band Controls Card ────────────────────────────────────────
-          _buildBandControls(band, isCutType),
-          const SizedBox(height: AfSpacing.s12),
+          // ── All interactive content ──────────────────────────────────
+          Opacity(
+            opacity: _masterEnabled ? 1.0 : 0.4,
+            child: AbsorbPointer(
+              absorbing: !_masterEnabled,
+              child: Column(
+                children: [
+                  // ── Frequency Response Curve (hero, 300dp) ───────────
+                  _buildCurveSection(),
+                  const SizedBox(height: AfSpacing.s8),
 
-          // ── Add Band Button ───────────────────────────────────────────
-          if (_eqState.bands.length < ParametricEqState.maxBands)
-            _buildAddBandButton(),
+                  // ── Band Strip (color-coded dots) ───────────────────
+                  _buildBandStrip(),
+                  const SizedBox(height: AfSpacing.s8),
 
-          const SizedBox(height: AfSpacing.s24),
+                  // ── Preset Dropdown ──────────────────────────────────
+                  _buildPresetDropdown(),
+                  const SizedBox(height: AfSpacing.s8),
+
+                  // ── Control Panel ───────────────────────────────────
+                  _buildControlPanel(band, isCutType, color, spectral),
+                  const SizedBox(height: AfSpacing.s8),
+
+                  // ── Add Band + Trash ────────────────────────────────
+                  _buildBandActions(),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Bottom spacing ────────────────────────────────────────────
+          const SizedBox(height: AfSpacing.bottomInsetWithMiniAndNav),
         ],
       ),
     );
   }
 
-  // ── Curve Section ──────────────────────────────────────────────────────
+  // ── Master Enable Toggle ─────────────────────────────────────────────────
+
+  Widget _buildMasterToggle() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AfColors.glassFill,
+        borderRadius: AfRadii.borderLg,
+        border: Border.all(color: AfColors.glassBorder),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AfSpacing.s16,
+        vertical: AfSpacing.s12,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _masterEnabled ? LucideIcons.power : LucideIcons.powerOff,
+            size: 18,
+            color: _masterEnabled
+                ? AfColors.accentPrimary
+                : AfColors.textTertiary,
+          ),
+          const SizedBox(width: AfSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Parametric EQ',
+                  style: AfTypography.bodyMedium.copyWith(
+                    color: AfColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  _masterEnabled
+                      ? 'Active — filters applied'
+                      : 'Bypassed — no processing',
+                  style: AfTypography.caption.copyWith(
+                    color: _masterEnabled
+                        ? AfColors.accentPrimary
+                        : AfColors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Semantics(
+            toggled: _masterEnabled,
+            label: 'Parametric EQ: ${_masterEnabled ? "on" : "off"}',
+            child: GestureDetector(
+              onTap: () => _onMasterToggle(!_masterEnabled),
+              child: AnimatedContainer(
+                duration: AfDurations.quick,
+                curve: AfCurves.easeStandard,
+                width: 48,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: _masterEnabled
+                      ? AfColors.accentPrimary
+                      : AfColors.surfaceHigh,
+                  borderRadius: AfRadii.borderPill,
+                ),
+                child: AnimatedAlign(
+                  duration: AfDurations.quick,
+                  alignment: _masterEnabled
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  curve: AfCurves.easeStandard,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AfSpacing.s2,
+                    ),
+                    decoration: const BoxDecoration(
+                      color: AfColors.textPrimary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Curve Section (300dp hero) ────────────────────────────────────────────
 
   Widget _buildCurveSection() {
     return Material(
@@ -965,7 +1174,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
       borderRadius: AfRadii.borderLg,
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
-        height: AfLayout.albumGridMaxTileExtent,
+        height: 300,
         child: Stack(
           children: [
             // dB labels on left edge
@@ -1023,34 +1232,60 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
     );
   }
 
-  // ── Preset Chips ───────────────────────────────────────────────────────
+  // ── Band Strip (color-coded dots) ──────────────────────────────────────────
 
-  Widget _buildPresetChips() {
+  Widget _buildBandStrip() {
     return SizedBox(
-      height: 36,
-      child: ListView.separated(
+      height: 48,
+      child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: kParametricPresets.length,
-        separatorBuilder: (_, _) => const SizedBox(width: AfSpacing.s8),
+        itemCount: _eqState.bands.length,
         itemBuilder: (context, index) {
-          final name = kParametricPresets.keys.elementAt(index);
+          final b = _eqState.bands[index];
+          final isSelected = index == _selectedBand;
+          final dotSize = isSelected ? 14.0 : 10.0;
+          final dotColor = _bandColor(index);
+          final opacity = b.enabled ? 1.0 : 0.4;
+
           return GestureDetector(
-            onTap: () => _applyPreset(name),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AfSpacing.s12,
-                vertical: AfSpacing.s4,
-              ),
-              decoration: BoxDecoration(
-                color: AfColors.surfaceBase,
-                borderRadius: AfRadii.borderPill,
-                border: Border.all(color: AfColors.surfaceHigh),
-              ),
-              child: Text(
-                name,
-                style: AfTypography.bodySmall.copyWith(
-                  color: AfColors.textSecondary,
-                ),
+            onTap: () => _onBandSelected(index),
+            onDoubleTap: () {
+              _onBandSelected(index);
+              _onToggleBand(index);
+            },
+            onLongPress: () {
+              _onBandSelected(index);
+              _showBandPicker();
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s4),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AnimatedContainer(
+                    duration: AfDurations.quick,
+                    curve: AfCurves.easeStandard,
+                    width: dotSize,
+                    height: dotSize,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: dotColor.withValues(alpha: opacity),
+                      border: isSelected
+                          ? Border.all(color: AfColors.textPrimary, width: 2)
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _formatFrequency(b.frequency),
+                    style: AfTypography.overline.copyWith(
+                      color: AfColors.textTertiary.withValues(alpha: opacity),
+                      fontSize: 8,
+                    ),
+                  ),
+                ],
               ),
             ),
           );
@@ -1059,108 +1294,325 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
     );
   }
 
-  // ── Band Selector ─────────────────────────────────────────────────────
+  // ── Preset Dropdown ───────────────────────────────────────────────────────
 
-  Widget _buildBandSelector() {
-    final selected = _eqState.bands[_selectedBand];
-    return Material(
-      color: AfColors.surfaceBase,
-      borderRadius: AfRadii.borderSm,
-      child: PressScale(
-        onTap: _showBandPicker,
-        child: InkWell(
-          borderRadius: AfRadii.borderSm,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AfSpacing.s12,
-              vertical: AfSpacing.s8,
+  Widget _buildPresetDropdown() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AfColors.glassFill,
+        borderRadius: AfRadii.borderLg,
+        border: Border.all(color: AfColors.glassBorder),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AfSpacing.s16,
+        vertical: AfSpacing.s8,
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            LucideIcons.slidersHorizontal,
+            size: 16,
+            color: AfColors.textTertiary,
+          ),
+          const SizedBox(width: AfSpacing.s12),
+          Text(
+            'Preset',
+            style: AfTypography.bodyMedium.copyWith(
+              color: AfColors.textSecondary,
             ),
-            child: Row(
-              children: [
-                // Color indicator
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: _bandColor(_selectedBand),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: AfSpacing.s8),
-                Text(
-                  'Band ${_selectedBand + 1}',
-                  style: AfTypography.bodyMedium.copyWith(
-                    color: AfColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(width: AfSpacing.s4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AfSpacing.s8,
-                    vertical: AfSpacing.s2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _bandColor(_selectedBand).withValues(alpha: 0.15),
-                    borderRadius: AfRadii.borderPill,
-                  ),
-                  child: Text(
-                    _formatFrequency(selected.frequency),
-                    style: AfTypography.caption.copyWith(
-                      color: _bandColor(_selectedBand),
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                // Enable/disable toggle
-                Semantics(
-                  toggled: selected.enabled,
-                  label:
-                      'Band ${_selectedBand + 1}: ${selected.enabled ? "on" : "off"}',
-                  child: GestureDetector(
-                    onTap: () => _onToggleBand(_selectedBand),
-                    child: AnimatedContainer(
-                      duration: AfDurations.quick,
-                      curve: AfCurves.easeStandard,
-                      width: 48,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: selected.enabled
-                            ? _bandColor(_selectedBand)
-                            : AfColors.surfaceHigh,
-                        borderRadius: AfRadii.borderPill,
-                      ),
-                      child: AnimatedAlign(
-                        duration: AfDurations.quick,
-                        alignment: selected.enabled
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        curve: AfCurves.easeStandard,
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: AfSpacing.s2,
-                          ),
-                          decoration: const BoxDecoration(
-                            color: AfColors.textPrimary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AfSpacing.s8),
-                const Icon(
-                  LucideIcons.chevronDown,
-                  size: AfIconSizes.xs,
+          ),
+          const Spacer(),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _activePreset,
+              isDense: true,
+              dropdownColor: AfColors.surfaceRaised,
+              style: AfTypography.bodyMedium.copyWith(
+                color: AfColors.accentPrimary,
+              ),
+              hint: Text(
+                'Flat',
+                style: AfTypography.bodyMedium.copyWith(
                   color: AfColors.textTertiary,
                 ),
-              ],
+              ),
+              items: kParametricPresets.keys.map((name) {
+                return DropdownMenuItem(value: name, child: Text(name));
+              }).toList(),
+              onChanged: (name) {
+                if (name != null) {
+                  setState(() => _activePreset = name);
+                  _applyPreset(name);
+                }
+              },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Control Panel (glass card) ─────────────────────────────────────────────
+
+  Widget _buildControlPanel(
+    ParametricEqBand band,
+    bool isCutType,
+    Color color,
+    Spectral spectral,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AfColors.glassFill,
+        borderRadius: AfRadii.borderLg,
+        border: Border.all(color: AfColors.glassBorder),
+      ),
+      padding: const EdgeInsets.all(AfSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Type Segmented Button ──────────────────────────────────────
+          _buildTypeSegmented(band.type, spectral),
+          const SizedBox(height: AfSpacing.s12),
+
+          // ── Freq Row ─────────────────────────────────────────────────
+          _buildValueRow(
+            label: 'Freq',
+            sliderPos: _freqToSlider(band.frequency),
+            displayText: _formatFrequency(band.frequency),
+            color: color,
+            onSliderChanged: (v) => _onFrequencyChanged(_freqFromSlider(v)),
+            onSliderEnd: (_) => _saveAndApply(),
+            onStep: _stepFrequency,
+          ),
+          const SizedBox(height: AfSpacing.s4),
+
+          // ── Gain Row (hidden for cut types) ──────────────────────────
+          if (!isCutType)
+            _buildValueRow(
+              label: 'Gain',
+              sliderPos: _gainToSlider(band.gain),
+              displayText: '${_formatGain(band.gain)} dB',
+              color: color,
+              onSliderChanged: (v) => _onGainChanged(_gainFromSlider(v)),
+              onSliderEnd: (_) => _saveAndApply(),
+              onStep: _stepGain,
+            ),
+          if (isCutType) const SizedBox(height: AfSpacing.s4),
+
+          // ── Q Row ────────────────────────────────────────────────────
+          _buildValueRow(
+            label: 'Q',
+            sliderPos: _qToSlider(band.q),
+            displayText: band.q.toStringAsFixed(1),
+            color: color,
+            onSliderChanged: (v) => _onQChanged(_qFromSlider(v)),
+            onSliderEnd: (_) => _saveAndApply(),
+            onStep: _stepQ,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Type Segmented Button ──────────────────────────────────────────────────
+
+  Widget _buildTypeSegmented(BandType currentType, Spectral spectral) {
+    return SegmentedButton<BandType>(
+      segments: const [
+        ButtonSegment(value: BandType.peak, label: Text('Peak')),
+        ButtonSegment(value: BandType.lowShelf, label: Text('L.Shelf')),
+        ButtonSegment(value: BandType.highShelf, label: Text('H.Shelf')),
+        ButtonSegment(value: BandType.lowCut, label: Text('L.Cut')),
+        ButtonSegment(value: BandType.highCut, label: Text('H.Cut')),
+      ],
+      selected: {currentType},
+      onSelectionChanged: (selected) {
+        if (selected.isNotEmpty) _onTypeChanged(selected.first);
+      },
+      style: ButtonStyle(
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return spectral.primary.withValues(alpha: 0.25);
+          }
+          return AfColors.surfaceBase;
+        }),
+        foregroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return spectral.primary;
+          }
+          return AfColors.textSecondary;
+        }),
+        side: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return BorderSide(color: spectral.primary.withValues(alpha: 0.5));
+          }
+          return const BorderSide(color: AfColors.surfaceHigh);
+        }),
+        textStyle: WidgetStateProperty.all(
+          AfTypography.caption.copyWith(fontWeight: FontWeight.w500),
+        ),
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(
+            horizontal: AfSpacing.s4,
+            vertical: AfSpacing.s4,
           ),
         ),
       ),
+      showSelectedIcon: false,
+    );
+  }
+
+  // ── Value Row (label + slider + step buttons + display) ────────────────────
+
+  Widget _buildValueRow({
+    required String label,
+    required double sliderPos,
+    required String displayText,
+    required Color color,
+    required ValueChanged<double> onSliderChanged,
+    required ValueChanged<double> onSliderEnd,
+    required void Function(int) onStep,
+  }) {
+    return Row(
+      children: [
+        SizedBox(width: 56, child: Text(label, style: AfTypography.bodyMedium)),
+        Expanded(
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 2,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+              activeTrackColor: color,
+              inactiveTrackColor: AfColors.surfaceHigh,
+              thumbColor: color,
+              overlayColor: color.withValues(alpha: 0.15),
+            ),
+            child: Slider(
+              value: sliderPos,
+              min: 0,
+              max: 1,
+              onChanged: onSliderChanged,
+              onChangeEnd: onSliderEnd,
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: () => onStep(-1),
+          behavior: HitTestBehavior.opaque,
+            child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 6),
+            child: Icon(
+              LucideIcons.minus,
+              size: 14,
+              color: AfColors.textSecondary,
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 56,
+          child: Text(
+            displayText,
+            textAlign: TextAlign.right,
+            style: AfTypography.mono.copyWith(color: color),
+          ),
+        ),
+        GestureDetector(
+          onTap: () => onStep(1),
+          behavior: HitTestBehavior.opaque,
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 6),
+            child: Icon(
+              LucideIcons.plus,
+              size: 14,
+              color: AfColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Band Actions (Add + Trash) ────────────────────────────────────────────
+
+  Widget _buildBandActions() {
+    return Row(
+      children: [
+        // Add Band button
+        if (_eqState.bands.length < ParametricEqState.maxBands)
+          Expanded(
+            child: GestureDetector(
+              onTap: _addBand,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: AfSpacing.s12),
+                decoration: BoxDecoration(
+                  color: AfColors.surfaceBase,
+                  borderRadius: AfRadii.borderSm,
+                  border: Border.all(
+                    color: AfColors.accentPrimary.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      LucideIcons.plus,
+                      size: AfIconSizes.xs,
+                      color: AfColors.accentPrimary,
+                    ),
+                    const SizedBox(width: AfSpacing.s8),
+                    Text(
+                      'Add Band (${_eqState.bands.length}/${ParametricEqState.maxBands})',
+                      style: AfTypography.bodySmall.copyWith(
+                        color: AfColors.accentPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+        // Trash button (only if > 1 band)
+        if (_eqState.bands.length > 1) ...[
+          if (_eqState.bands.length < ParametricEqState.maxBands)
+            const SizedBox(width: AfSpacing.s8),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _removeBand(_selectedBand),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: AfSpacing.s12),
+                decoration: BoxDecoration(
+                  color: AfColors.surfaceBase,
+                  borderRadius: AfRadii.borderSm,
+                  border: Border.all(
+                    color: AfColors.semanticError.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      LucideIcons.trash2,
+                      size: AfIconSizes.xs,
+                      color: AfColors.semanticError,
+                    ),
+                    const SizedBox(width: AfSpacing.s8),
+                    Text(
+                      'Remove Band',
+                      style: AfTypography.bodySmall.copyWith(
+                        color: AfColors.semanticError,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -1284,145 +1736,6 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
           ),
         );
       },
-    );
-  }
-
-  // ── Band Controls Card ────────────────────────────────────────────────
-
-  Widget _buildBandControls(ParametricEqBand band, bool isCutType) {
-    final color = _bandColor(_selectedBand);
-    return Material(
-      color: AfColors.surfaceBase,
-      borderRadius: AfRadii.borderLg,
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(AfSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Type selector
-            Row(
-              children: [
-                Text(
-                  'Type',
-                  style: AfTypography.bodyMedium.copyWith(
-                    color: AfColors.textSecondary,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AfSpacing.s8,
-                    vertical: AfSpacing.s2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    borderRadius: AfRadii.borderPill,
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<BandType>(
-                      value: band.type,
-                      isDense: true,
-                      dropdownColor: AfColors.surfaceRaised,
-                      style: AfTypography.bodySmall.copyWith(color: color),
-                      items: BandType.values.map((t) {
-                        return DropdownMenuItem(
-                          value: t,
-                          child: Text(_bandTypeLabel(t)),
-                        );
-                      }).toList(),
-                      onChanged: (t) {
-                        if (t != null) _onTypeChanged(t);
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AfSpacing.s12),
-
-            // Frequency slider (isolated — no parent rebuild on tick)
-            _IsolatedSliderRow(
-              key: ValueKey('freq-$_selectedBand-${band.frequency}'),
-              label: 'Freq',
-              initialValue: band.frequency,
-              min: 20,
-              max: 20000,
-              display: _formatFrequency(band.frequency),
-              color: color,
-              isLogarithmic: true,
-              onChanged: _onFrequencyChanged,
-              onChangeEnd: (_) => _saveAndApply(),
-            ),
-            const SizedBox(height: AfSpacing.s4),
-
-            // Gain slider (hidden for cut types, isolated)
-            if (!isCutType)
-              _IsolatedSliderRow(
-                key: ValueKey('gain-$_selectedBand-${band.gain}'),
-                label: 'Gain',
-                initialValue: band.gain,
-                min: -24,
-                max: 12,
-                display: '${_formatGain(band.gain)} dB',
-                color: color,
-                onChanged: _onGainChanged,
-                onChangeEnd: (_) => _saveAndApply(),
-              ),
-            if (isCutType) const SizedBox(height: AfSpacing.s4),
-
-            // Q slider (isolated)
-            _IsolatedSliderRow(
-              key: ValueKey('q-$_selectedBand-${band.q}'),
-              label: 'Q',
-              initialValue: band.q,
-              min: 0.3,
-              max: 12.0,
-              display: band.q.toStringAsFixed(1),
-              color: color,
-              onChanged: _onQChanged,
-              onChangeEnd: (_) => _saveAndApply(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Add Band Button ──────────────────────────────────────────────────
-
-  Widget _buildAddBandButton() {
-    return GestureDetector(
-      onTap: _addBand,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: AfSpacing.s12),
-        decoration: BoxDecoration(
-          color: AfColors.surfaceBase,
-          borderRadius: AfRadii.borderSm,
-          border: Border.all(
-            color: AfColors.accentPrimary.withValues(alpha: 0.3),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              LucideIcons.plus,
-              size: AfIconSizes.xs,
-              color: AfColors.accentPrimary,
-            ),
-            const SizedBox(width: AfSpacing.s8),
-            Text(
-              'Add Band (${_eqState.bands.length}/${ParametricEqState.maxBands})',
-              style: AfTypography.bodySmall.copyWith(
-                color: AfColors.accentPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
