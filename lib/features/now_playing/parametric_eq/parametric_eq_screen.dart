@@ -1502,7 +1502,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
         GestureDetector(
           onTap: () => onStep(-1),
           behavior: HitTestBehavior.opaque,
-            child: const Padding(
+          child: const Padding(
             padding: EdgeInsets.symmetric(horizontal: 6),
             child: Icon(
               LucideIcons.minus,

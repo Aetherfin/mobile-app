@@ -39,7 +39,7 @@ class _MediaStopIntent extends Intent {
 ///   - Tab content with directional slide + fade (left/right based on nav direction)
 ///   - Sleep timer watcher (zero-sized, invisible)
 ///   - Bottom nav bar
-///   - PopScope for Android back handling (non-Home → Home; Home → exit)
+///   - Keyboard shortcuts for media controls
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.shell});
   final StatefulNavigationShell shell;
@@ -66,33 +66,6 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  static DateTime? _lastBackPress;
-
-  Future<bool> _onBackPressed(BuildContext context) async {
-    if (widget.shell.currentIndex != 0) {
-      widget.shell.goBranch(0);
-      return false;
-    }
-    final now = DateTime.now();
-    if (_lastBackPress != null &&
-        now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
-      return true;
-    }
-    _lastBackPress = now;
-    if (context.mounted) {
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('Press back again to exit'),
-            duration: AfDurations.snackBarInfo,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-    }
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) {
     final mode = ref.watch(appModeProvider);
@@ -150,26 +123,12 @@ class _AppShellState extends ConsumerState<AppShell> {
             },
           ),
         },
-        child: PopScope(
-          canPop: false,
-          onPopInvokedWithResult: (didPop, _) async {
-            if (didPop) return;
-            if (blurSheetCount.value > 0) {
-              blurSheetDismiss.value?.call();
-              return;
-            }
-            final shouldExit = await _onBackPressed(context);
-            if (shouldExit) {
-              await SystemNavigator.pop();
-            }
-          },
-          child: _buildScaffold(
-            context,
-            ref,
-            isYt: isYt,
-            shadow: spectral.shadow,
-            energy: spectral.energy,
-          ),
+        child: _buildScaffold(
+          context,
+          ref,
+          isYt: isYt,
+          shadow: spectral.shadow,
+          energy: spectral.energy,
         ),
       ),
     );
@@ -187,76 +146,98 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final newIndex = widget.shell.currentIndex;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBody: true,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Full-bleed background — GPU shader (zero banding)
-          Positioned.fill(
-            child: WaveBackground(
-              color1: shadow,
-              color2: AfColors.surfaceCanvas,
-              amplitude: 0.15,
-              speed: 0.3,
-            ),
-          ),
-
-          // Tab content — FadeInUp on tab change.
-          // ExcludeFocus when a blur sheet is open to prevent
-          // keyboard focus escaping behind the sheet.
-          ValueListenableBuilder<int>(
-            valueListenable: blurSheetCount,
-            builder: (context, count, child) {
-              return ExcludeFocus(excluding: count > 0, child: child!);
-            },
-            child: RepaintBoundary(
-              child: FadeInUp(
-                key: ValueKey('shell-tab-$newIndex'),
-                duration: AfDurations.quick,
-                from: 10,
-                curve: AfCurves.easeEmphasized,
-                child: widget.shell,
+    // Shell-level PopScope — controls predictive back for all shell tabs.
+    // canPop: false → the shell itself never pops. System handles app exit
+    // with the correct Android predictive back animation (shrink-to-home).
+    // Non-root branches oscillate to Home before exit.
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        // Dismiss topmost blur sheet before any navigation.
+        if (blurSheetCount.value > 0) {
+          blurSheetDismiss.value?.call();
+          return;
+        }
+        // Non-root branch → oscillate back to Home (branch 0).
+        final currentIdx = widget.shell.currentIndex;
+        if (currentIdx != 0) {
+          widget.shell.goBranch(0);
+        }
+        // Root branch (Home) with no sub-routes: do nothing.
+        // canPop is false, so the system will handle app exit.
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Full-bleed background — GPU shader (zero banding)
+            Positioned.fill(
+              child: WaveBackground(
+                color1: shadow,
+                color2: AfColors.surfaceCanvas,
+                amplitude: 0.15,
+                speed: 0.3,
               ),
             ),
-          ),
 
-          // Sleep timer watcher — zero-sized, invisible.
-          const Positioned(
-            key: ValueKey('sleep-timer-watcher'),
-            width: 0,
-            height: 0,
-            child: SleepTimerWatcher(),
-          ),
-
-          // Mini now-playing — floating pill above bottom nav.
-          // AnimatedSlide + AnimatedOpacity for expand/collapse.
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: miniBottom,
-            child: MiniNowPlaying(
-              isVisible: ref.watch(
-                currentTrackProvider.select((t) => t != null),
+            // Tab content — FadeInUp on tab change.
+            // ExcludeFocus when a blur sheet is open to prevent
+            // keyboard focus escaping behind the sheet.
+            ValueListenableBuilder<int>(
+              valueListenable: blurSheetCount,
+              builder: (context, count, child) {
+                return ExcludeFocus(excluding: count > 0, child: child!);
+              },
+              child: RepaintBoundary(
+                child: FadeInUp(
+                  key: ValueKey('shell-tab-$newIndex'),
+                  duration: AfDurations.quick,
+                  from: 10,
+                  curve: AfCurves.easeEmphasized,
+                  child: widget.shell,
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: AfBottomNav(
-        currentIndex: isYt
-            ? AppShell._ytToBranch.indexOf(widget.shell.currentIndex)
-            : widget.shell.currentIndex,
-        onSelect: (i) {
-          if (isYt) {
-            widget.shell.goBranch(AppShell._ytToBranch[i]);
-          } else {
-            widget.shell.goBranch(i);
-          }
-        },
-        items: isYt ? AppShell._ytItems : AppShell._allItems,
-        accentColor: energy,
+
+            // Sleep timer watcher — zero-sized, invisible.
+            const Positioned(
+              key: ValueKey('sleep-timer-watcher'),
+              width: 0,
+              height: 0,
+              child: SleepTimerWatcher(),
+            ),
+
+            // Mini now-playing — floating pill above bottom nav.
+            // AnimatedSlide + AnimatedOpacity for expand/collapse.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: miniBottom,
+              child: MiniNowPlaying(
+                isVisible: ref.watch(
+                  currentTrackProvider.select((t) => t != null),
+                ),
+              ),
+            ),
+          ],
+        ),
+        bottomNavigationBar: AfBottomNav(
+          currentIndex: isYt
+              ? AppShell._ytToBranch.indexOf(widget.shell.currentIndex)
+              : widget.shell.currentIndex,
+          onSelect: (i) {
+            if (isYt) {
+              widget.shell.goBranch(AppShell._ytToBranch[i]);
+            } else {
+              widget.shell.goBranch(i);
+            }
+          },
+          items: isYt ? AppShell._ytItems : AppShell._allItems,
+          accentColor: energy,
+        ),
       ),
     );
   }

@@ -60,7 +60,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
     }
 
     return PopScope(
-      canPop: false,
+      canPop: true,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
         // Top-most overlay sheet (e.g. "more" menu) must close first.

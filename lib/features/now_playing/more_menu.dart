@@ -320,7 +320,7 @@ class _TrackDetailsWrapperState extends State<_TrackDetailsWrapper> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      canPop: true,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) widget.onBack();
       },

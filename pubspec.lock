@@ -555,10 +555,9 @@ packages:
   go_router:
     dependency: "direct main"
     description:
-      name: go_router
-      sha256: "5922b2861e2235a3504896f0d6fa07d84141b480cf52eecd2f42cd25585a9e8a"
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/go_router_patched"
+      relative: true
+    source: path
     version: "17.3.0"
   google_fonts:
     dependency: "direct main"

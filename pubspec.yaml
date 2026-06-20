@@ -100,6 +100,12 @@ flutter_launcher_icons:
   min_sdk_android: 21
 
 dependency_overrides:
+  # Local patch of go_router that adds PopScope around StatefulNavigationShell
+  # for Android predictive back gesture support. Upstream PR #11432 was closed
+  # without merging. See packages/go_router_patched/README.md.
+  # Upstream: https://pub.dev/packages/go_router
+  go_router:
+    path: packages/go_router_patched
   # Local patch of lucide_icons_flutter that consolidates variable fonts
   # into a single TTF file, saving ~2.6MB per ABI (~5.2MB total).
   # The official package (v3.1.14+2) includes separate Lucide100-600 font

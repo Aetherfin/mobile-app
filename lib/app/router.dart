@@ -255,27 +255,7 @@ final _router = GoRouter(
       name: 'settings',
       path: '/settings',
       parentNavigatorKey: _rootKey,
-      pageBuilder: (context, state) => CustomTransitionPage(
-        child: const SettingsScreen(),
-        transitionDuration: AfDurations.standard,
-        reverseTransitionDuration: AfDurations.standard,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final curved = CurvedAnimation(
-            parent: animation,
-            curve: AfCurves.easeEmphasized,
-          );
-          return FadeTransition(
-            opacity: curved,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.05),
-                end: Offset.zero,
-              ).animate(curved),
-              child: child,
-            ),
-          );
-        },
-      ),
+      builder: (context, state) => const SettingsScreen(),
     ),
     GoRoute(
       name: 'eq-dsp',
@@ -300,53 +280,14 @@ final _router = GoRouter(
       name: 'album',
       path: '/album/:id',
       parentNavigatorKey: _rootKey,
-      pageBuilder: (_, state) => CustomTransitionPage(
-        child: AlbumScreen(albumId: state.pathParameters['id']!),
-        transitionDuration: AfDurations.standard,
-        reverseTransitionDuration: AfDurations.standard,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final curved = CurvedAnimation(
-            parent: animation,
-            curve: AfCurves.easeEmphasized,
-          );
-          return FadeTransition(
-            opacity: curved,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.08, 0),
-                end: Offset.zero,
-              ).animate(curved),
-              child: child,
-            ),
-          );
-        },
-      ),
+      builder: (_, state) => AlbumScreen(albumId: state.pathParameters['id']!),
     ),
     GoRoute(
       name: 'artist',
       path: '/artist/:id',
       parentNavigatorKey: _rootKey,
-      pageBuilder: (_, state) => CustomTransitionPage(
-        child: ArtistScreen(artistId: state.pathParameters['id']!),
-        transitionDuration: AfDurations.standard,
-        reverseTransitionDuration: AfDurations.standard,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final curved = CurvedAnimation(
-            parent: animation,
-            curve: AfCurves.easeEmphasized,
-          );
-          return FadeTransition(
-            opacity: curved,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.08, 0),
-                end: Offset.zero,
-              ).animate(curved),
-              child: child,
-            ),
-          );
-        },
-      ),
+      builder: (_, state) =>
+          ArtistScreen(artistId: state.pathParameters['id']!),
     ),
     GoRoute(
       name: 'artist-songs',
@@ -366,27 +307,7 @@ final _router = GoRouter(
       name: 'genre',
       path: '/genre/:name',
       parentNavigatorKey: _rootKey,
-      pageBuilder: (_, state) => CustomTransitionPage(
-        child: GenreScreen(genre: state.pathParameters['name']!),
-        transitionDuration: AfDurations.standard,
-        reverseTransitionDuration: AfDurations.standard,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final curved = CurvedAnimation(
-            parent: animation,
-            curve: AfCurves.easeEmphasized,
-          );
-          return FadeTransition(
-            opacity: curved,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.08, 0),
-                end: Offset.zero,
-              ).animate(curved),
-              child: child,
-            ),
-          );
-        },
-      ),
+      builder: (_, state) => GenreScreen(genre: state.pathParameters['name']!),
     ),
     GoRoute(
       name: 'playlist',
