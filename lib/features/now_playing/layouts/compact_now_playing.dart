@@ -1,5 +1,6 @@
 import 'dart:async' show unawaited;
 
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -158,60 +159,59 @@ class _CompactNowPlayingState extends ConsumerState<CompactNowPlaying> {
           ),
         ),
 
-        // ── Artwork / Lyrics / Queue (same slot, crossfade) ──
+        // ── Artwork / Lyrics / Queue (animate_do fade-in on mount) ──
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AfSpacing.s16),
-            child: AnimatedSwitcher(
-              duration: AfDurations.standard,
-              switchInCurve: AfCurves.easeEmphasized,
-              switchOutCurve: AfCurves.easeEmphasized,
-              transitionBuilder: (child, animation) =>
-                  FadeTransition(opacity: animation, child: child),
-              child: _showLyrics
-                  ? KeyedSubtree(
-                      key: const ValueKey('lyrics'),
-                      child: _buildLyricsPanel(
-                        lrcAsync: lrcAsync,
-                        lrc: lrc,
-                        lyricsSource: lyricsSource,
-                        isSynced: isSynced,
-                        spectral: spectral.energy,
-                        track: track,
-                      ),
-                    )
-                  : _showQueue
-                  ? KeyedSubtree(
-                      key: const ValueKey('queue'),
-                      child: _buildQueuePanel(
-                        upNext: upNext,
-                        queue: queue,
-                        track: track,
-                        accent: spectral.energy,
-                      ),
-                    )
-                  : Semantics(
-                      key: const ValueKey('artwork'),
-                      button: true,
-                      label: 'Now playing artwork',
-                      child: GestureDetector(
-                        onTap: () {
-                          if (widget.lyricsExpandedNotifier.value) {
-                            widget.lyricsExpandedNotifier.value = false;
-                          }
-                        },
-                        onVerticalDragEnd: (details) {
-                          if ((details.primaryVelocity ?? 0) < -200) {
-                            widget.expandedNotifier.value = true;
-                          }
-                        },
-                        behavior: HitTestBehavior.translucent,
-                        child: RepaintBoundary(
-                          child: ReactiveArtwork(track: track),
-                        ),
+            child: _showLyrics
+                ? FadeInUp(
+                    key: const ValueKey('lyrics'),
+                    duration: AfDurations.standard,
+                    curve: AfCurves.easeEmphasized,
+                    from: 20,
+                    child: _buildLyricsPanel(
+                      lrcAsync: lrcAsync,
+                      lrc: lrc,
+                      lyricsSource: lyricsSource,
+                      isSynced: isSynced,
+                      spectral: spectral.energy,
+                      track: track,
+                    ),
+                  )
+                : _showQueue
+                ? FadeInUp(
+                    key: const ValueKey('queue'),
+                    duration: AfDurations.standard,
+                    curve: AfCurves.easeEmphasized,
+                    from: 20,
+                    child: _buildQueuePanel(
+                      upNext: upNext,
+                      queue: queue,
+                      track: track,
+                      accent: spectral.energy,
+                    ),
+                  )
+                : Semantics(
+                    key: const ValueKey('artwork'),
+                    button: true,
+                    label: 'Now playing artwork',
+                    child: GestureDetector(
+                      onTap: () {
+                        if (widget.lyricsExpandedNotifier.value) {
+                          widget.lyricsExpandedNotifier.value = false;
+                        }
+                      },
+                      onVerticalDragEnd: (details) {
+                        if ((details.primaryVelocity ?? 0) < -200) {
+                          widget.expandedNotifier.value = true;
+                        }
+                      },
+                      behavior: HitTestBehavior.translucent,
+                      child: RepaintBoundary(
+                        child: ReactiveArtwork(track: track),
                       ),
                     ),
-            ),
+                  ),
           ),
         ),
 
