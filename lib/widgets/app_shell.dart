@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,8 +66,6 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  int _previousIndex = 0;
-
   static DateTime? _lastBackPress;
 
   Future<bool> _onBackPressed(BuildContext context) async {
@@ -107,15 +106,6 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
 
     final svc = ref.read(playerServiceProvider);
-
-    // Track tab index for directional animation.
-    final currentIndex = widget.shell.currentIndex;
-    if (currentIndex != _previousIndex) {
-      // Update after build to avoid setState during build.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() => _previousIndex = currentIndex);
-      });
-    }
 
     return Shortcuts(
       shortcuts: const <ShortcutActivator, Intent>{
@@ -195,9 +185,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final miniBottom = AfSpacing.bottomNavHeight + bottomInset + AfSpacing.s4;
 
-    // Directional slide: new tab slides in from the direction of navigation.
     final newIndex = widget.shell.currentIndex;
-    final slideDirection = newIndex >= _previousIndex ? 1.0 : -1.0;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -215,7 +203,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             ),
           ),
 
-          // Tab content — directional slide + fade between tab changes.
+          // Tab content — FadeInUp on tab change.
           // ExcludeFocus when a blur sheet is open to prevent
           // keyboard focus escaping behind the sheet.
           ValueListenableBuilder<int>(
@@ -224,25 +212,12 @@ class _AppShellState extends ConsumerState<AppShell> {
               return ExcludeFocus(excluding: count > 0, child: child!);
             },
             child: RepaintBoundary(
-              child: AnimatedSwitcher(
-                duration: AfDurations.standard,
-                switchInCurve: AfCurves.easeStandard,
-                switchOutCurve: AfCurves.easeOut,
-                transitionBuilder: (child, animation) {
-                  final isNew = child.key == ValueKey('shell-tab-$newIndex');
-                  final direction = isNew ? slideDirection : -slideDirection;
-                  return SlideTransition(
-                    position: Tween<Offset>(
-                      begin: Offset(0.15 * direction, 0),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: FadeTransition(opacity: animation, child: child),
-                  );
-                },
-                child: KeyedSubtree(
-                  key: ValueKey('shell-tab-$newIndex'),
-                  child: widget.shell,
-                ),
+              child: FadeInUp(
+                key: ValueKey('shell-tab-$newIndex'),
+                duration: AfDurations.quick,
+                from: 10,
+                curve: AfCurves.easeEmphasized,
+                child: widget.shell,
               ),
             ),
           ),

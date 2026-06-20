@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +19,6 @@ import '../../widgets/section_header.dart';
 import '../../widgets/artwork.dart';
 import '../../widgets/tile.dart';
 import '../../widgets/skeletons/genre_skeleton.dart';
-import '../../widgets/stagger_reveal.dart';
 
 class GenreScreen extends ConsumerStatefulWidget {
   const GenreScreen({super.key, required this.genre});
@@ -343,17 +343,23 @@ class _GenreScreenState extends ConsumerState<GenreScreen> {
                               ),
                           delegate: SliverChildBuilderDelegate((context, i) {
                             final a = albums[i];
-                            return StaggerReveal(
-                              children: [
-                                Tile(
-                                  title: a.name,
-                                  subtitle: a.artistName,
-                                  variant: TileVariant.album,
-                                  imageUrl: a.imageUrl,
-                                  size: double.infinity,
-                                  onTap: () => context.push('/album/${a.id}'),
-                                ),
-                              ],
+                            return FadeInUp(
+                              duration: AfDurations.standard,
+                              delay:
+                                  AfStagger.perItem *
+                                  (i < AfStagger.maxStaggered
+                                      ? i
+                                      : AfStagger.maxStaggered),
+                              curve: AfCurves.easeEmphasized,
+                              from: 24,
+                              child: Tile(
+                                title: a.name,
+                                subtitle: a.artistName,
+                                variant: TileVariant.album,
+                                imageUrl: a.imageUrl,
+                                size: double.infinity,
+                                onTap: () => context.push('/album/${a.id}'),
+                              ),
                             );
                           }, childCount: albums.length),
                         ),

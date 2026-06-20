@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,39 +18,17 @@ class AllSetScreen extends ConsumerStatefulWidget {
   ConsumerState<AllSetScreen> createState() => _AllSetScreenState();
 }
 
-class _AllSetScreenState extends ConsumerState<AllSetScreen>
-    with TickerProviderStateMixin {
-  late final AnimationController _checkController = AnimationController(
-    vsync: this,
-    duration: AfDurations.expressive,
-  );
-  late final AnimationController _stagger = AnimationController(
-    vsync: this,
-    duration: AfDurations.long,
-  );
+class _AllSetScreenState extends ConsumerState<AllSetScreen> {
+  late final bool _animate;
 
   @override
   void initState() {
     super.initState();
-    final reducedMotion = WidgetsBinding
+    _animate = !WidgetsBinding
         .instance
         .platformDispatcher
         .accessibilityFeatures
         .disableAnimations;
-    if (!reducedMotion) {
-      _checkController.forward();
-      _stagger.forward();
-    } else {
-      _checkController.value = 1.0;
-      _stagger.value = 1.0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _checkController.dispose();
-    _stagger.dispose();
-    super.dispose();
   }
 
   @override
@@ -80,13 +59,14 @@ class _AllSetScreenState extends ConsumerState<AllSetScreen>
 
               // Checkmark animation
               Center(
-                child: ScaleTransition(
-                  scale: CurvedAnimation(
-                    parent: _checkController,
-                    curve: AfCurves.easeEmphasized,
-                  ),
-                  child: FadeTransition(
-                    opacity: _checkController,
+                child: ZoomIn(
+                  duration: AfDurations.expressive,
+                  curve: AfCurves.easeEmphasized,
+                  animate: _animate,
+                  child: FadeIn(
+                    duration: AfDurations.expressive,
+                    curve: AfCurves.easeOut,
+                    animate: _animate,
                     child: Container(
                       width: 80,
                       height: 80,
@@ -134,7 +114,7 @@ class _AllSetScreenState extends ConsumerState<AllSetScreen>
               const SizedBox(height: AfSpacing.s32),
 
               // Stats row
-              _StatRow(staggerAnimation: _stagger),
+              _StatRow(animate: _animate),
 
               const Spacer(flex: 2),
 
@@ -158,8 +138,8 @@ class _AllSetScreenState extends ConsumerState<AllSetScreen>
 
 /// Animated stat cards showing track/album counts with staggered reveal.
 class _StatRow extends ConsumerWidget {
-  const _StatRow({required this.staggerAnimation});
-  final Animation<double> staggerAnimation;
+  const _StatRow({required this.animate});
+  final bool animate;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -192,36 +172,38 @@ class _StatRow extends ConsumerWidget {
       currentSpectralProvider.select((s) => s.primary),
     );
 
-    return AnimatedBuilder(
-      animation: staggerAnimation,
-      builder: (context, _) {
-        final t = (staggerAnimation.value * 2).clamp(0.0, 1.0);
-        return Opacity(
-          opacity: t.clamp(0.001, 0.999),
-          child: Transform.translate(
-            offset: Offset(0, (1 - t) * 12),
-            child: Row(
-              children: [
-                _Stat(
-                  icon: LucideIcons.music,
-                  label: 'Tracks',
-                  value: trackLoaded ? '$trackCount' : '—',
-                  loaded: trackLoaded,
-                  primaryColor: primaryColor,
-                ),
-                const SizedBox(width: AfSpacing.s12),
-                _Stat(
-                  icon: LucideIcons.disc3,
-                  label: 'Albums',
-                  value: albumLoaded ? '$albumCount' : '—',
-                  loaded: albumLoaded,
-                  primaryColor: primaryColor,
-                ),
-              ],
-            ),
+    return Row(
+      children: [
+        FadeInUp(
+          duration: AfDurations.quick,
+          delay: animate ? const Duration(milliseconds: 200) : Duration.zero,
+          from: 12,
+          curve: AfCurves.easeEmphasized,
+          animate: animate,
+          child: _Stat(
+            icon: LucideIcons.music,
+            label: 'Tracks',
+            value: trackLoaded ? '$trackCount' : '—',
+            loaded: trackLoaded,
+            primaryColor: primaryColor,
           ),
-        );
-      },
+        ),
+        const SizedBox(width: AfSpacing.s12),
+        FadeInUp(
+          duration: AfDurations.quick,
+          delay: animate ? const Duration(milliseconds: 350) : Duration.zero,
+          from: 12,
+          curve: AfCurves.easeEmphasized,
+          animate: animate,
+          child: _Stat(
+            icon: LucideIcons.disc3,
+            label: 'Albums',
+            value: albumLoaded ? '$albumCount' : '—',
+            loaded: albumLoaded,
+            primaryColor: primaryColor,
+          ),
+        ),
+      ],
     );
   }
 }

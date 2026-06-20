@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 
 import '../design_tokens/tokens.dart';
@@ -25,12 +26,13 @@ Future<T?> showBlurDialog<T>({
       opaque: false,
       barrierDismissible: barrierDismissible,
       barrierColor: Colors.transparent,
-      transitionDuration: reduced ? Duration.zero : AfDurations.standard,
+      transitionDuration: reduced ? Duration.zero : AfDurations.quick,
       reverseTransitionDuration: reduced ? Duration.zero : AfDurations.bounce,
       pageBuilder: (context, animation, secondaryAnimation) {
         return _BlurDialogOverlay<T>(
           animation: animation,
           barrierDismissible: barrierDismissible,
+          reduced: reduced,
           child: builder != null
               ? builder(context, ([T? result]) {
                   Navigator.of(context).pop(result);
@@ -52,11 +54,13 @@ class _BlurDialogOverlay<T> extends StatelessWidget {
     required this.child,
     required this.barrierDismissible,
     required this.animation,
+    required this.reduced,
   });
 
   final Widget child;
   final bool barrierDismissible;
   final Animation<double> animation;
+  final bool reduced;
 
   @override
   Widget build(BuildContext context) {
@@ -66,11 +70,6 @@ class _BlurDialogOverlay<T> extends StatelessWidget {
         final t = animation.value;
         final blurSigma = lerpDouble(1, 24, t)!;
         final opacity = AfCurves.easeOut.transform(t).clamp(0.001, 0.999);
-        final scale = lerpDouble(
-          0.92,
-          1.0,
-          AfCurves.easeOut.transform(t),
-        )!; // ponytail: 0.92 differs from PressScale 0.96 — intentional animation feel, do not unify
 
         return Material(
           type: MaterialType.transparency,
@@ -87,7 +86,7 @@ class _BlurDialogOverlay<T> extends StatelessWidget {
               behavior: HitTestBehavior.opaque,
               child: Stack(
                 children: [
-                  // ── Blur layer ──
+                  // ── Blur layer (driven by route animation) ──
                   Positioned.fill(
                     child: BackdropFilter(
                       filter: ImageFilter.blur(
@@ -101,12 +100,17 @@ class _BlurDialogOverlay<T> extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // ── Dialog content ──
+                  // ── Dialog content (animate_do on mount) ──
                   Center(
-                    child: Transform.scale(
-                      scale: scale,
-                      child: Opacity(
-                        opacity: opacity,
+                    child: ZoomIn(
+                      duration: AfDurations.quick,
+                      curve: AfCurves.easeEmphasized,
+                      from: 0.92,
+                      animate: !reduced,
+                      child: FadeIn(
+                        duration: AfDurations.quick,
+                        curve: AfCurves.easeEmphasized,
+                        animate: !reduced,
                         child: GestureDetector(
                           onTap: () {},
                           child: FocusScope(
