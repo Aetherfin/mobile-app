@@ -1,54 +1,180 @@
-# Design
+---
+name: Aetherfin
+description: Dark moody music player with album-art-driven spectral atmosphere
+colors:
+  surfaceCanvas: "#0A0B0E"
+  surfaceLow: "#14161A"
+  surfaceBase: "#1E2028"
+  surfaceRaised: "#282A34"
+  surfaceHigh: "#343640"
+  surfaceMax: "#40424E"
+  textPrimary: "#E8ECF2"
+  textSecondary: "#9AA0AD"
+  textTertiary: "#7C8290"
+  textDisabled: "#4A4E58"
+  textOnPrimary: "#F0F4F8"
+  accentPrimary: "#2E6FA8"
+  accentSecondary: "#3A7CA5"
+  accentMuted: "#6B8FA3"
+  semanticSuccess: "#7DB88F"
+  semanticWarning: "#5B9BD5"
+  semanticError: "#D4735A"
+  semanticInfo: "#7BA3B8"
+typography:
+  display:
+    fontFamily: "Outfit, sans-serif"
+    fontSize: "36dp"
+    fontWeight: 700
+    lineHeight: "40/36"
+    letterSpacing: -0.5
+  titleExtraLarge:
+    fontFamily: "Outfit, sans-serif"
+    fontSize: "32dp"
+    fontWeight: 700
+    lineHeight: "38/32"
+    letterSpacing: -0.4
+  titleLarge:
+    fontFamily: "Outfit, sans-serif"
+    fontSize: "28dp"
+    fontWeight: 700
+    lineHeight: "34/28"
+    letterSpacing: -0.3
+  titleMedium:
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "22dp"
+    fontWeight: 600
+    lineHeight: "28/22"
+    letterSpacing: -0.2
+  titleSmall:
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "17dp"
+    fontWeight: 600
+    lineHeight: "22/17"
+    letterSpacing: -0.1
+  bodyLarge:
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "16dp"
+    fontWeight: 400
+    lineHeight: "24/16"
+    letterSpacing: 0
+  bodyMedium:
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "14dp"
+    fontWeight: 400
+    lineHeight: "20/14"
+    letterSpacing: 0
+  bodySmall:
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "12dp"
+    fontWeight: 400
+    lineHeight: "16/12"
+    letterSpacing: 0.1
+  label:
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "11dp"
+    fontWeight: 600
+    lineHeight: "14/11"
+    letterSpacing: 0.6
+  caption:
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "10dp"
+    fontWeight: 400
+    lineHeight: "13/10"
+    letterSpacing: 0.2
+  overline:
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "9dp"
+    fontWeight: 500
+    lineHeight: "12/9"
+    letterSpacing: 0.8
+  mono:
+    fontFamily: "JetBrains Mono, monospace"
+    fontSize: "11dp"
+    fontWeight: 500
+    lineHeight: "14/11"
+    letterSpacing: 0
+rounded:
+  xs: "4dp"
+  sm: "8dp"
+  md: "12dp"
+  lg: "16dp"
+  xl: "24dp"
+  rounded: "20dp"
+  pill: "999dp"
+spacing:
+  s4: "4dp"
+  s8: "8dp"
+  s12: "12dp"
+  s16: "16dp"
+  s24: "24dp"
+  s32: "32dp"
+  s48: "48dp"
+  s64: "64dp"
+  s96: "96dp"
+components:
+  button-primary:
+    backgroundColor: "{colors.accentPrimary}"
+    textColor: "{colors.textOnPrimary}"
+    rounded: "{rounded.pill}"
+    padding: "16dp 32dp"
+  chip:
+    backgroundColor: "{colors.surfaceRaised}"
+    textColor: "{colors.textSecondary}"
+    rounded: "{rounded.pill}"
+    padding: "8dp 16dp"
+  card:
+    backgroundColor: "{colors.surfaceBase}"
+    textColor: "{colors.textPrimary}"
+    rounded: "{rounded.sm}"
+    padding: "16dp"
+---
 
-## Theme
+# Design System: Aetherfin
 
-Dark moody palette. Deep blacks, cool blue-grey surfaces, ocean-blue accent. Album-art-driven atmosphere — runtime-extracted spectral colors shift the entire UI to match the current track. The darkness is functional (headphone listening in dim environments), not aesthetic posturing.
+## 1. Overview
 
-## Color Strategy
+**Creative North Star: "The Dark Listening Room"**
 
-**Restrained** — tinted neutrals + one accent (ocean blue) ≤10%. The spectral system provides a second axis of color derived from artwork at runtime, but the base palette stays calm and restrained.
+Aetherfin's visual system is built for one activity: listening to music in dim environments. The palette is dark by function, not by fashion — headphone sessions happen in bedrooms, cars, and late-night commutes. The UI recedes into near-black surfaces while album artwork takes over: runtime-extracted spectral colors shift the entire atmosphere to match the current track. The system rejects the bright Material You defaults of cloud-first streaming apps and the settings-overload density of power-user tools. Instead, it walks the line between calm surface and technical depth — 86 DSP effects exist, but the now-playing screen doesn't scream about them.
 
-### Surface Scale
+**Key Characteristics:**
 
-Cool blue-grey, no warm tint. Depth via tone, not blur or decorative shadow.
+- Artwork is the interface. Colors, gradients, atmosphere — all derived from the current track's album art at runtime.
+- Dark by nature. Cool blue-grey surfaces at near-black tones, depth via tone not shadow decoration.
+- Restrained accent. Ocean blue (`#2E6FA8`) used for primary actions only; spectral system provides dynamic accent replacement.
+- iOS-like motion. Heavier, springier transitions than stock Material. Audio-coupled animations always linear.
+- Technical depth, calm surface. EQ, DSP, visualizer — powerful but discoverable, never mandatory.
 
-| Token | Hex | Usage |
-|---|---|---|
-| `surfaceCanvas` | `#0A0B0E` | Page background |
-| `surfaceLow` | `#14161A` | Sunken areas, input fields |
-| `surfaceBase` | `#1E2028` | Cards, list items |
-| `surfaceRaised` | `#282A34` | Elevated cards, floating elements |
-| `surfaceHigh` | `#343640` | Active states, hover |
-| `surfaceMax` | `#40424E` | Maximum elevation |
+## 2. Colors
 
-### Foreground
+The palette is cool blue-grey at near-black tones, with ocean blue as the single accent. Spectral colors extracted from album artwork at runtime replace accent colors dynamically — the base palette stays calm and restrained.
 
-APCA targets: body Lc ≥ 60, secondary ≥ 45, tertiary ≥ 30.
+### Primary
 
-| Token | Hex | Usage |
-|---|---|---|
-| `textPrimary` | `#E8ECF2` | Body text, headings |
-| `textSecondary` | `#9AA0AD` | Captions, secondary info |
-| `textTertiary` | `#7C8290` | Hints, disabled text |
-| `textDisabled` | `#4A4E58` | Disabled state |
-| `textOnPrimary` | `#F0F4F8` | Text on accent buttons |
+- **Ocean Blue** (`#2E6FA8`): Primary accent — buttons, switches, sliders, focus rings. WCAG AA 4.80:1 against `surfaceCanvas`. Used on ≤10% of any screen; its rarity is the point.
+- **Deep Blue** (`#3A7CA5`): Secondary accent — badges, secondary actions, chips.
+- **Muted Blue** (`#6B8FA3`): Subtle accents — icon tint, chip background, disabled accent states.
 
-### Accent — Ocean Blue
+### Neutral
 
-| Token | Hex | Usage |
-|---|---|---|
-| `accentPrimary` | `#2E6FA8` | Buttons, switches, sliders, focus (WCAG AA 4.80:1) |
-| `accentSecondary` | `#3A7CA5` | Secondary actions, badges |
-| `accentMuted` | `#6B8FA3` | Subtle accents, chip bg, icon tint |
+- **Void Black** (`#0A0B0E`): Page background (`surfaceCanvas`). The deepest surface; pure darkness for headphone listening.
+- **Dark Slate** (`#14161A`): Sunken areas, input fields (`surfaceLow`).
+- **Slate** (`#1E2028`): Cards, list items (`surfaceBase`). Default surface for interactive content.
+- **Elevated Slate** (`#282A34`): Raised cards, floating elements (`surfaceRaised`).
+- **Active Slate** (`#343640`): Hover states, active indicators (`surfaceHigh`).
+- **Max Slate** (`#40424E`): Maximum elevation (`surfaceMax`).
+- **Bright White** (`#E8ECF2`): Body text, headings (`textPrimary`). APCA Lc ≥ 60.
+- **Cool Gray** (`#9AA0AD`): Captions, secondary info (`textSecondary`). APCA Lc ≥ 45.
+- **Muted Gray** (`#7C8290`): Hints, disabled text (`textTertiary`). APCA Lc ≥ 30.
+- **Disabled Gray** (`#4A4E58`): Disabled state (`textDisabled`).
+- **On Accent** (`#F0F4F8`): Text on accent buttons (`textOnPrimary`).
 
 ### Semantic
 
-| Token | Hex | Usage |
-|---|---|---|
-| `semanticSuccess` | `#7DB88F` | Success states |
-| `semanticWarning` | `#5B9BD5` | Warnings (blue, not red) |
-| `semanticError` | `#D4735A` | Error states |
-| `semanticInfo` | `#7BA3B8` | Informational |
+- **Success Green** (`#7DB88F`): Success states.
+- **Info Blue** (`#5B9BD5`): Warnings (blue, not red — matches ocean hue).
+- **Error Coral** (`#D4735A`): Error states.
+- **Info Slate** (`#7BA3B8`): Informational cues.
 
 ### Spectral System
 
@@ -58,129 +184,153 @@ Runtime-extracted from album artwork via `palette_generator_master`. The `Spectr
 
 Translucent white overlays for frosted surfaces (mini-player, now-playing top bar, cast button, track rows). Used sparingly — not decorative glassmorphism.
 
-| Token | Opacity | Usage |
-|---|---|---|
-| `glassFillSubtle` | 4% white | Subtle overlays |
-| `glassFill` | 6% white | Standard frosted surfaces |
-| `glassFillStrong` | 8% white | Emphasized frosted surfaces |
-| `glassFillHeavy` | 55% `#0A0A0A` | Heavy overlays (queue) |
+- **Subtle** (4% white): Faint overlays.
+- **Standard** (6% white): Frosted glass surfaces.
+- **Strong** (8% white): Emphasized frosted surfaces.
+- **Heavy** (55% `#0A0A0A`): Queue overlay.
 
-## Typography
+### Named Rules
 
-Three-font system. **Outfit** for display/headlines (geometric, modern, premium). **DM Sans** for body/UI (clean, characterful, excellent readability). **JetBrains Mono** for technical readouts only (bitrate, codec, EQ parameters).
+**The Accent Ration Rule.** Ocean blue appears on ≤10% of any given screen. Its rarity is the point — buttons, switches, sliders, focus rings. Never used for decoration, background fills, or borders on static elements.
 
-### Type Scale
+**The Spectral Override Rule.** When artwork is loaded, spectral colors replace ocean blue for primary, secondary, muted, link, and warning roles. The base palette is a fallback, not a default.
 
-| Style | Font | Size | Height | Weight | Letter Spacing |
-|---|---|---|---|---|---|
-| `display` | Outfit | 36dp | 40/36 | 700 | -0.5 |
-| `titleExtraLarge` | Outfit | 32dp | 38/32 | 700 | -0.4 |
-| `titleLarge` | Outfit | 28dp | 34/28 | 700 | -0.3 |
-| `titleMedium` | DM Sans | 22dp | 28/22 | 600 | -0.2 |
-| `titleSmall` | DM Sans | 17dp | 22/17 | 600 | -0.1 |
-| `bodyLarge` | DM Sans | 16dp | 24/16 | 400 | 0 |
-| `bodyMedium` | DM Sans | 14dp | 20/14 | 400 | 0 |
-| `bodySmall` | DM Sans | 12dp | 16/12 | 400 | 0.1 |
-| `label` | DM Sans | 11dp | 14/11 | 600 | 0.6 |
-| `caption` | DM Sans | 10dp | 13/10 | 400 | 0.2 |
-| `overline` | DM Sans | 9dp | 12/9 | 500 | 0.8 |
-| `mono` | JetBrains Mono | 11dp | 14/11 | 500 | 0 |
+## 3. Typography
+
+**Display Font:** Outfit (geometric, modern, premium)
+**Body Font:** DM Sans (clean, characterful, excellent readability)
+**Label/Mono Font:** JetBrains Mono (technical readouts only — bitrate, codec, EQ parameters)
+
+**Character:** Outfit carries display/headline weight with geometric precision. DM Sans handles everything body/UI with friendly readability. JetBrains Mono is reserved for data readouts — never used for labels or UI text.
+
+### Hierarchy
+
+- **Display** (Outfit, 700, 36dp, line-height 40/36, letter-spacing -0.5): Hero headlines on Now Playing, large hero text.
+- **Title Extra Large** (Outfit, 700, 32dp, line-height 38/32, letter-spacing -0.4): Album/artist screen titles.
+- **Title Large** (Outfit, 700, 28dp, line-height 34/28, letter-spacing -0.3): Section headers, large titles.
+- **Title Medium** (DM Sans, 600, 22dp, line-height 28/22, letter-spacing -0.2): Card titles, list headers.
+- **Title Small** (DM Sans, 600, 17dp, line-height 22/17, letter-spacing -0.1): Subtitles, dialog titles.
+- **Body Large** (DM Sans, 400, 16dp, line-height 24/16): Primary body text, descriptions.
+- **Body Medium** (DM Sans, 400, 14dp, line-height 20/14): Secondary body text, list content.
+- **Body Small** (DM Sans, 400, 12dp, line-height 16/12, letter-spacing 0.1): Captions, metadata.
+- **Label** (DM Sans, 600, 11dp, line-height 14/11, letter-spacing 0.6): UPPERCASE in widget. Section headers, category labels. Never bold, never accent-colored.
+- **Caption** (DM Sans, 400, 10dp, line-height 13/10, letter-spacing 0.2): Timestamps, secondary metadata.
+- **Overline** (DM Sans, 500, 9dp, line-height 12/9, letter-spacing 0.8): Tiny labels, micro text.
+- **Mono** (JetBrains Mono, 500, 11dp, line-height 14/11): Bitrate, codec, hash readouts only.
 
 All text styles support `Scaled` variants via `MediaQuery.textScalerOf(context)` for accessibility.
 
-## Spacing
+### Named Rules
 
-4dp base unit. 8dp default sibling rhythm. 24dp section gap. 16dp gutters (24dp for "generous" surfaces like Now Playing and Lyrics). 48dp minimum hit target.
+**The Mono Restriction Rule.** JetBrains Mono appears only for technical data readouts (bitrate, codec, EQ parameters). Never for UI labels, buttons, or body text.
 
-| Token | Value | Usage |
-|---|---|---|
-| `s4` | 4dp | Base unit, tight spacing |
-| `s8` | 8dp | Default sibling rhythm |
-| `s12` | 12dp | Compact gaps |
-| `s16` | 16dp | Standard gutter, page horizontal |
-| `s24` | 24dp | Section gap, generous gutter |
-| `s32` | 32dp | Large gaps |
-| `s48` | 48dp | Minimum hit target |
-| `s64` | 64dp | Play button, mini-player height |
-| `s96` | 96dp | Profile avatar |
+**The Label Case Rule.** The `label` style is always rendered UPPERCASE in widgets. It is never bold and never accent-colored — use `textSecondary` or `labelContrast` color only.
 
-## Radii
+## 4. Elevation
 
-| Token | Value | Usage |
-|---|---|---|
-| `xs` | 4dp | Tight corners |
-| `sm` | 8dp | Cards, list items |
-| `md` | 12dp | Standard containers |
-| `lg` | 16dp | Large containers |
-| `xl` | 24dp | Featured elements |
-| `rounded` | 20dp | Rounded cards |
-| `pill` | 999dp | Buttons, chips, pills |
+Shadow-based elevation system. No Material elevation — shadows are explicit `BoxShadow` lists. Depth is conveyed through progressive shadow blur and offset, not tonal layering or decorative blur.
 
-## Elevation
+- **Subtle** (`box-shadow: 0 1px 4px rgba(0,0,0,0.1)`): Cards at rest, list items.
+- **Medium** (`box-shadow: 0 2px 8px rgba(0,0,0,0.14)`): Raised cards, floating elements.
+- **Large** (`box-shadow: 0 4px 16px rgba(0,0,0,0.2)`): Dialogs, bottom sheets.
+- **Extra-Large** (`box-shadow: 0 8px 24px rgba(0,0,0,0.25)`): Modals, overlays.
 
-Shadow-based elevation system. No Material elevation — shadows are explicit `BoxShadow` lists.
+### Spectral Glow
 
-| Token | Blur | Offset | Usage |
-|---|---|---|---|
-| `sm` | 4dp | (0, 1) | Cards at rest, list items |
-| `md` | 8dp | (0, 2) | Raised cards, floating elements |
-| `lg` | 16dp | (0, 4) | Dialogs, bottom sheets |
-| `xl` | 24dp | (0, 8) | Modals, overlays |
+Dynamic `BoxShadow` pair driven by artwork energy level. Applied to Now Playing artwork and play button. Two shadows with artwork-derived color, opacity scaled by energy (0.0–1.0).
 
-Spectral glow: dynamic `BoxShadow` pair driven by artwork energy level.
+### Named Rules
 
-## Motion
+**The Flat-By-Default Rule.** Surfaces are flat at rest. Shadows appear only as a response to state (hover, elevation, focus). The spectral glow is the sole exception — it's audio-coupled, not interaction-coupled.
 
-iOS-like feel: heavier, springier, more deliberate than stock Material. Audio-coupled animations (waveform, progress, lyric scroll) use `linear` — easing audio time lies about playback position.
+## 5. Components
 
-### Curves
+### Buttons
 
-| Token | Bezier | Usage |
-|---|---|---|
-| `easeStandard` | (0.16, 1, 0.3, 1) | Page transitions, tab switches |
-| `easeEmphasized` | (0.22, 1, 0.36, 1) | Mini-player → Now Playing expand |
-| `springPresent` | (0.175, 0.885, 0.32, 1.045) | Bottom sheet open, dialog open |
-| `springDismiss` | (0.55, 0.055, 0.675, 0.19) | Bottom sheet close, dialog close |
+- **Shape:** Full pill (`999dp` radius). Tall hit target (48dp minimum).
+- **Primary:** Ocean blue (`#2E6FA8`) background, white text (`#F0F4F8`). Padding: 16dp vertical, 32dp horizontal.
+- **Hover / Focus:** Transition via `easeStandard` (350ms). Focus ring uses accent color.
+- **Secondary / Outlined:** Transparent background, ocean blue border (1.5dp), ocean blue text.
 
-### Durations
+### Chips
 
-| Token | Value | Usage |
-|---|---|---|
-| `instant` | 80ms | Color/opacity micro-feedback |
-| `quick` | 180ms | Small element transitions, heart pop |
-| `standard` | 350ms | Default page/sheet transitions |
-| `expressive` | 500ms | Now Playing expand, hero handoff |
-| `long` | 700ms | Onboarding intro only |
-| `bounce` | 250ms | Play button bounce, icon morph |
-| `ambient` | 1200ms | Pulse glow, breathing animations |
-| `shimmer` | 1500ms | Skeleton shimmer sweep |
-| `spectral` | 800ms | Spectral color crossfade |
+- **Style:** Raised surface (`#282A34`), secondary text (`#9AA0AD`), pill shape.
+- **State:** Selected state uses accent background with accent text. Filter and action variants.
 
-### Stagger
+### Cards / Containers
 
-40ms per item for grid/list reveals. Max 8 items staggered (items 9+ share the last slot). Per-item animation: fade + 12dp translate up.
+- **Corner Style:** 8dp radius (`sm`). No cards exceed 12dp.
+- **Background:** `surfaceBase` (`#1E2028`) at rest. `surfaceRaised` on hover/active.
+- **Shadow Strategy:** Subtle shadow at rest (blur 4dp, offset 1). Medium shadow on elevation.
+- **Border:** No default border. 1dp `glassBorder` (6% white) on select containers.
+- **Internal Padding:** 16dp standard, 24dp generous (Now Playing, Lyrics).
 
-## Layout
+### Inputs / Fields
 
-Android phones (360dp+), foldables, tablets. Three screen size tiers: compact (<600dp), medium (600–840dp), expanded (>840dp).
+- **Style:** Filled background (`surfaceLow`), no visible border. 8dp radius.
+- **Focus:** Accent color border or glow. Background shifts to `surfaceBase`.
+- **Error:** Error coral (`#D4735A`) border. Error text below field.
+- **Disabled:** `textDisabled` text, `surfaceLow` background at reduced opacity.
 
-| Constraint | Value |
-|---|---|
-| Max content width | 600dp |
-| Max dialog width | 560dp |
-| Album grid max tile | 200dp |
-| Artist grid max tile | 160dp |
-| Genre grid max tile | 280dp |
-| Page horizontal padding | 16dp (24dp generous) |
+### Navigation
 
-## Components
+- **Bottom Nav:** 4-tab with sliding pill background (`indigo900`). Inactive tabs show icon only; label appears when enabled. 64dp height.
+- **Top App Bar:** Transparent over content, collapses on scroll. Title uses `titleMedium` style.
 
-- **Bottom nav**: 4-tab with sliding pill background (indigo900). Inactive tabs show icon only; label appears when enabled.
-- **Mini-player**: 64dp height, frosted glass, artwork + progress ring + transport controls.
-- **Track row**: 3 density modes (compact, comfortable, generous). Dialog-based context menus.
-- **Album card**: Hero animation capable. Grid layout with `SliverGridDelegateWithMaxCrossAxisExtent`.
-- **Skeleton loaders**: Per-screen `*_skeleton.dart` files using `ShimmerLayout` base widget.
-- **Bottom sheets**: Frosted glass container, per-sheet manual drag handle, `AfRadii.borderLg` corners.
-- **Context menus**: Dialog-based (not bottom sheets) for album 3-dot and track long-press.
-- **EQ/DSP**: Full-screen with 18-band graphic EQ, preset system, frequency response curve visualization.
-- **Now Playing**: Gradient background from spectral colors, artwork pulse on kick drums, 64-band FFT visualizer, synced lyrics.
+### Track Row
+
+Three density modes: compact (48dp), comfortable (56dp), generous (64dp). Dialog-based context menus (not bottom sheets). Leading artwork thumbnail, title + subtitle, trailing actions.
+
+### Mini-Player
+
+64dp height, frosted glass container (`glassFill`), artwork thumbnail + progress ring + transport controls. Sits above bottom nav.
+
+### Now Playing
+
+Full-screen overlay. Gradient background from spectral colors. Artwork pulse on kick drums (transient detector + spring decay). 64-band FFT visualizer. Synced lyrics. Interactive drag-down sheet.
+
+### Skeleton Loaders
+
+Per-screen `*_skeleton.dart` files using `ShimmerLayout` base widget. Shimmer sweep at 1500ms. Used for all async content loading.
+
+### Context Menus
+
+Dialog-based (not bottom sheets) for album 3-dot and track long-press. Frosted glass container with manual drag handle.
+
+## 6. Do's and Don'ts
+
+### Do:
+
+- **Do** use `AfColors.*` tokens for all colors. Never `Colors.white`, `Colors.black`, or raw `Color(0xFF...)`.
+- **Do** use `AfSpacing.*` for all spacing. `SizedBox(height: AfSpacing.s8)`, `EdgeInsets.all(AfSpacing.s16)`.
+- **Do** use `AfRadii.*` for all border radii. `AfRadii.borderSm` (8dp), `AfRadii.borderMd` (12dp), `AfRadii.borderPill` (999dp).
+- **Do** use `AfTypography.*` text styles with `.copyWith()` for color/weight overrides. Never raw `TextStyle(...)`.
+- **Do** use `AfDurations.*` and `AfCurves.*` for all animation timings. Never literal ms values.
+- **Do** use `StaggerReveal` for list/grid entrance animations. 40ms per item, max 8 staggered.
+- **Do** use dialog-based context menus for album 3-dot and track long-press.
+- **Do** use skeleton shimmer loading for all async content.
+- **Do** use `context.push()` for overlay/detail routes (Now Playing, Lyrics, Queue).
+- **Do** use `context.go()` only for tab switches and auth redirects.
+
+### Don't:
+
+- **Don't** use `just_audio` or `audio_session` — use `mpv_audio_kit`.
+- **Don't** use `json_serializable` — hand-write models.
+- **Don't** use `ChangeNotifier` for Riverpod providers.
+- **Don't** use `Timer.periodic` for progress reporting — use serialized `while` loop.
+- **Don't** use `Future.delayed` for auto-advance — use stream callbacks.
+- **Don't** use `.then()` for jump+play — use `async/await`.
+- **Don't** use `NoTransitionPage` for tab switches — use `AnimatedSwitcher` with `AfDurations.quick`.
+- **Don't** hardcode animation durations (e.g. `Duration(milliseconds: 300)`) — use `AfDurations.standard` etc.
+- **Don't** hardcode colors, spacing, border radii, or font sizes — use the design tokens.
+- **Don't** use `jellyfinClientProvider` for backend ops in UI — use `musicBackendProvider`.
+- **Don't** create a separate HTTP client — add to `JellyfinClient` or `SubsonicClient`.
+- **Don't** store Subsonic auth token — store password, generate `md5(password + salt)` per request.
+- **Don't** pass network artwork URLs to native MediaSession — download to local file first.
+- **Don't** use `context.go()` for overlay screens (lyrics, queue, settings) — breaks back stack.
+- **Don't** rebuild GoRouter — it's a module-level singleton.
+- **Don't** use generic AI dark UI patterns: gradient text, glassmorphism everywhere, identical card grids, tiny uppercase eyebrows above every section.
+- **Don't** use side-stripe borders (`border-left` > 1px as colored accent). Never intentional.
+- **Don't** use `border-radius: 24dp+` on cards. Cards top out at 12dp.
+- **Don't** use display fonts in UI labels, buttons, or data readouts.
+- **Don't** use decorative motion that doesn't convey state.
