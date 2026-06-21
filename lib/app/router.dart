@@ -31,6 +31,7 @@ import '../features/sleep_timer/sleep_timer_screen.dart';
 import '../features/smart_playlist/smart_playlist_detail_screen.dart';
 import '../features/smart_playlist/smart_playlist_edit_screen.dart';
 import '../features/smart_playlist/smart_playlist_list_screen.dart';
+import '../core/transitions/predictive_back.dart';
 import '../design_tokens/tokens.dart';
 import '../widgets/app_shell.dart';
 
@@ -164,6 +165,10 @@ final _router = GoRouter(
     ),
 
     // Shell — 4 tabs.
+    // CustomTransitionPage with predictiveBackNoForwardTransition:
+    // No forward animation (like NoTransitionPage) BUT with predictive back
+    // gesture support so Android shows shrink-to-center instead of the
+    // system default horizontal slide.
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => AppShell(shell: shell),
       branches: [
@@ -173,8 +178,10 @@ final _router = GoRouter(
             GoRoute(
               name: 'home',
               path: '/home',
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: HomeScreen()),
+              pageBuilder: (context, state) => const CustomTransitionPage<void>(
+                child: HomeScreen(),
+                transitionsBuilder: predictiveBackNoForwardTransition,
+              ),
             ),
           ],
         ),
@@ -184,8 +191,10 @@ final _router = GoRouter(
             GoRoute(
               name: 'library',
               path: '/library',
-              pageBuilder: (_, state) =>
-                  const NoTransitionPage(child: LibraryScreen()),
+              pageBuilder: (_, state) => const CustomTransitionPage<void>(
+                child: LibraryScreen(),
+                transitionsBuilder: predictiveBackNoForwardTransition,
+              ),
             ),
           ],
         ),
@@ -195,8 +204,10 @@ final _router = GoRouter(
             GoRoute(
               name: 'playlists',
               path: '/playlists',
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: PlaylistListScreen()),
+              pageBuilder: (context, state) => const CustomTransitionPage<void>(
+                child: PlaylistListScreen(),
+                transitionsBuilder: predictiveBackNoForwardTransition,
+              ),
             ),
           ],
         ),
@@ -206,8 +217,10 @@ final _router = GoRouter(
             GoRoute(
               name: 'profile',
               path: '/profile',
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: ProfileScreen()),
+              pageBuilder: (context, state) => const CustomTransitionPage<void>(
+                child: ProfileScreen(),
+                transitionsBuilder: predictiveBackNoForwardTransition,
+              ),
             ),
           ],
         ),

@@ -2,13 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-
 library;
 
 import 'dart:ui' show clampDouble;
 
 import 'package:flutter/services.dart';
-
 
 import 'package:flutter/material.dart';
 
@@ -778,4 +776,43 @@ class _PredictiveBackFullscreenPageTransitionState
       ),
     );
   }
+}
+
+/// Transitions builder for shell tab routes that supports predictive back
+/// but has no forward animation.
+///
+/// Shell tab routes (Home, Library, Playlists, Profile) should not animate
+/// when first displayed, but they DO need the predictive back gesture
+/// detector so Android shows the correct shrink-to-center animation
+/// instead of the system default horizontal slide.
+Widget predictiveBackNoForwardTransition(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+  Widget child,
+) {
+  final route = ModalRoute.of(context)! as PageRoute;
+  return _PredictiveBackGestureDetector(
+    route: route,
+    builder:
+        (
+          BuildContext context,
+          _PredictiveBackPhase phase,
+          PredictiveBackEvent? startBackEvent,
+          PredictiveBackEvent? currentBackEvent,
+        ) {
+          if (route.popGestureInProgress) {
+            return _PredictiveBackSharedElementPageTransition(
+              isDelegatedTransition: true,
+              animation: animation,
+              phase: phase,
+              secondaryAnimation: secondaryAnimation,
+              startBackEvent: startBackEvent,
+              currentBackEvent: currentBackEvent,
+              child: child,
+            );
+          }
+          return child;
+        },
+  );
 }
