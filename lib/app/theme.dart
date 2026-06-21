@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/transitions/predictive_back.dart';
 import '../design_tokens/tokens.dart';
 
 /// Builds the Aetherfin "Nocturne" (dark) theme — Dark Moody edition.
@@ -63,7 +64,7 @@ const _dialogTheme = DialogThemeData(
 
 const _pageTransitionsTheme = PageTransitionsTheme(
   builders: {
-    TargetPlatform.android: ZoomPageTransitionsBuilder(),
+    TargetPlatform.android: AfPredictiveBackPageTransitionsBuilder(),
     TargetPlatform.iOS: _AfSlideUpTransition(),
     TargetPlatform.fuchsia: _AfSlideUpTransition(),
   },
