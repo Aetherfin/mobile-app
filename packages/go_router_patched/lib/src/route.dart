@@ -1571,11 +1571,16 @@ class StatefulNavigationShellState extends State<StatefulNavigationShell>
         )
         .toList();
 
-    // ponytail: No shell-level PopScope here — branch oscillation
-    // (non-root → root) and blur sheet dismissal are handled by AppShell's
-    // own PopScope in app_shell.dart. We only add per-branch PopScope
-    // (in _BranchNavigatorProxy) to prevent inactive branches from being
-    // popped by Android predictive back (PR #11910).
+    // ponytail: No PopScope wrappers at any level.
+    //
+    // Shell-level: not needed because the root navigator has only 1 route
+    // (the shell). Navigator.canPop() returns false → root navigator does
+    // NOT register a predictive back callback → system handles app-exit
+    // with the correct Android shrink-to-home animation.
+    //
+    // Per-branch: removed (see _BranchNavigatorProxyState.build comment).
+    // PopScope outside the branch Navigator registered with the shell
+    // route's ModalRoute, poisoning the root navigator's back handling.
     return widget.containerBuilder(context, widget, children);
   }
 }
@@ -1667,14 +1672,25 @@ class _BranchNavigatorProxyState extends State<_BranchNavigatorProxy>
     super.build(context);
     final navigator =
         widget.navigatorForBranch(widget.branch) ?? const SizedBox.shrink();
-    // ponytail: Per-branch PopScope — PR #11910 (flutter/packages, open).
-    // Without this, Android predictive back fires on ALL branch navigators
-    // simultaneously, popping routes from inactive tabs. Only inactive
-    // branches need blocking; the active branch's navigator handles back
-    // naturally via its own canPop state.
-    if (!widget.isActive) {
-      return PopScope<Object?>(canPop: false, child: navigator);
-    }
+    // ponytail: Per-branch PopScope REMOVED.
+    //
+    // The original PR #11910 fix wrapped inactive branches with
+    // PopScope(canPop: false) to prevent simultaneous back-popping across
+    // all branch navigators. However, this PopScope sits OUTSIDE the branch
+    // Navigator, so it registers PopEntry objects on the shell route's
+    // ModalRoute (root navigator), not on the branch's own ModalRoute.
+    //
+    // With 3 inactive branches each adding PopEntry(canPop: false), the
+    // shell route's popDisposition becomes doNotPop. This causes
+    // Navigator.maybePop() to intercept and swallow back events instead of
+    // returning false (which would let the system handle app-exit). Result:
+    //   - Shell tabs: predictive back disappears (back gestures swallowed)
+    //   - Root-level routes (album, artist, etc.): wrong animation direction
+    //   - State corruption after warm restart or navigation
+    //
+    // This is safe to remove because all sub-routes in this app use
+    // parentNavigatorKey: _rootKey (pushed on root navigator). Branch
+    // navigators always have exactly 1 route and can never be popped.
     return navigator;
   }
 
