@@ -63,7 +63,7 @@ const _dialogTheme = DialogThemeData(
 
 const _pageTransitionsTheme = PageTransitionsTheme(
   builders: {
-    TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+    TargetPlatform.android: ZoomPageTransitionsBuilder(),
     TargetPlatform.iOS: _AfSlideUpTransition(),
     TargetPlatform.fuchsia: _AfSlideUpTransition(),
   },
