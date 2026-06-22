@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection' show UnmodifiableListView;
 
 import '../jellyfin/models/items.dart';
 import 'queue_engine.dart';
@@ -31,7 +32,8 @@ class AfQueueManager {
 
   bool get isShuffleEnabled => _engine.isShuffleEnabled;
   bool get isTailShuffle => _engine.isTailShuffle;
-  List<AfTrack> get currentQueue => List<AfTrack>.unmodifiable(_engine.tracks);
+  List<AfTrack> get currentQueue =>
+      UnmodifiableListView<AfTrack>(_engine.tracks);
   int get currentIndex => _engine.currentIndex;
   AfTrack? get currentTrack => _engine.currentTrack;
   bool get isAtQueueEnd => _engine.isAtQueueEnd;

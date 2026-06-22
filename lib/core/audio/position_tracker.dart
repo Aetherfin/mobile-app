@@ -215,6 +215,10 @@ class AfPositionTracker {
     }
     final elapsed = now.difference(_positionAnchor.lastUpdateTime);
     final speed = _player.state.rate;
+    if (speed <= 0) {
+      _emitPosition(_positionAnchor.lastKnownPos);
+      return;
+    }
     final extrapolated =
         _positionAnchor.lastKnownPos +
         Duration(milliseconds: (elapsed.inMilliseconds * speed).round());

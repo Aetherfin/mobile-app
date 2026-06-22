@@ -124,8 +124,8 @@ class JellyfinClient implements MusicBackend {
               final response = await _dio.fetch(error.requestOptions);
               handler.resolve(response);
               return;
-            } on Exception catch (_) {
-              // Re-auth failed — pass original error to next handler
+            } on Exception catch (e) {
+              afLog('http', '401 re-auth failed', error: e);
             }
           }
           handler.next(error);

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 
+import '../../utils/log.dart';
+
 /// Wraps [connectivity_plus] to emit a `bool` stream of online/offline state.
 ///
 /// - `true` = device has at least one active network connection.
@@ -47,8 +49,8 @@ class ConnectivityObserver {
       if (!_disposed) {
         _controller.add(_lastOnline);
       }
-    } catch (_) {
-      // checkConnectivity can throw on some platforms (emulators).
+    } catch (e) {
+      afLog('http', 'Connectivity check failed', error: e);
       // Assume online by default.
       _lastOnline = true;
       if (!_disposed) {

@@ -230,6 +230,7 @@ class SubsonicClient implements MusicBackend {
         type: e.type,
         error: e.error,
         message: 'Subsonic API error: ${e.message}',
+        stackTrace: e.stackTrace,
       );
       Error.throwWithStackTrace(enriched, stack);
     }

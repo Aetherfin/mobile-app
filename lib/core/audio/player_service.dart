@@ -207,6 +207,7 @@ class AfPlayerService {
             );
           }),
     );
+    if (_disposed) return;
     _bindStreams();
     _positionTracker.start();
 
@@ -262,6 +263,7 @@ class AfPlayerService {
 
   bool _disposed = false;
   double _preDuckVolume = 1.0;
+  CoverArt? _lastCoverArt;
   bool _initFailed = false;
 
   /// True if any constructor `.catchError` fired — indicates a partial init.
@@ -496,6 +498,8 @@ class AfPlayerService {
       _playback.reorderQueue(oldIndex, newIndex);
 
   Future<bool> removeFromQueue(int index) => _playback.removeFromQueue(index);
+
+  Future<int> removeBatch(List<int> indices) => _playback.removeBatch(indices);
 
   Future<void> insertIntoQueue(
     int index,
@@ -920,6 +924,14 @@ class AfPlayerService {
   }
 
   Future<void> _onCoverArtChanged(CoverArt? raw) async {
+    // Dedup: skip if bytes haven't changed since last persist.
+    if (raw == null && _lastCoverArt == null) return;
+    if (raw != null &&
+        _lastCoverArt != null &&
+        raw.bytes == _lastCoverArt!.bytes) {
+      return;
+    }
+    _lastCoverArt = raw;
     try {
       try {
         await _artworkManager.persistCover(raw);
@@ -935,7 +947,7 @@ class AfPlayerService {
         afLog('audio', 'persistCover failed', error: e, stackTrace: stack);
       }
       _playback.updateMediaSession();
-    } on Exception catch (e, stack) {
+    } on Object catch (e, stack) {
       afLog('audio', 'coverArt handler failed', error: e, stackTrace: stack);
     }
   }

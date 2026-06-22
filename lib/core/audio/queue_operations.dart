@@ -197,6 +197,29 @@ extension QueueOperations on PlaybackController {
     return true;
   }
 
+  /// Removes multiple queue items by logical index in a single lock acquisition.
+  /// Indices are sorted descending internally so removal doesn't shift earlier indices.
+  Future<int> removeBatch(List<int> indices) async {
+    if (_disposed) return 0;
+    final sorted = [...indices]..sort((a, b) => b.compareTo(a));
+    var removed = 0;
+    await _queueLock.run(() async {
+      for (final idx in sorted) {
+        if (idx < 0 || idx >= _queueManager.currentQueue.length) continue;
+        if (!_queueManager.canRemove(idx)) continue;
+        _queueManager.remove(idx);
+        removed++;
+      }
+    });
+    afLog(
+      'audio',
+      'removeBatch removed=$removed '
+          'currentIndex=${_queueManager.currentIndex} '
+          'queueSize=${_queueManager.currentQueue.length}',
+    );
+    return removed;
+  }
+
   Future<void> insertIntoQueue(
     int index,
     AfTrack track, {

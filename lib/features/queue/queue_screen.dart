@@ -112,15 +112,13 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
     final svc = ref.read(playerServiceProvider);
     final currentId = ref.read(currentTrackProvider.select((t) => t?.id));
 
-    // Sort indices descending so removal doesn't shift earlier indices.
-    final sorted = _selectedIndices.toList()..sort((a, b) => b.compareTo(a));
-    final removed = <AfTrack>[];
+    // Map selected UI indices to actual queue indices.
     final actualIndices = <int>[];
-
-    for (final idx in sorted) {
+    final removed = <AfTrack>[];
+    for (final idx in _selectedIndices) {
       if (idx < 0 || idx >= _items.length) continue;
       final track = _items[idx];
-      if (track.id == currentId) continue; // skip playing track
+      if (track.id == currentId) continue;
       final actualIndex = svc.currentQueue.indexWhere((q) => q.id == track.id);
       if (actualIndex < 0) continue;
       removed.add(track);
@@ -134,7 +132,7 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
 
     // Remove from local list first for instant UI feedback.
     setState(() {
-      for (final idx in sorted) {
+      for (final idx in _selectedIndices) {
         if (idx < 0 || idx >= _items.length) continue;
         final track = _items[idx];
         if (track.id == currentId) continue;
@@ -145,10 +143,8 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
       _exitSelectionMode();
     });
 
-    // Remove from player in reverse actual-index order.
-    for (var i = 0; i < actualIndices.length; i++) {
-      await svc.removeFromQueue(actualIndices[i]);
-    }
+    // Remove from player in a single lock acquisition.
+    await svc.removeBatch(actualIndices);
 
     if (!mounted) return;
     ScaffoldMessenger.of(context)

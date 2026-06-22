@@ -213,7 +213,7 @@ class StreamPrefetcher {
         }
 
         final sink = tempFile.openWrite();
-        await body.stream.forEach(sink.add);
+        await sink.addStream(body.stream);
         await sink.close();
 
         // Add to cache
@@ -315,7 +315,9 @@ class StreamPrefetcher {
         final oldSize = await existing.length();
         _totalCacheSize -= oldSize;
         if (await existing.exists()) await existing.delete();
-      } on Exception catch (_) {}
+      } on Exception catch (e) {
+        afLog('audio', 'Failed to delete old cache file', error: e);
+      }
     }
 
     try {

@@ -372,6 +372,7 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
       appBar: AppBar(
         backgroundColor: AfColors.surfaceBase,
         leading: IconButton(
+          tooltip: 'Back',
           icon: const Icon(LucideIcons.arrowLeft, color: AfColors.textPrimary),
           onPressed: () => context.safePop(),
         ),
@@ -394,11 +395,24 @@ class _YouTubeLoginScreenState extends ConsumerState<YouTubeLoginScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(AfSpacing.s12),
               color: AfColors.semanticError.withValues(alpha: 0.15),
-              child: Text(
-                _error!,
-                style: AfTypography.bodySmall.copyWith(
-                  color: AfColors.semanticError,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _error!,
+                    style: AfTypography.bodySmall.copyWith(
+                      color: AfColors.semanticError,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton.tonal(
+                    onPressed: () {
+                      setState(() => _error = null);
+                      _controller.reload();
+                    },
+                    child: const Text('Try again'),
+                  ),
+                ],
               ),
             ),
           Expanded(

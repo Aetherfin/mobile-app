@@ -362,31 +362,34 @@ class _CleartextWarning extends ConsumerWidget {
     final spectral = ref.watch(
       currentSpectralProvider.select((s) => s.warning),
     );
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AfSpacing.s12,
-        vertical: AfSpacing.s8,
-      ),
-      decoration: BoxDecoration(
-        color: spectral.withValues(alpha: 0.12),
-        borderRadius: AfRadii.borderMd,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(LucideIcons.lockOpen, size: 18, color: spectral),
-          const SizedBox(width: AfSpacing.s8),
-          Expanded(
-            child: Text(
-              'This server uses plain HTTP. Your username, password, '
-              'and access token will be sent unencrypted to $baseUrl. '
-              'Only sign in on a trusted network.',
-              style: AfTypography.bodySmall.copyWith(
-                color: AfColors.textPrimary,
+    return Semantics(
+      label: 'Warning: transmitting credentials over unencrypted connection',
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AfSpacing.s12,
+          vertical: AfSpacing.s8,
+        ),
+        decoration: BoxDecoration(
+          color: spectral.withValues(alpha: 0.12),
+          borderRadius: AfRadii.borderMd,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(LucideIcons.lockOpen, size: 18, color: spectral),
+            const SizedBox(width: AfSpacing.s8),
+            Expanded(
+              child: Text(
+                'This server uses plain HTTP. Your username, password, '
+                'and access token will be sent unencrypted to $baseUrl. '
+                'Only sign in on a trusted network.',
+                style: AfTypography.bodySmall.copyWith(
+                  color: AfColors.textPrimary,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

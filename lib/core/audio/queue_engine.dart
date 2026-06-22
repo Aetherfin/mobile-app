@@ -1,3 +1,4 @@
+import 'dart:collection' show UnmodifiableListView;
 import 'dart:math';
 import '../jellyfin/models/items.dart';
 
@@ -45,11 +46,11 @@ class AfQueueEngine {
   // ── Query helpers ──────────────────────────────────────────────────
 
   List<AfTrack> get tracks {
-    if (_shuffleOrder == null) return List<AfTrack>.unmodifiable(_tracks);
+    if (_shuffleOrder == null) return UnmodifiableListView<AfTrack>(_tracks);
     _shuffledTracks ??= _shuffleOrder!
         .map((i) => _tracks[i])
         .toList(growable: false);
-    return List<AfTrack>.unmodifiable(_shuffledTracks!);
+    return UnmodifiableListView<AfTrack>(_shuffledTracks!);
   }
 
   /// Logical index in the queue (index into [_shuffleOrder] or direct
