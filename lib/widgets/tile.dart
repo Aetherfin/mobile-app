@@ -114,7 +114,7 @@ class GenreTile extends StatelessWidget {
               Artwork(
                 url: imageUrl,
                 size: width > height ? width : height,
-                radius: BorderRadius.zero,
+                radius: AfRadii.borderNone,
                 fit: BoxFit.cover,
               ),
             // Solid scrim for text readability
@@ -130,7 +130,7 @@ class GenreTile extends StatelessWidget {
                         ],
                       )
                     : null,
-                color: imageUrl == null ? Colors.transparent : null,
+                color: imageUrl == null ? AfColors.transparent : null,
               ),
             ),
             // Genre name

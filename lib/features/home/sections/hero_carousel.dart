@@ -228,7 +228,7 @@ class _HeroCard extends StatelessWidget {
                               gradient: RadialGradient(
                                 colors: [
                                   spectral.energy.withValues(alpha: 0.3),
-                                  Colors.transparent,
+                                  AfColors.transparent,
                                 ],
                               ),
                             ),
@@ -242,7 +242,7 @@ class _HeroCard extends StatelessWidget {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.transparent,
+                                AfColors.transparent,
                                 AfColors.surfaceCanvas.withValues(alpha: 0.95),
                               ],
                             ),
@@ -326,7 +326,7 @@ class _ArtworkLayer extends StatelessWidget {
     Widget child = Artwork(
       url: url,
       size: double.infinity,
-      radius: BorderRadius.zero,
+      radius: AfRadii.borderNone,
       fit: BoxFit.cover,
     );
 

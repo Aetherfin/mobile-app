@@ -147,7 +147,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     final newIndex = widget.shell.currentIndex;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AfColors.transparent,
       extendBody: true,
       body: Stack(
         fit: StackFit.expand,

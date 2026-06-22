@@ -84,6 +84,10 @@ class PlaybackController {
   /// Guards against re-processing a track completion via the EOF fallback.
   String? _eofFallbackHandledTrackId;
 
+  /// Guards against concurrent advance operations from handleCompleted
+  /// and checkEndOfTrackFallback racing each other.
+  bool _advanceInProgress = false;
+
   /// The ID of the track currently loaded in the mpv player.
   String? _mpvLoadedTrackId;
 

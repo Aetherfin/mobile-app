@@ -28,9 +28,9 @@ class AetherfinApp extends ConsumerWidget {
     afLog('boot', 'AetherfinApp.build');
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
+        statusBarColor: AfColors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarColor: AfColors.transparent,
         systemNavigationBarIconBrightness: Brightness.light,
       ),
     );

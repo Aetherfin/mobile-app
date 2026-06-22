@@ -28,4 +28,5 @@ abstract final class AfRadii {
   static const BorderRadius borderXl = BorderRadius.all(rXl);
   static const BorderRadius borderRounded = BorderRadius.all(rRounded);
   static const BorderRadius borderPill = BorderRadius.all(rPill);
+  static const BorderRadius borderNone = BorderRadius.zero;
 }

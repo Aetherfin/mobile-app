@@ -33,6 +33,7 @@ extension CompletedHandler on PlaybackController {
   // ---------------------------------------------------------------------------
 
   Future<void> _advanceToNextTrack() async {
+    _eofFallbackHandledTrackId = null;
     final completedTrack = _queueManager.currentTrack;
     _queueManager.engine.advanceIndex();
     _onTrackChangedOrRestarted();
@@ -86,6 +87,7 @@ extension CompletedHandler on PlaybackController {
     if (currentTrack == null) return;
     if (_completedHandledForTrackId == currentTrack.id) return;
     if (_eofFallbackHandledTrackId == currentTrack.id) return;
+    if (_advanceInProgress) return;
 
     final duration = _player.state.duration;
     if (duration <= Duration.zero) return;
@@ -102,8 +104,14 @@ extension CompletedHandler on PlaybackController {
       _queueLock.run(() async {
         if (_eofFallbackHandledTrackId == currentTrack.id) return;
         if (_completedHandledForTrackId == currentTrack.id) return;
+        if (_advanceInProgress) return;
         _eofFallbackHandledTrackId = currentTrack.id;
-        await _advanceToNextTrack();
+        _advanceInProgress = true;
+        try {
+          await _advanceToNextTrack();
+        } finally {
+          _advanceInProgress = false;
+        }
       }),
     );
   }
@@ -160,7 +168,12 @@ extension CompletedHandler on PlaybackController {
         _completedHandledForTrackId = currentTrackId;
 
         if (!_queueManager.engine.isAtQueueEnd) {
-          await _advanceToNextTrack();
+          _advanceInProgress = true;
+          try {
+            await _advanceToNextTrack();
+          } finally {
+            _advanceInProgress = false;
+          }
         } else {
           final autoplayTriggered = await _handleAutoplay(loopAtEvent);
           if (!autoplayTriggered) {

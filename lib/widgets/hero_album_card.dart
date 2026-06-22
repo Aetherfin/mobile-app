@@ -47,7 +47,7 @@ class HeroAlbumCard extends StatelessWidget {
                     url: album.imageUrl,
                     size: double.infinity,
                     fit: BoxFit.cover,
-                    radius: BorderRadius.zero,
+                    radius: AfRadii.borderNone,
                   ),
                 ),
               // Gradient scrim
@@ -61,7 +61,7 @@ class HeroAlbumCard extends StatelessWidget {
                         colors: [
                           AfColors.surfaceCanvas.withValues(alpha: 0.92),
                           AfColors.surfaceCanvas.withValues(alpha: 0.40),
-                          Colors.transparent,
+                          AfColors.transparent,
                         ],
                       ),
                     ),

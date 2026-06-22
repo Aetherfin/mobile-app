@@ -180,7 +180,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                 radius: 0.8,
                 colors: [
                   spectral.withValues(alpha: alpha),
-                  Colors.transparent,
+                  AfColors.transparent,
                 ],
               ),
             ),

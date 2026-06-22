@@ -263,7 +263,7 @@ class _GraphicEqScreenState extends ConsumerState<GraphicEqScreen> {
       backgroundColor: AfColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: AfColors.surfaceCanvas,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AfColors.transparent,
         title: const Text('Graphic EQ'),
         centerTitle: false,
         actions: [

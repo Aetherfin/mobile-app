@@ -145,7 +145,7 @@ class _SmartPlaylistEditScreenState
       backgroundColor: AfColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: AfColors.surfaceCanvas,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AfColors.transparent,
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),
           tooltip: 'Back',

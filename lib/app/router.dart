@@ -46,7 +46,7 @@ final _shellBranch1Key = GlobalKey<NavigatorState>();
 final _shellBranch2Key = GlobalKey<NavigatorState>();
 final _shellBranch3Key = GlobalKey<NavigatorState>();
 final _shellBranch4Key = GlobalKey<NavigatorState>();
-final _authRefresh = _AuthRefreshListenable();
+final _authRefresh = ValueNotifier<int>(0);
 
 /// Auth & mode snapshot for the router redirect. Set by [setRouterAuthState]
 /// in main.dart before runApp, then kept in sync via provider listeners.
@@ -384,10 +384,6 @@ GoRouter get appRouter => _router;
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _AuthRefreshListenable extends ChangeNotifier {
-  void _notify() => notifyListeners();
-}
-
 /// Called from main.dart to initialise auth/mode state before runApp,
 /// and from provider listeners to keep the redirect snapshot in sync.
 ///
@@ -415,7 +411,7 @@ void resetRouterMode() {
 }
 
 /// Called from main.dart when auth/mode changes to trigger router redirect.
-void notifyAuthChanged() => _authRefresh._notify();
+void notifyAuthChanged() => _authRefresh.value++;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Deep-link URI parsing

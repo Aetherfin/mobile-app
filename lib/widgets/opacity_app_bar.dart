@@ -29,7 +29,7 @@ class OpacityAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = (scrollOffset / threshold).clamp(0.0, 1.0);
     final bg = Color.lerp(
-      Colors.transparent,
+      AfColors.transparent,
       AfColors.surfaceCanvas.withValues(alpha: 0.75),
       t,
     )!;

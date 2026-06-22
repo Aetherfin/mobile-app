@@ -28,6 +28,16 @@ String formatHourCount(Duration d) {
   return '${hours.round()}h';
 }
 
+/// Parses a nullable numeric string and formats it compactly.
+/// Returns '' for null, the raw string if unparseable, or a compact
+/// representation like `1.2K`, `3.4M` for valid integers.
+String formatCompactCountString(String? numStr) {
+  if (numStr == null || numStr.isEmpty) return '';
+  final n = int.tryParse(numStr);
+  if (n == null) return numStr;
+  return formatCompactCount(n);
+}
+
 /// "2,247" → "2.2K", "12,400" → "12K", small numbers untouched.
 ///
 /// Each decimal-place tier truncates rather than rounds at the upper edge

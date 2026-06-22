@@ -25,6 +25,7 @@ class SongsTab extends ConsumerWidget {
     // ponytail: isBuffering is a bool — no narrower select possible.
     // SliverChildBuilderDelegate rebuilds only visible items.
     final isBuffering = ref.watch(isBufferingProvider);
+    final playing = ref.watch(playingStreamProvider).value ?? false;
     // ponytail: .select(s.energy) avoids full Spectral rebuilds.
     final accent = ref.watch(currentSpectralProvider.select((s) => s.energy));
 
@@ -32,7 +33,7 @@ class SongsTab extends ConsumerWidget {
       final tracks = ref.watch(localTracksProvider);
       return tracks.when(
         data: (list) =>
-            _buildSliverList(list, activeId, isBuffering, accent, ref),
+            _buildSliverList(list, activeId, isBuffering, playing, accent, ref),
         loading: () => const SliverToBoxAdapter(
           child: LibrarySkeleton(mode: LibrarySkeletonMode.songs),
         ),
@@ -67,6 +68,7 @@ class SongsTab extends ConsumerWidget {
       tracksState.items,
       activeId,
       isBuffering,
+      playing,
       accent,
       ref,
     );
@@ -76,6 +78,7 @@ class SongsTab extends ConsumerWidget {
     List<AfTrack> tracks,
     String? activeId,
     bool isBuffering,
+    bool isPlaying,
     Color accent,
     WidgetRef ref,
   ) {
@@ -108,6 +111,7 @@ class SongsTab extends ConsumerWidget {
                 child: TrackRow(
                   track: t,
                   isActive: t.id == activeId,
+                  isPlaying: t.id == activeId && isPlaying,
                   isBuffering: t.id == activeId && isBuffering,
                   activeAccent: accent,
                   onTap: () =>

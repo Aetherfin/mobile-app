@@ -129,7 +129,7 @@ class _LostMemoryTile extends ConsumerWidget {
                       Artwork(
                         url: track.imageUrl,
                         size: 80,
-                        radius: BorderRadius.zero,
+                        radius: AfRadii.borderNone,
                         fit: BoxFit.cover,
                       ),
                       // Vignette edges
@@ -141,7 +141,7 @@ class _LostMemoryTile extends ConsumerWidget {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.transparent,
+                                AfColors.transparent,
                                 AfColors.surfaceCanvas.withValues(alpha: 0.6),
                               ],
                             ),

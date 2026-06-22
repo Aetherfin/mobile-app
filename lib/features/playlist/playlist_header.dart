@@ -202,7 +202,7 @@ class _SegmentedControlState extends ConsumerState<_SegmentedControl> {
       decoration: BoxDecoration(
         color: isSelected
             ? ref.read(currentSpectralProvider).primary
-            : Colors.transparent,
+            : AfColors.transparent,
       ),
       child: PressScale(
         ensureHitTarget: false,

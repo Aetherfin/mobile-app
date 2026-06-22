@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
+import '../../state/providers.dart';
 import '../../widgets/track_context_menu.dart';
 import '../../widgets/track_row.dart';
 
@@ -43,6 +44,7 @@ class QueueListView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final playing = ref.watch(playingStreamProvider).value ?? false;
     return ReorderableListView.builder(
       scrollController: scrollController,
       padding: const EdgeInsets.only(
@@ -129,6 +131,7 @@ class QueueListView extends ConsumerWidget {
                         track: t,
                         density: TrackRowDensity.compact,
                         isActive: active,
+                        isPlaying: active && playing,
                         isBuffering: active && isBuffering,
                         showHeart: false,
                         onTap: () => onTap(i),

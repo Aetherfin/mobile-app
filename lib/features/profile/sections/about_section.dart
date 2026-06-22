@@ -159,7 +159,7 @@ class _AboutTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: AfColors.transparent,
       child: PressScale(
         onTap: onTap,
         child: Semantics(

@@ -138,6 +138,7 @@ class SearchResults extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activeId = ref.watch(currentTrackProvider.select((t) => t?.id));
     final isBuffering = ref.watch(isBufferingProvider);
+    final playing = ref.watch(playingStreamProvider).value ?? false;
     final activeAccent = ref.watch(
       currentSpectralProvider.select((s) => s.energy),
     );
@@ -186,6 +187,7 @@ class SearchResults extends ConsumerWidget {
                     child: TrackRow(
                       track: tracks[i],
                       isActive: tracks[i].id == activeId,
+                      isPlaying: tracks[i].id == activeId && playing,
                       isBuffering: tracks[i].id == activeId && isBuffering,
                       activeAccent: activeAccent,
                       onTap: () => ref
@@ -241,7 +243,7 @@ class SearchResults extends ConsumerWidget {
                             color: AfColors.textTertiary,
                           ),
                         ),
-                        tileColor: Colors.transparent,
+                        tileColor: AfColors.transparent,
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
@@ -292,7 +294,7 @@ class SearchResults extends ConsumerWidget {
                             color: AfColors.textTertiary,
                           ),
                         ),
-                        tileColor: Colors.transparent,
+                        tileColor: AfColors.transparent,
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
@@ -352,7 +354,7 @@ class SearchResults extends ConsumerWidget {
                             color: AfColors.textTertiary,
                           ),
                         ),
-                        tileColor: Colors.transparent,
+                        tileColor: AfColors.transparent,
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),

@@ -12,27 +12,14 @@ class AfAsyncLock {
 
   Future<T> run<T>(Future<T> Function() action) {
     final completer = Completer<T>();
-    _chain = _chain
-        .then((_) async {
-          try {
-            final result = await action();
-            completer.complete(result);
-          } on Object catch (e, st) {
-            completer.completeError(e, st);
-          }
-        })
-        .catchError((Object error, StackTrace stack) {
-          afLog(
-            'error',
-            'AfAsyncLock chain error',
-            error: error,
-            stackTrace: stack,
-          );
-          if (!completer.isCompleted) {
-            completer.completeError(error, stack);
-          }
-          Error.throwWithStackTrace(error, stack);
-        });
+    _chain = _chain.then((_) async {
+      try {
+        completer.complete(await action());
+      } on Object catch (e, st) {
+        afLog('error', 'AfAsyncLock action failed', error: e, stackTrace: st);
+        completer.completeError(e, st);
+      }
+    });
     return completer.future;
   }
 }

@@ -172,7 +172,7 @@ class _HeroArtistCard extends ConsumerWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.transparent,
+                  AfColors.transparent,
                   AfColors.surfaceCanvas.withValues(alpha: 0.95),
                 ],
               ),
@@ -395,7 +395,7 @@ class _CircleButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(AfSpacing.s8),
             decoration: BoxDecoration(
-              color: filled ? AfColors.textPrimary : Colors.transparent,
+              color: filled ? AfColors.textPrimary : AfColors.transparent,
               shape: BoxShape.circle,
               border: filled
                   ? null

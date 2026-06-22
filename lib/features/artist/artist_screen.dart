@@ -56,6 +56,7 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
     final topTracksAsync = ref.watch(artistTopTracksProvider(widget.artistId));
     final activeId = ref.watch(currentTrackProvider)?.id;
     final isBuffering = ref.watch(isBufferingProvider);
+    final playing = ref.watch(playingStreamProvider).value ?? false;
     final activeAccent = ref.watch(
       currentSpectralProvider.select((s) => s.energy),
     );
@@ -140,7 +141,7 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                                 stops: [0.6, 1.0],
                                 colors: [
                                   AfColors.textOnPrimary,
-                                  Colors.transparent,
+                                  AfColors.transparent,
                                 ],
                               ).createShader(rect);
                             },
@@ -259,6 +260,7 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
                               topTracks: displayTracks,
                               activeId: activeId,
                               isBuffering: isBuffering,
+                              isPlaying: playing,
                               activeAccent: activeAccent,
                               onTap: (i) => ref
                                   .read(playActionsProvider)
@@ -527,6 +529,7 @@ class ArtistAllSongsScreen extends ConsumerWidget {
     final topTracksAsync = ref.watch(artistTopTracksProvider(artistId));
     final activeId = ref.watch(currentTrackProvider)?.id;
     final isBuffering = ref.watch(isBufferingProvider);
+    final playing = ref.watch(playingStreamProvider).value ?? false;
     final activeAccent = ref.watch(
       currentSpectralProvider.select((s) => s.energy),
     );
@@ -534,7 +537,7 @@ class ArtistAllSongsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AfColors.surfaceCanvas,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AfColors.transparent,
         elevation: 0,
         leading: IconButton(
           tooltip: 'Go back',
@@ -580,6 +583,7 @@ class ArtistAllSongsScreen extends ConsumerWidget {
                   track: track,
                   leadingNumber: i + 1,
                   isActive: track.id == activeId,
+                  isPlaying: track.id == activeId && playing,
                   isBuffering: track.id == activeId && isBuffering,
                   activeAccent: activeAccent,
                   onTap: () => ref
@@ -608,7 +612,7 @@ class ArtistAllAlbumsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AfColors.surfaceCanvas,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AfColors.transparent,
         elevation: 0,
         leading: IconButton(
           tooltip: 'Go back',

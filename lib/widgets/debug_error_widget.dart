@@ -250,7 +250,7 @@ class _ActionIconButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.transparent,
+        color: AfColors.transparent,
         child: InkWell(
           borderRadius: AfRadii.borderPill,
           onTap: onPressed,

@@ -27,7 +27,7 @@ class SmartPlaylistListScreen extends ConsumerWidget {
       backgroundColor: AfColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: AfColors.surfaceCanvas,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AfColors.transparent,
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),
           tooltip: 'Back',
@@ -78,47 +78,49 @@ class SmartPlaylistListScreen extends ConsumerWidget {
                   ],
                 ),
               )
-            : ListView(
+            : ListView.builder(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AfSpacing.s16,
                   vertical: AfSpacing.s8,
                 ),
-                children: [
-                  // Grouped card container
-                  Container(
+                itemCount: playlists.length,
+                itemBuilder: (context, index) {
+                  return Container(
                     clipBehavior: Clip.antiAlias,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AfColors.surfaceBase,
-                      borderRadius: AfRadii.borderLg,
+                      borderRadius: BorderRadius.vertical(
+                        top: index == 0 ? AfRadii.rLg : Radius.zero,
+                        bottom: index == playlists.length - 1
+                            ? AfRadii.rLg
+                            : Radius.zero,
+                      ),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        for (int i = 0; i < playlists.length; i++) ...[
-                          _PlaylistTile(
-                            playlist: playlists[i],
-                            onTap: () => context.push(
-                              '/smart-playlist/${playlists[i].id}',
-                            ),
-                            onDelete: () async {
-                              final db = ref.read(smartPlaylistDbProvider);
-                              await db.delete(playlists[i].id);
-                              ref.invalidate(smartPlaylistsProvider);
-                            },
+                        _PlaylistTile(
+                          playlist: playlists[index],
+                          onTap: () => context.push(
+                            '/smart-playlist/${playlists[index].id}',
                           ),
-                          if (i < playlists.length - 1)
-                            const Divider(
-                              height: 0,
-                              thickness: 0.5,
-                              indent: 60,
-                              color: AfColors.surfaceHigh,
-                            ),
-                        ],
+                          onDelete: () async {
+                            final db = ref.read(smartPlaylistDbProvider);
+                            await db.delete(playlists[index].id);
+                            ref.invalidate(smartPlaylistsProvider);
+                          },
+                        ),
+                        if (index < playlists.length - 1)
+                          const Divider(
+                            height: 0,
+                            thickness: 0.5,
+                            indent: 60,
+                            color: AfColors.surfaceHigh,
+                          ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: AfSpacing.s24),
-                ],
+                  );
+                },
               ),
         loading: () => const PlaylistSkeleton(),
         error: (e, _) => AsyncErrorView(

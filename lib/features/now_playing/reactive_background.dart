@@ -79,16 +79,16 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
 
     final luminance = _target.computeLuminance();
     final overlayStyle = SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
+      statusBarColor: AfColors.transparent,
       statusBarIconBrightness: luminance > 0.5
           ? Brightness.dark
           : Brightness.light,
       statusBarBrightness: luminance > 0.5 ? Brightness.light : Brightness.dark,
-      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarColor: AfColors.transparent,
       systemNavigationBarIconBrightness: luminance > 0.5
           ? Brightness.dark
           : Brightness.light,
-      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarDividerColor: AfColors.transparent,
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(

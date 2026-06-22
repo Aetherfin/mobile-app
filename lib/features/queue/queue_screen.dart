@@ -207,7 +207,7 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AfColors.transparent,
         extendBodyBehindAppBar: true,
         appBar: _isSelectionMode
             ? _buildSelectionAppBar()
@@ -263,7 +263,7 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
 
   PreferredSizeWidget _buildNormalAppBar() {
     return AppBar(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AfColors.transparent,
       leading: IconButton(
         icon: const Icon(LucideIcons.chevronDown),
         tooltip: 'Close',

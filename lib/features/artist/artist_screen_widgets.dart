@@ -10,6 +10,7 @@ import '../../core/jellyfin/models/items.dart';
 import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../state/radio_providers.dart';
+import '../../utils/time_format.dart';
 import '../../widgets/af_dialog.dart';
 import '../../widgets/artwork.dart';
 import '../../widgets/press_scale.dart';
@@ -129,6 +130,7 @@ List<Widget> buildArtistTopSongsSlivers({
   required Color activeAccent,
   required void Function(int index) onTap,
   required void Function(AfTrack track) onLongPress,
+  bool isPlaying = false,
   VoidCallback? onMoreTap,
 }) {
   if (topTracks.isEmpty) return [];
@@ -159,6 +161,7 @@ List<Widget> buildArtistTopSongsSlivers({
                 track: displayedTracks[i],
                 leadingNumber: i + 1,
                 isActive: displayedTracks[i].id == activeId,
+                isPlaying: displayedTracks[i].id == activeId && isPlaying,
                 isBuffering: displayedTracks[i].id == activeId && isBuffering,
                 activeAccent: activeAccent,
                 onTap: () => onTap(i),
@@ -219,7 +222,7 @@ List<Widget> buildArtistDiscographySlivers(
                     Artwork(
                       url: a.imageUrl,
                       size: 152,
-                      radius: BorderRadius.zero,
+                      radius: AfRadii.borderNone,
                     ),
                     const SizedBox(height: AfSpacing.s8),
                     Text(
@@ -273,14 +276,7 @@ class _ArtistBiographyPanelState extends ConsumerState<ArtistBiographyPanel> {
     return html.replaceAll(RegExp(r'<[^>]*>'), '').trim();
   }
 
-  String _formatNumber(String? numStr) {
-    if (numStr == null) return '';
-    final n = int.tryParse(numStr);
-    if (n == null) return numStr;
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '$n';
-  }
+  // _formatNumber removed — use formatCompactCountString from time_format.dart
 
   @override
   Widget build(BuildContext context) {
@@ -292,10 +288,10 @@ class _ArtistBiographyPanelState extends ConsumerState<ArtistBiographyPanel> {
     );
     final stats = <String>[];
     if (widget.listeners != null) {
-      stats.add('${_formatNumber(widget.listeners)} listeners');
+      stats.add('${formatCompactCountString(widget.listeners)} listeners');
     }
     if (widget.playCount != null) {
-      stats.add('${_formatNumber(widget.playCount)} plays');
+      stats.add('${formatCompactCountString(widget.playCount)} plays');
     }
 
     return Container(

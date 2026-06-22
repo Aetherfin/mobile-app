@@ -90,6 +90,11 @@ abstract final class AfColors {
   static const glassBorder = Color(0x0FFFFFFF); // white @ 6%
   static const glassBorderStrong = Color(0x14FFFFFF); // white @ 8%
   static const glassBorderEmphasis = Color(0x1AFFFFFF); // white @ 10%
+
+  // ---------------------------------------------------------------------------
+  // Utility
+  // ---------------------------------------------------------------------------
+  static const transparent = Color(0x00000000);
 }
 
 /// Genre-specific gradient pairs for genre cards.

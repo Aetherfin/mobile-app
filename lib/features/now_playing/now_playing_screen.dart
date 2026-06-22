@@ -78,7 +78,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AfColors.transparent,
         extendBodyBehindAppBar: true,
         body: RepaintBoundary(
           child: ReactiveBackground(

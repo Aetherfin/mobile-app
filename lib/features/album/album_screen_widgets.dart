@@ -8,6 +8,7 @@ import '../../design_tokens/tokens.dart';
 import '../../state/providers.dart';
 import '../../utils/display_error.dart';
 import '../../utils/log.dart';
+import '../../utils/time_format.dart';
 import '../../widgets/artwork.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/track_context_menu.dart';
@@ -40,7 +41,7 @@ Widget buildAlbumHeroArtwork({
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   stops: [0.6, 1.0],
-                  colors: [AfColors.textOnPrimary, Colors.transparent],
+                  colors: [AfColors.textOnPrimary, AfColors.transparent],
                 ).createShader(rect);
               },
               blendMode: BlendMode.dstIn,
@@ -48,7 +49,7 @@ Widget buildAlbumHeroArtwork({
                 url: imageUrl,
                 size: width,
                 height: heroHeight,
-                radius: BorderRadius.zero,
+                radius: AfRadii.borderNone,
               ),
             ),
           ),
@@ -233,6 +234,7 @@ class AlbumTrackRowItem extends ConsumerWidget {
     final activeAccent = ref.watch(
       currentSpectralProvider.select((s) => s.energy),
     );
+    final playing = ref.watch(playingStreamProvider).value ?? false;
     final isActive = track.id == activeId;
 
     return Padding(
@@ -241,6 +243,7 @@ class AlbumTrackRowItem extends ConsumerWidget {
         track: track,
         leadingNumber: index + 1,
         isActive: isActive,
+        isPlaying: isActive && playing,
         isBuffering: isActive && isBuffering,
         activeAccent: activeAccent,
         onTap: () =>
@@ -273,14 +276,7 @@ class _AlbumWikiPanelState extends ConsumerState<AlbumWikiPanel> {
     return html.replaceAll(RegExp(r'<[^>]*>'), '').trim();
   }
 
-  String _formatNumber(String? numStr) {
-    if (numStr == null) return '';
-    final n = int.tryParse(numStr);
-    if (n == null) return numStr;
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '$n';
-  }
+  // _formatNumber removed — use formatCompactCountString from time_format.dart
 
   @override
   Widget build(BuildContext context) {
@@ -292,10 +288,10 @@ class _AlbumWikiPanelState extends ConsumerState<AlbumWikiPanel> {
     );
     final stats = <String>[];
     if (widget.listeners != null) {
-      stats.add('${_formatNumber(widget.listeners)} listeners');
+      stats.add('${formatCompactCountString(widget.listeners)} listeners');
     }
     if (widget.playCount != null) {
-      stats.add('${_formatNumber(widget.playCount)} plays');
+      stats.add('${formatCompactCountString(widget.playCount)} plays');
     }
 
     return Container(

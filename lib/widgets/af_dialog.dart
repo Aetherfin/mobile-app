@@ -25,7 +25,7 @@ Future<T?> showBlurDialog<T>({
     PageRouteBuilder<T>(
       opaque: false,
       barrierDismissible: barrierDismissible,
-      barrierColor: Colors.transparent,
+      barrierColor: AfColors.transparent,
       transitionDuration: reduced ? Duration.zero : AfDurations.quick,
       reverseTransitionDuration: reduced ? Duration.zero : AfDurations.bounce,
       pageBuilder: (context, animation, secondaryAnimation) {
@@ -132,7 +132,7 @@ class _BlurDialogOverlay<T> extends StatelessWidget {
                                   ),
                                 ),
                                 child: ListTileTheme(
-                                  tileColor: Colors.transparent,
+                                  tileColor: AfColors.transparent,
                                   child: child,
                                 ),
                               ),

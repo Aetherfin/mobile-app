@@ -119,7 +119,7 @@ class _AfBottomNavState extends ConsumerState<AfBottomNav>
             decoration: BoxDecoration(
               color: active
                   ? accent.withValues(alpha: _pillAlpha)
-                  : Colors.transparent,
+                  : AfColors.transparent,
               borderRadius: AfRadii.borderPill,
             ),
             child: Row(

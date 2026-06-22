@@ -407,7 +407,7 @@ class OptionTile extends ConsumerWidget {
                 width: 3,
                 height: subtitle != null ? 28 : 20,
                 decoration: BoxDecoration(
-                  color: isActive ? spectral : Colors.transparent,
+                  color: isActive ? spectral : AfColors.transparent,
                   borderRadius: AfRadii.borderXs,
                 ),
               ),

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/jellyfin/models/items.dart';
 import '../design_tokens/tokens.dart';
-import '../state/player_providers.dart';
 import 'artwork.dart';
 import 'favorite_heart_button.dart';
 import 'press_scale.dart';
@@ -120,12 +118,13 @@ enum TrackRowDensity { compact, comfortable, generous }
 ///
 /// Active rows render a 2dp left bar in `accentPrimary` and tint the
 /// background to `surfaceBase`.
-class TrackRow extends ConsumerWidget {
+class TrackRow extends StatelessWidget {
   const TrackRow({
     super.key,
     required this.track,
     this.density = TrackRowDensity.comfortable,
     this.isActive = false,
+    this.isPlaying = false,
     this.activeAccent,
     this.onTap,
     this.onLongPress,
@@ -139,6 +138,7 @@ class TrackRow extends ConsumerWidget {
   final AfTrack track;
   final TrackRowDensity density;
   final bool isActive;
+  final bool isPlaying;
   final Color? activeAccent;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
@@ -149,7 +149,7 @@ class TrackRow extends ConsumerWidget {
   final bool isBuffering;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final (height, artSize) = switch (density) {
       TrackRowDensity.compact => (44.0, 36.0),
       TrackRowDensity.comfortable => (64.0, 44.0),
@@ -165,10 +165,6 @@ class TrackRow extends ConsumerWidget {
     final subtitleStyle = AfTypography.bodySmall.copyWith(
       color: AfColors.textSecondary,
     );
-
-    final isPlaying = isActive
-        ? (ref.watch(playingStreamProvider).value ?? false)
-        : false;
 
     Widget leading;
     if (leadingNumber != null) {
@@ -253,7 +249,7 @@ class TrackRow extends ConsumerWidget {
                 ? (isActive
                       ? AfColors.surfaceHigh.withValues(alpha: 0.6)
                       : AfColors.surfaceHigh.withValues(alpha: 0.3))
-                : (isActive ? AfColors.surfaceBase : Colors.transparent),
+                : (isActive ? AfColors.surfaceBase : AfColors.transparent),
             borderRadius: steelBackground ? AfRadii.borderLg : AfRadii.borderSm,
             border: steelBackground
                 ? Border.all(

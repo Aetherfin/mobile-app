@@ -87,9 +87,9 @@ class _ShimmerWrapState extends State<ShimmerWrap>
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
                 colors: const [
-                  Colors.transparent,
+                  AfColors.transparent,
                   AfColors.glassFillStrong,
-                  Colors.transparent,
+                  AfColors.transparent,
                 ],
                 stops: [
                   (_controller.value - 0.3).clamp(0.0, 1.0),

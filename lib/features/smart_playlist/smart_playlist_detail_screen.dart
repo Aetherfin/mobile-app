@@ -27,6 +27,7 @@ class SmartPlaylistDetailScreen extends ConsumerWidget {
     final activeAccent = ref.watch(
       currentSpectralProvider.select((s) => s.energy),
     );
+    final playing = ref.watch(playingStreamProvider).value ?? false;
     final spectral = ref.watch(
       currentSpectralProvider.select((s) => s.primary),
     );
@@ -39,7 +40,7 @@ class SmartPlaylistDetailScreen extends ConsumerWidget {
       backgroundColor: AfColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: AfColors.surfaceCanvas,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AfColors.transparent,
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),
           tooltip: 'Back',
@@ -203,6 +204,7 @@ class SmartPlaylistDetailScreen extends ConsumerWidget {
                         TrackRow(
                           track: t,
                           isActive: t.id == activeId,
+                          isPlaying: t.id == activeId && playing,
                           isBuffering: t.id == activeId && isBuffering,
                           activeAccent: activeAccent,
                           onTap: () => ref

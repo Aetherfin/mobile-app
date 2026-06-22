@@ -46,6 +46,7 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
     final activeTrack = ref.watch(currentTrackProvider);
     final activeId = activeTrack?.id;
     final isBuffering = ref.watch(isBufferingProvider);
+    final playing = ref.watch(playingStreamProvider).value ?? false;
     final activeAccent = ref.watch(
       currentSpectralProvider.select((s) => s.energy),
     );
@@ -195,6 +196,7 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
                           hasBackend: backend != null,
                           activeId: activeId,
                           isBuffering: isBuffering,
+                          isPlaying: playing,
                           activeAccent: activeAccent,
                           spectral: spectral,
                           onReorder: (oldIndex, newIndex) => _onReorder(

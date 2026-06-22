@@ -298,7 +298,7 @@ class _EqDspScreenState extends ConsumerState<EqDspScreen> {
       backgroundColor: AfColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: AfColors.surfaceCanvas,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AfColors.transparent,
         title: const Text('Equalizer & DSP'),
         centerTitle: false,
         actions: [
@@ -556,7 +556,7 @@ class _EqDspScreenState extends ConsumerState<EqDspScreen> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.transparent,
+      color: AfColors.transparent,
       child: PressScale(
         onTap: onTap,
         child: InkWell(

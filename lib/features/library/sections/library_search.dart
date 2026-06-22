@@ -353,6 +353,7 @@ class _LiveResults extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activeId = ref.watch(currentTrackProvider)?.id;
     final isBuffering = ref.watch(isBufferingProvider);
+    final playing = ref.watch(playingStreamProvider).value ?? false;
     final accent = ref.watch(currentSpectralProvider.select((s) => s.energy));
 
     final albumsAsync = ref.watch(
@@ -509,6 +510,7 @@ class _LiveResults extends ConsumerWidget {
                       filtered,
                       activeId,
                       isBuffering,
+                      playing,
                       accent,
                       ref,
                       context,
@@ -532,6 +534,7 @@ class _LiveResults extends ConsumerWidget {
                   filtered,
                   activeId,
                   isBuffering,
+                  playing,
                   accent,
                   ref,
                   context,
@@ -548,6 +551,7 @@ class _LiveResults extends ConsumerWidget {
     List<AfTrack> filtered,
     String? activeId,
     bool isBuffering,
+    bool isPlaying,
     Color accent,
     WidgetRef ref,
     BuildContext context,
@@ -559,6 +563,7 @@ class _LiveResults extends ConsumerWidget {
           return TrackRow(
             track: t,
             isActive: t.id == activeId,
+            isPlaying: t.id == activeId && isPlaying,
             isBuffering: t.id == activeId && isBuffering,
             activeAccent: accent,
             onTap: () {

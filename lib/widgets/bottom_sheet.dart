@@ -252,7 +252,7 @@ class _BlurBottomSheetOverlayState<T> extends State<_BlurBottomSheetOverlay<T>>
                                   FocusScope(
                                     autofocus: true,
                                     child: ListTileTheme(
-                                      tileColor: Colors.transparent,
+                                      tileColor: AfColors.transparent,
                                       child: widget.builder(context),
                                     ),
                                   ),

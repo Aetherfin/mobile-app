@@ -761,7 +761,7 @@ class TabButton extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: AfSpacing.s8),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: active ? AfColors.surfaceHigh : Colors.transparent,
+            color: active ? AfColors.surfaceHigh : AfColors.transparent,
             borderRadius: AfRadii.borderMd,
           ),
           child: Text(

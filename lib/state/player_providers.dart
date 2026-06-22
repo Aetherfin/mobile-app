@@ -192,7 +192,7 @@ void _wireQueueSaving(Ref ref, AfPlayerService svc, _WireDisposables d) {
       await Future<void>.delayed(const Duration(seconds: 10));
       // Stop if timer was cancelled or a new loop started (play/pause race).
       if (d.activeQueuePeriodicTimer == null || gen != d.saveLoopGen) return;
-      if (!svc.isPlaying) continue;
+      if (!svc.isPlaying) return; // exit — re-created on next play
       final tracks = svc.currentQueue;
       if (tracks.isEmpty) continue;
 

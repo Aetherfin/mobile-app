@@ -118,7 +118,7 @@ class _LocalSetupScreenState extends ConsumerState<LocalSetupScreen> {
       backgroundColor: AfColors.surfaceCanvas,
       appBar: AppBar(
         backgroundColor: AfColors.surfaceCanvas,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AfColors.transparent,
         title: Text('Local files', style: AfTypography.titleMedium),
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),

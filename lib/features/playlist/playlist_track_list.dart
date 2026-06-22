@@ -19,6 +19,7 @@ class PlaylistTrackList extends StatelessWidget {
     required this.isBuffering,
     required this.activeAccent,
     required this.spectral,
+    this.isPlaying = false,
     required this.onReorder,
     required this.confirmDismiss,
     required this.onDismissed,
@@ -32,6 +33,7 @@ class PlaylistTrackList extends StatelessWidget {
   final bool isBuffering;
   final Color? activeAccent;
   final Color spectral;
+  final bool isPlaying;
   final void Function(int oldIndex, int newIndex) onReorder;
   final Future<bool> Function(String title) confirmDismiss;
   final void Function(int index) onDismissed;
@@ -115,6 +117,7 @@ class PlaylistTrackList extends StatelessWidget {
               child: TrackRow(
                 track: t,
                 isActive: isActive,
+                isPlaying: isActive && isPlaying,
                 isBuffering: t.id == activeId && isBuffering,
                 activeAccent: activeAccent,
                 onTap: () => onTap(i),
