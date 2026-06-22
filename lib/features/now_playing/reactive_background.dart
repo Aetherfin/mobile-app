@@ -33,6 +33,12 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
   @override
   void initState() {
     super.initState();
+    final initialSpectral = ref.read(currentSpectralProvider);
+    final oklch = srgbToOklch(initialSpectral.energy);
+    final color = OklchColor(0.35, 0.12, oklch.h).toColor();
+    _current = color;
+    _target = color;
+
     _controller = AnimationController(
       vsync: this,
       duration: AfDurations.expressive,
