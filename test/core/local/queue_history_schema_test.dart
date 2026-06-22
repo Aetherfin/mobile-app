@@ -70,8 +70,8 @@ void main() {
       expect(rows[1].sourceId, 'album-123');
     });
 
-    test('schema version is 16', () {
-      expect(db.schemaVersion, 16);
+    test('schema version is 17', () {
+      expect(db.schemaVersion, 17);
     });
 
     test('migration from v9 to v10 creates performance indexes', () async {

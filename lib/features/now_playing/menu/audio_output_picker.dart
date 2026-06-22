@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:mpv_audio_kit/mpv_audio_kit.dart' show Device;
 
 import '../../../design_tokens/tokens.dart';
 import '../../../state/providers.dart';
@@ -37,76 +36,64 @@ class OutputDialogContent extends ConsumerWidget {
       currentSpectralProvider.select((s) => s.primary),
     );
 
-    return StreamBuilder<List<Device>>(
-      stream: svc.audioDevicesStream,
-      initialData: svc.audioDevices,
-      builder: (context, devicesSnap) {
-        return StreamBuilder<Device>(
-          stream: svc.audioDeviceStream,
-          initialData: svc.audioDevice,
-          builder: (context, activeSnap) {
-            final devices = devicesSnap.data ?? [];
-            final active = activeSnap.data;
+    final devices = ref.watch(audioDevicesProvider).value ?? [];
+    final active = ref.watch(audioDeviceProvider).value;
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: AfSpacing.s16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AfSpacing.gutterGenerous,
-                    ),
-                    child: Text('Output', style: AfTypography.titleSmall),
-                  ),
-                  const SizedBox(height: AfSpacing.s8),
-                  if (devices.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(AfSpacing.gutterGenerous),
-                      child: Text(
-                        'No audio devices found.\nStart playback first.',
-                        style: AfTypography.bodyMedium.copyWith(
-                          color: AfColors.textTertiary,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    )
-                  else
-                    ...devices.map((device) {
-                      final isActive = active?.name == device.name;
-                      return ListTile(
-                        leading: iconForDevice(
-                          device.description.isNotEmpty
-                              ? device.description
-                              : device.name,
-                          color: isActive ? spectral : AfColors.textSecondary,
-                        ),
-                        title: Text(
-                          device.description.isNotEmpty
-                              ? device.description
-                              : device.name,
-                          style: AfTypography.bodyMedium,
-                        ),
-                        trailing: isActive
-                            ? Icon(
-                                LucideIcons.check,
-                                color: spectral,
-                                size: AfIconSizes.sm,
-                              )
-                            : null,
-                        onTap: () async {
-                          await svc.setAudioDevice(device);
-                          dismiss();
-                        },
-                      );
-                    }),
-                ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AfSpacing.s16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AfSpacing.gutterGenerous,
+            ),
+            child: Text('Output', style: AfTypography.titleSmall),
+          ),
+          const SizedBox(height: AfSpacing.s8),
+          if (devices.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(AfSpacing.gutterGenerous),
+              child: Text(
+                'No audio devices found.\nStart playback first.',
+                style: AfTypography.bodyMedium.copyWith(
+                  color: AfColors.textTertiary,
+                ),
+                textAlign: TextAlign.center,
               ),
-            );
-          },
-        );
-      },
+            )
+          else
+            ...devices.map((device) {
+              final isActive = active?.name == device.name;
+              return ListTile(
+                leading: iconForDevice(
+                  device.description.isNotEmpty
+                      ? device.description
+                      : device.name,
+                  color: isActive ? spectral : AfColors.textSecondary,
+                ),
+                title: Text(
+                  device.description.isNotEmpty
+                      ? device.description
+                      : device.name,
+                  style: AfTypography.bodyMedium,
+                ),
+                trailing: isActive
+                    ? Icon(
+                        LucideIcons.check,
+                        color: spectral,
+                        size: AfIconSizes.sm,
+                      )
+                    : null,
+                onTap: () async {
+                  await svc.setAudioDevice(device);
+                  dismiss();
+                },
+              );
+            }),
+        ],
+      ),
     );
   }
 

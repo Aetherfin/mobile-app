@@ -152,9 +152,9 @@ class StreamPrefetcher {
     unawaited(
       future
           .then((file) {
-            _processPrefetchQueue();
             _prefetchFutures.remove(trackId);
             _cancelTokens.remove(trackId);
+            _processPrefetchQueue();
           })
           .catchError((_) {
             _prefetchFutures.remove(trackId);
@@ -302,8 +302,9 @@ class StreamPrefetcher {
   /// Adds a file to the cache with size tracking
   Future<void> _addToCache(String trackId, File file) async {
     // Remove oldest entries if cache is full
-    while (_cachedFiles.length >= _maxCachedFiles ||
-        _totalCacheSize >= _maxCacheSizeBytes) {
+    while (_cachedFiles.isNotEmpty &&
+        (_cachedFiles.length >= _maxCachedFiles ||
+            _totalCacheSize >= _maxCacheSizeBytes)) {
       final oldestTrackId = _cachedFiles.keys.first;
       await _removeFromCache(oldestTrackId);
     }

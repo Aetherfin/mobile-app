@@ -207,7 +207,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -236,6 +236,8 @@ class AppDatabase extends _$AppDatabase {
             'ON tracks (artist, title)',
         'CREATE INDEX IF NOT EXISTS idx_tracks_album_artist '
             'ON tracks (album, album_artist)',
+        'CREATE INDEX IF NOT EXISTS idx_tracks_album_coalesced_artist '
+            "ON tracks (album, COALESCE(NULLIF(album_artist, ''), artist))",
         'CREATE INDEX IF NOT EXISTS idx_track_stats_track_id '
             'ON track_stats (track_id)',
         'CREATE INDEX IF NOT EXISTS idx_lastfm_similar_cache_track_id '
@@ -437,6 +439,16 @@ class AppDatabase extends _$AppDatabase {
           } on Exception {
             // FTS table or triggers may already exist — skip.
           }
+        }
+      }
+      if (from < 17) {
+        try {
+          await m.database.customStatement(
+            'CREATE INDEX IF NOT EXISTS idx_tracks_album_coalesced_artist '
+            "ON tracks (album, COALESCE(NULLIF(album_artist, ''), artist))",
+          );
+        } on Exception {
+          // Table or columns might not exist - skip index.
         }
       }
     },

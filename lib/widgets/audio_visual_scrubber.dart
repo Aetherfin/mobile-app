@@ -71,7 +71,12 @@ class _AudioVisualScrubberState extends ConsumerState<AudioVisualScrubber>
           vsync: this,
           duration: const Duration(milliseconds: 16),
         )..addListener(() {
-          if (mounted) _fftNotifier.flush();
+          if (mounted) {
+            _fftNotifier.flush();
+            if (!_fftNotifier.needsTicker && _ticker.isAnimating) {
+              _ticker.stop();
+            }
+          }
         });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {

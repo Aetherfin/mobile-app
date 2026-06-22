@@ -54,10 +54,7 @@ class PlaylistTrackList extends StatelessWidget {
       decoration: const BoxDecoration(
         color: AfColors.surfaceRaised,
         // ponytail: top-only corners, no matching AfRadii token
-        borderRadius: BorderRadius.only(
-          topLeft: AfRadii.rXl,
-          topRight: AfRadii.rXl,
-        ),
+        borderRadius: BorderRadius.vertical(top: AfRadii.rXl),
       ),
       child: hasBackend ? _buildReorderable(context) : _buildStatic(context),
     );

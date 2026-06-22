@@ -89,8 +89,10 @@ class _ReactiveBackgroundState extends ConsumerState<ReactiveBackground>
       value: overlayStyle,
       child: AnimatedBuilder(
         animation: _colorAnimation,
-        builder: (context, _) =>
-            GlowBackground(energy: energy, child: widget.child),
+        builder: (context, _) => GlowBackground(
+          energy: _colorAnimation.value ?? energy,
+          child: widget.child,
+        ),
       ),
     );
   }

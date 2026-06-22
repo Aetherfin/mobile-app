@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,14 +40,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  late final Future<PackageInfo> _packageInfoFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _packageInfoFuture = PackageInfo.fromPlatform();
-  }
-
   @override
   Widget build(BuildContext context) {
     final mode = ref.watch(appModeProvider);
@@ -143,20 +134,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             padding: const EdgeInsets.symmetric(
                               vertical: AfSpacing.s24,
                             ),
-                            child: FutureBuilder<PackageInfo>(
-                              future: _packageInfoFuture,
-                              builder: (context, snap) {
-                                final version = snap.data != null
-                                    ? 'v${snap.data!.version}+${snap.data!.buildNumber}'
-                                    : '...';
-                                return Text(
-                                  'Aetherfin $version · Android',
-                                  style: AfTypography.overline.copyWith(
-                                    color: AfColors.textDisabled,
-                                  ),
-                                );
-                              },
-                            ),
+                            child: () {
+                              final info = ref.watch(packageInfoProvider).value;
+                              final version = info != null
+                                  ? 'v${info.version}+${info.buildNumber}'
+                                  : '...';
+                              return Text(
+                                'Aetherfin $version · Android',
+                                style: AfTypography.overline.copyWith(
+                                  color: AfColors.textDisabled,
+                                ),
+                              );
+                            }(),
                           ),
                         ),
 

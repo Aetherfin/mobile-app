@@ -1277,12 +1277,11 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
                           : null,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: ProAudioSpacing.controlGap),
                   Text(
                     _formatFrequency(b.frequency),
-                    style: AfTypography.overline.copyWith(
+                    style: ProAudioTypography.dbLabel.copyWith(
                       color: AfColors.textTertiary.withValues(alpha: opacity),
-                      fontSize: 8,
                     ),
                   ),
                 ],
@@ -1621,7 +1620,7 @@ class _ParametricEqScreenState extends ConsumerState<ParametricEqScreen> {
       context: context,
       backgroundColor: AfColors.surfaceBase,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AfRadii.lg)),
+        borderRadius: BorderRadius.vertical(top: AfRadii.rLg),
       ),
       builder: (context) {
         return SafeArea(

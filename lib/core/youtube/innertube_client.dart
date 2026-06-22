@@ -128,6 +128,30 @@ class InnerTubeClient {
     };
   }
 
+  Future<String> _readResponse(HttpClientResponse response) async {
+    final completer = Completer<String>();
+    final bytes = <int>[];
+    final sub = response.listen(
+      bytes.addAll,
+      onDone: () {
+        if (!completer.isCompleted) {
+          completer.complete(utf8.decode(bytes));
+        }
+      },
+      onError: (Object e) {
+        if (!completer.isCompleted) {
+          completer.completeError(e);
+        }
+      },
+    );
+
+    try {
+      return await completer.future.timeout(const Duration(seconds: 10));
+    } finally {
+      await sub.cancel();
+    }
+  }
+
   /// Apply common + auth headers to an HTTP request.
   void _applyHeaders(
     HttpClientRequest request, {
@@ -205,30 +229,7 @@ class InnerTubeClient {
         }
 
         // Read response bytes with a timeout to avoid streaming hang.
-        final completer = Completer<String>();
-        final bytes = <int>[];
-        final sub = response.listen(
-          bytes.addAll,
-          onDone: () {
-            if (!completer.isCompleted) {
-              completer.complete(utf8.decode(bytes));
-            }
-          },
-          onError: (Object e) {
-            if (!completer.isCompleted) {
-              completer.completeError(e);
-            }
-          },
-        );
-        String responseBody;
-        try {
-          responseBody = await completer.future.timeout(
-            const Duration(seconds: 10),
-          );
-        } on TimeoutException {
-          unawaited(sub.cancel());
-          return null;
-        }
+        final responseBody = await _readResponse(response);
 
         if (response.statusCode != 200) {
           afLog(
@@ -296,16 +297,7 @@ class InnerTubeClient {
           const Duration(seconds: 10),
         );
 
-        final completer = Completer<String>();
-        final bytes = <int>[];
-        response.listen(
-          bytes.addAll,
-          onDone: () => completer.complete(utf8.decode(bytes)),
-          onError: completer.completeError,
-        );
-        final responseBody = await completer.future.timeout(
-          const Duration(seconds: 10),
-        );
+        final responseBody = await _readResponse(response);
 
         if (response.statusCode != 200) return null;
 
@@ -385,16 +377,7 @@ class InnerTubeClient {
         final response = await request.close().timeout(
           const Duration(seconds: 15),
         );
-        final completer = Completer<String>();
-        final bytes = <int>[];
-        response.listen(
-          bytes.addAll,
-          onDone: () => completer.complete(utf8.decode(bytes)),
-          onError: completer.completeError,
-        );
-        final responseBody = await completer.future.timeout(
-          const Duration(seconds: 10),
-        );
+        final responseBody = await _readResponse(response);
 
         if (response.statusCode != 200) {
           return [];
@@ -526,16 +509,7 @@ class InnerTubeClient {
         final response = await request.close().timeout(
           const Duration(seconds: 15),
         );
-        final completer = Completer<String>();
-        final bytes = <int>[];
-        response.listen(
-          bytes.addAll,
-          onDone: () => completer.complete(utf8.decode(bytes)),
-          onError: completer.completeError,
-        );
-        final responseBody = await completer.future.timeout(
-          const Duration(seconds: 10),
-        );
+        final responseBody = await _readResponse(response);
 
         if (response.statusCode != 200) return null;
 
@@ -748,16 +722,7 @@ class InnerTubeClient {
         final response = await request.close().timeout(
           const Duration(seconds: 15),
         );
-        final completer = Completer<String>();
-        final bytes = <int>[];
-        response.listen(
-          bytes.addAll,
-          onDone: () => completer.complete(utf8.decode(bytes)),
-          onError: completer.completeError,
-        );
-        final responseBody = await completer.future.timeout(
-          const Duration(seconds: 10),
-        );
+        final responseBody = await _readResponse(response);
 
         if (response.statusCode != 200) {
           return null;

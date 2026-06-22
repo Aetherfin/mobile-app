@@ -17,7 +17,17 @@ class StreamUrlCache {
   final LinkedHashMap<String, String> _cache;
 
   /// Returns the cached URL for [trackId], or `null` if not cached.
-  String? get(String trackId) => _cache[trackId];
+  ///
+  /// Updates the access order to move the retrieved item to the
+  /// most-recently-used position.
+  String? get(String trackId) {
+    final value = _cache[trackId];
+    if (value != null) {
+      _cache.remove(trackId);
+      _cache[trackId] = value;
+    }
+    return value;
+  }
 
   /// Caches a resolved [url] for the given [trackId].
   ///

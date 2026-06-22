@@ -47,6 +47,8 @@ class ScrubBlockNotifier extends ChangeNotifier {
   bool _fadingOut = false;
   bool _dirty = false;
 
+  bool get needsTicker => _fadingOut || totalEnergy > 0.0 || _dirty;
+
   // ── Transition buffer ──────────────────────────────────────────────
   static const int _transitionCapacity = 20; // ~150ms at 8ms emit interval
   final List<Float32List> _transitionBuffer = List<Float32List>.generate(

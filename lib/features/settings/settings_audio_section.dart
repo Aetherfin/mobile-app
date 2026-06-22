@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:mpv_audio_kit/mpv_audio_kit.dart' show AudioParams, Device;
 
 import '../../core/audio/offline_cache_service.dart';
 import '../../core/audio/player_settings_store.dart';
@@ -31,40 +30,32 @@ class AudioSection extends ConsumerWidget {
           title: 'Audio output',
           child: SettingsGroup(
             children: [
-              StreamBuilder<AudioParams>(
-                stream: ref.read(playerServiceProvider).audioOutParamsStream,
-                initialData: ref.read(playerServiceProvider).audioOutParams,
-                builder: (context, snap) {
-                  final params = snap.data;
-                  final rate = params?.sampleRate;
-                  final fmt = params?.format;
-                  final ch = params?.channelCount;
-                  final hasData = rate != null && rate > 0;
-                  return SettingsTile(
-                    icon: LucideIcons.waves,
-                    title: 'Current output',
-                    subtitle: hasData
-                        ? '$rate Hz · ${fmt?.name ?? "auto"} · ${ch}ch'
-                        : 'Not active — start playback first',
-                  );
-                },
-              ),
-              StreamBuilder<Device>(
-                stream: svc.audioDeviceStream,
-                initialData: svc.audioDevice,
-                builder: (context, snap) {
-                  final device = snap.data;
-                  final label = device?.description.isNotEmpty == true
-                      ? device!.description
-                      : device?.name ?? 'Auto';
-                  return SettingsTile(
-                    icon: LucideIcons.speaker,
-                    title: 'Audio device',
-                    subtitle: label,
-                    onTap: () => showAudioDeviceDialog(context, ref),
-                  );
-                },
-              ),
+              () {
+                final params = ref.watch(audioOutParamsProvider).value;
+                final rate = params?.sampleRate;
+                final fmt = params?.format;
+                final ch = params?.channelCount;
+                final hasData = rate != null && rate > 0;
+                return SettingsTile(
+                  icon: LucideIcons.waves,
+                  title: 'Current output',
+                  subtitle: hasData
+                      ? '$rate Hz · ${fmt?.name ?? "auto"} · ${ch}ch'
+                      : 'Not active — start playback first',
+                );
+              }(),
+              () {
+                final device = ref.watch(audioDeviceProvider).value;
+                final label = device?.description.isNotEmpty == true
+                    ? device!.description
+                    : device?.name ?? 'Auto';
+                return SettingsTile(
+                  icon: LucideIcons.speaker,
+                  title: 'Audio device',
+                  subtitle: label,
+                  onTap: () => showAudioDeviceDialog(context, ref),
+                );
+              }(),
               SettingsTile(
                 icon: LucideIcons.gauge,
                 title: 'Sample rate',
@@ -77,23 +68,20 @@ class AudioSection extends ConsumerWidget {
                 subtitle: 'Force output format',
                 onTap: () => showFormatDialog(context, ref),
               ),
-              StreamBuilder<bool>(
-                stream: svc.audioExclusiveStream,
-                initialData: svc.audioExclusive,
-                builder: (context, snap) {
-                  final enabled = snap.data ?? false;
-                  return SettingsSwitchTile(
-                    icon: LucideIcons.lock,
-                    title: 'Exclusive mode',
-                    subtitle: 'Bypass OS mixer for bit-perfect output',
-                    value: enabled,
-                    onChanged: (v) {
-                      unawaited(svc.setAudioExclusive(v));
-                      unawaited(PlayerSettingsStore.saveExclusive(v));
-                    },
-                  );
-                },
-              ),
+              () {
+                final enabled =
+                    ref.watch(audioExclusiveProvider).value ?? false;
+                return SettingsSwitchTile(
+                  icon: LucideIcons.lock,
+                  title: 'Exclusive mode',
+                  subtitle: 'Bypass OS mixer for bit-perfect output',
+                  value: enabled,
+                  onChanged: (v) {
+                    unawaited(svc.setAudioExclusive(v));
+                    unawaited(PlayerSettingsStore.saveExclusive(v));
+                  },
+                );
+              }(),
             ],
           ),
         ),
@@ -125,44 +113,36 @@ class AudioSection extends ConsumerWidget {
                 subtitle: 'Audio hardware buffer (latency vs stability)',
                 onTap: () => showAudioBufferDialog(context, ref),
               ),
-              StreamBuilder<bool>(
-                stream: svc.audioStreamSilenceStream,
-                initialData: svc.audioStreamSilence,
-                builder: (context, snap) {
-                  final enabled = snap.data ?? false;
-                  return SettingsSwitchTile(
-                    icon: LucideIcons.volume2,
-                    title: 'Keep audio active on pause',
-                    subtitle: 'Eliminates click/pop on resume',
-                    value: enabled,
-                    onChanged: (v) {
-                      unawaited(svc.setAudioStreamSilence(v));
-                      unawaited(PlayerSettingsStore.saveStreamSilence(v));
-                    },
-                  );
-                },
-              ),
-              StreamBuilder<bool>(
-                stream: svc.cacheStream.map((c) => c.pauseInitial),
-                initialData: svc.cacheSettings.pauseInitial,
-                builder: (context, snap) {
-                  final enabled = snap.data ?? false;
-                  return SettingsSwitchTile(
-                    icon: LucideIcons.loader,
-                    title: 'Buffer before playing',
-                    subtitle: 'Smoother start on streams',
-                    value: enabled,
-                    onChanged: (v) {
-                      unawaited(
-                        svc.setCache(
-                          svc.cacheSettings.copyWith(pauseInitial: v),
-                        ),
-                      );
-                      unawaited(PlayerSettingsStore.saveCachePauseInitial(v));
-                    },
-                  );
-                },
-              ),
+              () {
+                final enabled =
+                    ref.watch(audioStreamSilenceProvider).value ?? false;
+                return SettingsSwitchTile(
+                  icon: LucideIcons.volume2,
+                  title: 'Keep audio active on pause',
+                  subtitle: 'Eliminates click/pop on resume',
+                  value: enabled,
+                  onChanged: (v) {
+                    unawaited(svc.setAudioStreamSilence(v));
+                    unawaited(PlayerSettingsStore.saveStreamSilence(v));
+                  },
+                );
+              }(),
+              () {
+                final enabled =
+                    ref.watch(audioCachePauseInitialProvider).value ?? false;
+                return SettingsSwitchTile(
+                  icon: LucideIcons.loader,
+                  title: 'Buffer before playing',
+                  subtitle: 'Smoother start on streams',
+                  value: enabled,
+                  onChanged: (v) {
+                    unawaited(
+                      svc.setCache(svc.cacheSettings.copyWith(pauseInitial: v)),
+                    );
+                    unawaited(PlayerSettingsStore.saveCachePauseInitial(v));
+                  },
+                );
+              }(),
             ],
           ),
         ),

@@ -2,7 +2,7 @@ import 'dart:async' show unawaited, Timer, StreamSubscription;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart'
-    show Loop, MpvPlayerError, FftFrame;
+    show Device, AudioParams, Loop, MpvPlayerError, FftFrame;
 
 import '../design_tokens/tokens.dart';
 import '../core/audio/active_queue_store.dart';
@@ -705,6 +705,36 @@ final playbackSpeedProvider = StreamProvider.autoDispose<double>((ref) {
     final sub = svc.speedStream.listen(controller.add);
     controller.onCancel = sub.cancel;
   });
+});
+
+final audioDeviceProvider = StreamProvider.autoDispose<Device?>((ref) {
+  final svc = ref.watch(playerServiceProvider);
+  return svc.audioDeviceStream.map((d) => d as Device?);
+});
+
+final audioDevicesProvider = StreamProvider.autoDispose<List<Device>>((ref) {
+  final svc = ref.watch(playerServiceProvider);
+  return svc.audioDevicesStream;
+});
+
+final audioExclusiveProvider = StreamProvider.autoDispose<bool>((ref) {
+  final svc = ref.watch(playerServiceProvider);
+  return svc.audioExclusiveStream;
+});
+
+final audioOutParamsProvider = StreamProvider.autoDispose<AudioParams?>((ref) {
+  final svc = ref.watch(playerServiceProvider);
+  return svc.audioOutParamsStream.map((p) => p as AudioParams?);
+});
+
+final audioStreamSilenceProvider = StreamProvider.autoDispose<bool>((ref) {
+  final svc = ref.watch(playerServiceProvider);
+  return svc.audioStreamSilenceStream;
+});
+
+final audioCachePauseInitialProvider = StreamProvider.autoDispose<bool>((ref) {
+  final svc = ref.watch(playerServiceProvider);
+  return svc.cacheStream.map((c) => c.pauseInitial);
 });
 
 final currentTrackProvider = NotifierProvider<StateHolder<AfTrack?>, AfTrack?>(

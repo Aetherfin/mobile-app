@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:package_info_plus/package_info_plus.dart';
-
 import '../../build_id.dart';
 import '../../design_tokens/tokens.dart';
+import '../../state/providers.dart';
 import 'settings_sections.dart';
 import 'settings_widgets.dart';
 
@@ -20,19 +19,17 @@ class AboutSection extends ConsumerWidget {
       title: 'About',
       child: SettingsGroup(
         children: [
-          FutureBuilder<PackageInfo>(
-            future: PackageInfo.fromPlatform(),
-            builder: (context, snap) {
-              final version = snap.data != null
-                  ? 'v${snap.data!.version}+${snap.data!.buildNumber} ($kBuildId)'
-                  : '...';
-              return SettingsTile(
-                icon: LucideIcons.info,
-                title: 'Aetherfin $version',
-                subtitle: 'Jellyfin-backed music player · FOSS',
-              );
-            },
-          ),
+          () {
+            final info = ref.watch(packageInfoProvider).value;
+            final version = info != null
+                ? 'v${info.version}+${info.buildNumber} ($kBuildId)'
+                : '...';
+            return SettingsTile(
+              icon: LucideIcons.info,
+              title: 'Aetherfin $version',
+              subtitle: 'Jellyfin-backed music player · FOSS',
+            );
+          }(),
           SettingsTile(
             icon: LucideIcons.code,
             title: 'Source code',
